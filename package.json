@@ -1,0 +1,14 @@
+{
+  "name": "vibecheck",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:landing": "npm --workspace @vibecheck/landing run dev",
+    "build:landing": "npm --workspace @vibecheck/landing run build",
+    "lint:landing": "npm --workspace @vibecheck/landing run lint",
+    "preview:landing": "npm --workspace @vibecheck/landing run preview"
+  }
+}
