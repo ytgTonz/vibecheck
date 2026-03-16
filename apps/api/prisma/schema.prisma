@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Venue {
+  id         String    @id @default(cuid())
+  name       String
+  type       VenueType
+  location   String
+  city       String    @default("East London")
+  hours      String?
+  musicGenre String[]
+  claimedBy  String?   // user ID of the venue owner, if claimed
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  clips Clip[]
+}
+
+model Clip {
+  id         String   @id @default(cuid())
+  videoUrl   String
+  thumbnail  String?
+  duration   Int      // length of the clip in seconds
+  venueId    String
+  uploadedBy String   // user ID of the promoter who posted this
+  musicGenre String?
+  caption    String?
+  views      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  venue Venue @relation(fields: [venueId], references: [id])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(PROMOTER)
+  createdAt DateTime @default(now())
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum VenueType {
+  NIGHTCLUB
+  BAR
+  RESTAURANT_BAR
+  LOUNGE
+  SHISA_NYAMA
+  ROOFTOP
+  OTHER
+}
+
+enum UserRole {
+  PROMOTER
+  VENUE_OWNER
+  ADMIN
+}
