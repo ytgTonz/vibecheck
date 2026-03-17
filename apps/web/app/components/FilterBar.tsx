@@ -45,7 +45,7 @@ export default function FilterBar() {
             e.target.value ? (e.target.value as VenueType) : null
           )
         }
-        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-zinc-500"
+        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
       >
         <option value="">All types</option>
         {venueTypeOptions.map((opt) => (
@@ -61,7 +61,7 @@ export default function FilterBar() {
         onChange={(e) =>
           setMusicGenreFilter(e.target.value || null)
         }
-        className="rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-zinc-500"
+        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
       >
         <option value="">All genres</option>
         {genreOptions.map((genre) => (
@@ -75,7 +75,7 @@ export default function FilterBar() {
       {hasFilters && (
         <button
           onClick={clearFilters}
-          className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-zinc-200"
+          className="rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
         >
           Clear filters
         </button>

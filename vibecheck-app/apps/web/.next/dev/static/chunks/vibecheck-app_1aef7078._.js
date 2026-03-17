@@ -179,7 +179,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_mod
 };
 function VenueCard({ venue }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-        className: "rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-zinc-600",
+        className: "rounded-xl border border-zinc-200 bg-zinc-50 p-5 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "mb-3 flex items-start justify-between gap-3",
@@ -193,7 +193,7 @@ function VenueCard({ venue }) {
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                        className: "shrink-0 rounded-full bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-300",
+                        className: "shrink-0 rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
                         children: venueTypeLabel[venue.type] ?? venue.type
                     }, void 0, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/components/VenueCard.tsx",
@@ -207,7 +207,7 @@ function VenueCard({ venue }) {
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "mb-3 text-sm text-zinc-400",
+                className: "mb-3 text-sm text-zinc-500 dark:text-zinc-400",
                 children: venue.location
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/components/VenueCard.tsx",
@@ -215,10 +215,10 @@ function VenueCard({ venue }) {
                 columnNumber: 7
             }, this),
             venue.hours && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "mb-3 text-sm text-zinc-500",
+                className: "mb-3 text-sm text-zinc-400 dark:text-zinc-500",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                        className: "text-zinc-400",
+                        className: "text-zinc-500 dark:text-zinc-400",
                         children: "Hours:"
                     }, void 0, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/components/VenueCard.tsx",
@@ -236,7 +236,7 @@ function VenueCard({ venue }) {
             venue.musicGenre.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex flex-wrap gap-2",
                 children: venue.musicGenre.map((genre)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                        className: "rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300",
+                        className: "rounded-md bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
                         children: genre
                     }, genre, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/components/VenueCard.tsx",
@@ -350,7 +350,7 @@ function FilterBar() {
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
                 value: venueTypeFilter ?? "",
                 onChange: (e)=>setVenueTypeFilter(e.target.value ? e.target.value : null),
-                className: "rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-zinc-500",
+                className: "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                         value: "",
@@ -377,7 +377,7 @@ function FilterBar() {
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
                 value: musicGenreFilter ?? "",
                 onChange: (e)=>setMusicGenreFilter(e.target.value || null),
-                className: "rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 outline-none focus:border-zinc-500",
+                className: "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
                         value: "",
@@ -403,7 +403,7 @@ function FilterBar() {
             }, this),
             hasFilters && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                 onClick: clearFilters,
-                className: "rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:text-zinc-200",
+                className: "rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
                 children: "Clear filters"
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/components/FilterBar.tsx",
@@ -497,7 +497,7 @@ function BrowsePage() {
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                        className: "mt-1 text-zinc-400",
+                        className: "mt-1 text-zinc-500 dark:text-zinc-400",
                         children: "See the vibe before you arrive — East London"
                     }, void 0, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
@@ -523,7 +523,7 @@ function BrowsePage() {
                 columnNumber: 7
             }, this),
             loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "text-zinc-500",
+                className: "text-zinc-400 dark:text-zinc-500",
                 children: "Loading venues…"
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
@@ -531,7 +531,7 @@ function BrowsePage() {
                 columnNumber: 9
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "text-red-400",
+                className: "text-red-600 dark:text-red-400",
                 children: [
                     "Error: ",
                     error
@@ -542,7 +542,7 @@ function BrowsePage() {
                 columnNumber: 9
             }, this),
             !loading && !error && venues.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                className: "text-zinc-500",
+                className: "text-zinc-400 dark:text-zinc-500",
                 children: "No venues match your filters."
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",

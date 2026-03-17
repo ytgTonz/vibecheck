@@ -107,6 +107,8 @@
     --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --color-red-400: #ff6568;
+    --color-red-600: #e40014;
+    --color-zinc-50: #fafafa;
     --color-zinc-100: #f4f4f5;
     --color-zinc-200: #e4e4e7;
     --color-zinc-300: #d4d4d8;
@@ -117,6 +119,7 @@
     --color-zinc-800: #27272a;
     --color-zinc-900: #18181b;
     --color-zinc-950: #09090b;
+    --color-white: #fff;
     --spacing: .25rem;
     --container-3xl: 48rem;
     --text-xs: .75rem;
@@ -144,6 +147,8 @@
   @supports (color: lab(0% 0 0)) {
     :root, :host {
       --color-red-400: lab(63.7053% 60.745 31.3109);
+      --color-red-600: lab(48.4493% 77.4328 61.5452);
+      --color-zinc-50: lab(98.26% 0 0);
       --color-zinc-100: lab(96.1634% .0993311 -.364041);
       --color-zinc-200: lab(90.6853% .399232 -1.45452);
       --color-zinc-300: lab(84.9837% .601262 -2.17986);
@@ -496,12 +501,32 @@
     border-width: 1px;
   }
 
+  .border-zinc-200 {
+    border-color: var(--color-zinc-200);
+  }
+
+  .border-zinc-300 {
+    border-color: var(--color-zinc-300);
+  }
+
   .border-zinc-700 {
     border-color: var(--color-zinc-700);
   }
 
   .border-zinc-800 {
     border-color: var(--color-zinc-800);
+  }
+
+  .bg-white {
+    background-color: var(--color-white);
+  }
+
+  .bg-zinc-50 {
+    background-color: var(--color-zinc-50);
+  }
+
+  .bg-zinc-200 {
+    background-color: var(--color-zinc-200);
   }
 
   .bg-zinc-800 {
@@ -597,6 +622,10 @@
     color: var(--color-red-400);
   }
 
+  .text-red-600 {
+    color: var(--color-red-600);
+  }
+
   .text-zinc-100 {
     color: var(--color-zinc-100);
   }
@@ -617,6 +646,18 @@
     color: var(--color-zinc-500);
   }
 
+  .text-zinc-600 {
+    color: var(--color-zinc-600);
+  }
+
+  .text-zinc-700 {
+    color: var(--color-zinc-700);
+  }
+
+  .text-zinc-900 {
+    color: var(--color-zinc-900);
+  }
+
   .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -634,6 +675,12 @@
   }
 
   @media (hover: hover) {
+    .hover\:border-zinc-400:hover {
+      border-color: var(--color-zinc-400);
+    }
+  }
+
+  @media (hover: hover) {
     .hover\:border-zinc-600:hover {
       border-color: var(--color-zinc-600);
     }
@@ -642,6 +689,12 @@
   @media (hover: hover) {
     .hover\:text-zinc-200:hover {
       color: var(--color-zinc-200);
+    }
+  }
+
+  @media (hover: hover) {
+    .hover\:text-zinc-700:hover {
+      color: var(--color-zinc-700);
     }
   }
 
@@ -654,19 +707,66 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  .dark\:border-zinc-700:where(.dark, .dark *) {
+    border-color: var(--color-zinc-700);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .dark\:border-zinc-800:where(.dark, .dark *) {
+    border-color: var(--color-zinc-800);
+  }
+
+  .dark\:bg-zinc-800:where(.dark, .dark *) {
+    background-color: var(--color-zinc-800);
+  }
+
+  .dark\:bg-zinc-900:where(.dark, .dark *) {
+    background-color: var(--color-zinc-900);
+  }
+
+  .dark\:bg-zinc-950:where(.dark, .dark *) {
+    background-color: var(--color-zinc-950);
+  }
+
+  .dark\:text-red-400:where(.dark, .dark *) {
+    color: var(--color-red-400);
+  }
+
+  .dark\:text-zinc-100:where(.dark, .dark *) {
+    color: var(--color-zinc-100);
+  }
+
+  .dark\:text-zinc-200:where(.dark, .dark *) {
+    color: var(--color-zinc-200);
+  }
+
+  .dark\:text-zinc-300:where(.dark, .dark *) {
+    color: var(--color-zinc-300);
+  }
+
+  .dark\:text-zinc-400:where(.dark, .dark *) {
+    color: var(--color-zinc-400);
+  }
+
+  .dark\:text-zinc-500:where(.dark, .dark *) {
+    color: var(--color-zinc-500);
+  }
+
+  @media (hover: hover) {
+    .dark\:hover\:border-zinc-600:where(.dark, .dark *):hover {
+      border-color: var(--color-zinc-600);
+    }
+  }
+
+  @media (hover: hover) {
+    .dark\:hover\:text-zinc-200:where(.dark, .dark *):hover {
+      color: var(--color-zinc-200);
+    }
+  }
+
+  .dark\:focus\:border-zinc-500:where(.dark, .dark *):focus {
+    border-color: var(--color-zinc-500);
+  }
 }
 
 @property --tw-border-style {

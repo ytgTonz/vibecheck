@@ -27,7 +27,7 @@ export default function BrowsePage() {
       {/* Header */}
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">VibeCheck</h1>
-        <p className="mt-1 text-zinc-400">
+        <p className="mt-1 text-zinc-500 dark:text-zinc-400">
           See the vibe before you arrive — East London
         </p>
       </header>
@@ -39,15 +39,15 @@ export default function BrowsePage() {
 
       {/* Content */}
       {loading && (
-        <p className="text-zinc-500">Loading venues…</p>
+        <p className="text-zinc-400 dark:text-zinc-500">Loading venues…</p>
       )}
 
       {error && (
-        <p className="text-red-400">Error: {error}</p>
+        <p className="text-red-600 dark:text-red-400">Error: {error}</p>
       )}
 
       {!loading && !error && venues.length === 0 && (
-        <p className="text-zinc-500">No venues match your filters.</p>
+        <p className="text-zinc-400 dark:text-zinc-500">No venues match your filters.</p>
       )}
 
       {!loading && !error && venues.length > 0 && (
