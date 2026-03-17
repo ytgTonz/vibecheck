@@ -471,9 +471,20 @@ function BrowsePage() {
     const loadVenues = (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"])({
         "BrowsePage.useVenueStore[loadVenues]": (s)=>s.loadVenues
     }["BrowsePage.useVenueStore[loadVenues]"]);
-    const filteredVenues = (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"])({
-        "BrowsePage.useVenueStore[filteredVenues]": (s)=>s.filteredVenues
-    }["BrowsePage.useVenueStore[filteredVenues]"]);
+    const allVenues = (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"])({
+        "BrowsePage.useVenueStore[allVenues]": (s)=>s.venues
+    }["BrowsePage.useVenueStore[allVenues]"]);
+    const venueTypeFilter = (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"])({
+        "BrowsePage.useVenueStore[venueTypeFilter]": (s)=>s.venueTypeFilter
+    }["BrowsePage.useVenueStore[venueTypeFilter]"]);
+    const musicGenreFilter = (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"])({
+        "BrowsePage.useVenueStore[musicGenreFilter]": (s)=>s.musicGenreFilter
+    }["BrowsePage.useVenueStore[musicGenreFilter]"]);
+    const venues = allVenues.filter((venue)=>{
+        if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
+        if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
+        return true;
+    });
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "BrowsePage.useEffect": ()=>{
             loadVenues();
@@ -481,7 +492,6 @@ function BrowsePage() {
     }["BrowsePage.useEffect"], [
         loadVenues
     ]);
-    const venues = filteredVenues();
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
         className: "mx-auto max-w-3xl px-4 py-8",
         children: [
@@ -493,7 +503,7 @@ function BrowsePage() {
                         children: "VibeCheck"
                     }, void 0, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                        lineNumber: 29,
+                        lineNumber: 35,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -501,25 +511,25 @@ function BrowsePage() {
                         children: "See the vibe before you arrive — East London"
                     }, void 0, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                        lineNumber: 30,
+                        lineNumber: 36,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 28,
+                lineNumber: 34,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "mb-6",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$apps$2f$web$2f$app$2f$components$2f$FilterBar$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                     fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                    lineNumber: 37,
+                    lineNumber: 43,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 36,
+                lineNumber: 42,
                 columnNumber: 7
             }, this),
             loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -527,7 +537,7 @@ function BrowsePage() {
                 children: "Loading venues…"
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 42,
+                lineNumber: 48,
                 columnNumber: 9
             }, this),
             error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -538,7 +548,7 @@ function BrowsePage() {
                 ]
             }, void 0, true, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 46,
+                lineNumber: 52,
                 columnNumber: 9
             }, this),
             !loading && !error && venues.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -546,7 +556,7 @@ function BrowsePage() {
                 children: "No venues match your filters."
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 50,
+                lineNumber: 56,
                 columnNumber: 9
             }, this),
             !loading && !error && venues.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -555,23 +565,25 @@ function BrowsePage() {
                         venue: venue
                     }, venue.id, false, {
                         fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                        lineNumber: 56,
+                        lineNumber: 62,
                         columnNumber: 13
                     }, this))
             }, void 0, false, {
                 fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-                lineNumber: 54,
+                lineNumber: 60,
                 columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/vibecheck-app/apps/web/app/page.tsx",
-        lineNumber: 26,
+        lineNumber: 32,
         columnNumber: 5
     }, this);
 }
-_s(BrowsePage, "CQ2NL8WtgenVL9NsRrgBSAUA3nc=", false, function() {
+_s(BrowsePage, "CUeHMgmO+LY1ppLIdn9t8MjRNgk=", false, function() {
     return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"],
         __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"],
         __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"],
         __TURBOPACK__imported__module__$5b$project$5d2f$vibecheck$2d$app$2f$packages$2f$shared$2f$src$2f$stores$2f$venueStore$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useVenueStore"],

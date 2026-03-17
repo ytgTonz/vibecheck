@@ -14,13 +14,19 @@ export default function BrowsePage() {
   const loading = useVenueStore((s) => s.loading);
   const error = useVenueStore((s) => s.error);
   const loadVenues = useVenueStore((s) => s.loadVenues);
-  const filteredVenues = useVenueStore((s) => s.filteredVenues);
+  const allVenues = useVenueStore((s) => s.venues);
+  const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
+  const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
+
+  const venues = allVenues.filter((venue) => {
+    if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
+    if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
+    return true;
+  });
 
   useEffect(() => {
     loadVenues();
   }, [loadVenues]);
-
-  const venues = filteredVenues();
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
