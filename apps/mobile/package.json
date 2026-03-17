@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.28",
+    "@vibecheck/shared": "*",
+    "zustand": "^5",
     "expo": "~55.0.6",
     "expo-constants": "~55.0.7",
     "expo-font": "~55.0.4",
