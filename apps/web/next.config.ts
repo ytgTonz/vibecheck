@@ -4,7 +4,9 @@ import path from "path";
 const nextConfig: NextConfig = {
   transpilePackages: ["@vibecheck/shared"],
   turbopack: {
-    root: path.join(__dirname, "../.."),
+    resolveAlias: {
+      tailwindcss: path.join(__dirname, "node_modules/tailwindcss"),
+    },
   },
 };
 
