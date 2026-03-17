@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "scripts": {
+    "heroku-postbuild": "npm --workspace @vibecheck/api run build",
     "dev:landing": "npm --workspace @vibecheck/landing run dev",
     "build:landing": "npm --workspace @vibecheck/landing run build",
     "lint:landing": "npm --workspace @vibecheck/landing run lint",
