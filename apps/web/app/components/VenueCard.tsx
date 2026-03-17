@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Venue } from "@vibecheck/shared";
 
 /** Human-readable labels for venue types. */
@@ -13,7 +14,10 @@ const venueTypeLabel: Record<string, string> = {
 
 export default function VenueCard({ venue }: { venue: Venue }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600">
+    <Link
+      href={`/venues/${venue.id}`}
+      className="block rounded-xl border border-zinc-200 bg-zinc-50 p-5 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
+    >
       {/* Header: name + type badge */}
       <div className="mb-3 flex items-start justify-between gap-3">
         <h2 className="text-lg font-semibold leading-tight">{venue.name}</h2>
@@ -45,6 +49,6 @@ export default function VenueCard({ venue }: { venue: Venue }) {
           ))}
         </div>
       )}
-    </div>
+    </Link>
   );
 }
