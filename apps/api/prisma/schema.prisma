@@ -14,7 +14,7 @@ model Venue {
   name       String
   type       VenueType
   location   String
-  city       String    @default("East London")
+  city       String    @default("East London, Eastern Cape")
   hours      String?
   musicGenre String[]
   claimedBy  String?   // user ID of the venue owner, if claimed

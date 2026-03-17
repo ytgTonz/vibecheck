@@ -1,0 +1,15 @@
+export enum VenueType {
+  NIGHTCLUB = 'NIGHTCLUB',
+  BAR = 'BAR',
+  RESTAURANT_BAR = 'RESTAURANT_BAR',
+  LOUNGE = 'LOUNGE',
+  SHISA_NYAMA = 'SHISA_NYAMA',
+  ROOFTOP = 'ROOFTOP',
+  OTHER = 'OTHER',
+}
+
+export enum UserRole {
+  PROMOTER = 'PROMOTER',
+  VENUE_OWNER = 'VENUE_OWNER',
+  ADMIN = 'ADMIN',
+}
