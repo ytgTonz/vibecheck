@@ -30,13 +30,10 @@ export default function BrowsePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      {/* Header */}
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">VibeCheck</h1>
-        <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-          See the vibe before you arrive — East London
-        </p>
-      </header>
+      {/* Subtitle */}
+      <p className="mb-6 text-zinc-500 dark:text-zinc-400">
+        See the vibe before you arrive — East London
+      </p>
 
       {/* Filters */}
       <div className="mb-6">
