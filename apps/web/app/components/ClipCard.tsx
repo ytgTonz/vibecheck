@@ -35,7 +35,7 @@ export default function ClipCard({
       onClick={() => onPlay(clip)}
       className={`group relative shrink-0 overflow-hidden rounded-[1.75rem] border text-left transition-all duration-300 ${
         featured
-          ? "h-[28rem] w-full border-orange-300/30 bg-zinc-950 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:h-[32rem] sm:max-w-md"
+          ? "h-[28rem] w-full border-orange-300/30 bg-zinc-950 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:h-[32rem]"
           : "h-72 w-56 border-white/10 bg-zinc-950 hover:-translate-y-1 hover:border-orange-200/30 hover:shadow-[0_18px_48px_rgba(0,0,0,0.28)] sm:h-80 sm:w-60"
       }`}
     >

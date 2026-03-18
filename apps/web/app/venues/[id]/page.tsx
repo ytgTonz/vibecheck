@@ -196,7 +196,7 @@ export default function VenueDetailPage() {
             )}
           </div>
 
-          <div className="lg:justify-self-end">
+          <div className="w-full lg:max-w-md">
             {featuredClip ? (
               <ClipCard
                 clip={featuredClip}
@@ -204,7 +204,7 @@ export default function VenueDetailPage() {
                 onPlay={() => setActiveClipIndex(0)}
               />
             ) : (
-              <div className="flex h-[28rem] w-full items-end rounded-[1.75rem] border border-white/10 bg-black/30 p-6 sm:h-[32rem] sm:max-w-md">
+              <div className="flex h-[28rem] w-full items-end rounded-[1.75rem] border border-white/10 bg-black/30 p-6 sm:h-[32rem]">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-200/80">
                     No clips yet
