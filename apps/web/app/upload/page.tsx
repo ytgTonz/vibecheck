@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { setBaseUrl, useAuthStore, fetchVenues, Venue } from "@vibecheck/shared";
+import {
+  compressVideo,
+  shouldCompress,
+  formatFileSize,
+} from "../lib/compressVideo";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
@@ -34,6 +39,10 @@ export default function UploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("");
+  const [compressing, setCompressing] = useState(false);
+  const [compressProgress, setCompressProgress] = useState(0);
+  const [compressionInfo, setCompressionInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
@@ -83,6 +92,7 @@ export default function UploadPage() {
     }
 
     setError(null);
+    setCompressionInfo(null);
     setFile(selected);
   };
 
@@ -90,12 +100,46 @@ export default function UploadPage() {
     e.preventDefault();
     if (!file || !venueId || !token) return;
 
+    setError(null);
+    let fileToUpload = file;
+
+    // Compress if needed
+    if (shouldCompress(file)) {
+      setCompressing(true);
+      setCompressProgress(0);
+      setStatusText("Loading compressor...");
+
+      try {
+        const originalSize = file.size;
+        setStatusText("Compressing video...");
+
+        fileToUpload = await compressVideo(file, {
+          maxResolution: 720,
+          videoBitrate: "1M",
+          onProgress: (pct) => setCompressProgress(pct),
+        });
+
+        const saved = originalSize - fileToUpload.size;
+        const pctSaved = Math.round((saved / originalSize) * 100);
+        setCompressionInfo(
+          `Compressed: ${formatFileSize(originalSize)} → ${formatFileSize(fileToUpload.size)} (${pctSaved}% smaller)`
+        );
+      } catch (err) {
+        console.error("Compression failed, uploading original:", err);
+        setCompressionInfo("Compression skipped — uploading original file");
+        fileToUpload = file;
+      } finally {
+        setCompressing(false);
+      }
+    }
+
+    // Upload
     setUploading(true);
     setProgress(0);
-    setError(null);
+    setStatusText("Uploading...");
 
     const formData = new FormData();
-    formData.append("video", file);
+    formData.append("video", fileToUpload);
     formData.append("venueId", venueId);
     if (musicGenre) formData.append("musicGenre", musicGenre);
     if (caption.trim()) formData.append("caption", caption.trim());
@@ -131,8 +175,11 @@ export default function UploadPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
+      setStatusText("");
     }
   };
+
+  const busy = compressing || uploading;
 
   // Don't render until hydration is done
   if (!hydrated || !user) {
@@ -168,10 +215,28 @@ export default function UploadPage() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-8 text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-300"
+            disabled={busy}
+            className="w-full rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-8 text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-300 disabled:opacity-50"
           >
-            {file ? file.name : "Click to select a video file"}
+            {file ? (
+              <span>
+                {file.name}{" "}
+                <span className="text-zinc-600">
+                  ({formatFileSize(file.size)})
+                </span>
+              </span>
+            ) : (
+              "Click to select a video file"
+            )}
           </button>
+          {file && shouldCompress(file) && !compressionInfo && !busy && (
+            <p className="mt-1 text-xs text-zinc-500">
+              This video will be compressed before upload
+            </p>
+          )}
+          {compressionInfo && (
+            <p className="mt-1 text-xs text-green-400">{compressionInfo}</p>
+          )}
         </div>
 
         {/* Video preview */}
@@ -196,7 +261,8 @@ export default function UploadPage() {
             required
             value={venueId}
             onChange={(e) => setVenueId(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+            disabled={busy}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
           >
             <option value="">Select a venue</option>
             {venues.map((v) => (
@@ -216,7 +282,8 @@ export default function UploadPage() {
             id="genre"
             value={musicGenre}
             onChange={(e) => setMusicGenre(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+            disabled={busy}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
           >
             <option value="">Select a genre</option>
             {MUSIC_GENRES.map((g) => (
@@ -238,7 +305,8 @@ export default function UploadPage() {
             maxLength={120}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+            disabled={busy}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
             placeholder="What's the vibe?"
           />
           <p className="mt-1 text-xs text-zinc-600">{caption.length}/120</p>
@@ -247,11 +315,27 @@ export default function UploadPage() {
         {/* Error */}
         {error && <p className="text-sm text-red-400">{error}</p>}
 
+        {/* Compression progress */}
+        {compressing && (
+          <div>
+            <div className="mb-1 flex justify-between text-xs text-zinc-400">
+              <span>{statusText}</span>
+              <span>{compressProgress}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${compressProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Upload progress */}
         {uploading && (
           <div>
             <div className="mb-1 flex justify-between text-xs text-zinc-400">
-              <span>Uploading...</span>
+              <span>{statusText}</span>
               <span>{progress}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
@@ -266,10 +350,14 @@ export default function UploadPage() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={uploading || !file || !venueId}
+          disabled={busy || !file || !venueId}
           className="w-full rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 disabled:opacity-50"
         >
-          {uploading ? "Uploading..." : "Upload clip"}
+          {compressing
+            ? "Compressing..."
+            : uploading
+              ? "Uploading..."
+              : "Upload clip"}
         </button>
       </form>
     </div>
