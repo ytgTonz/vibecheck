@@ -4,6 +4,9 @@ import { useRef, useState, useCallback, SyntheticEvent, useEffect } from "react"
 import ReactPlayer from "react-player";
 import { Clip } from "@vibecheck/shared";
 
+const SWIPE_X_THRESHOLD = 56;
+const SWIPE_Y_THRESHOLD = 84;
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
@@ -39,6 +42,8 @@ export default function VideoPlayer({
 }) {
   const clip = clips[activeIndex];
   const viewedClipIds = useRef<Set<string>>(new Set());
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const lastGestureAtRef = useRef(0);
   const [playing, setPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -118,6 +123,51 @@ export default function VideoPlayer({
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
+  const handleTogglePlayback = useCallback(() => {
+    if (Date.now() - lastGestureAtRef.current < 250) {
+      return;
+    }
+
+    setPlaying((prev) => !prev);
+  }, []);
+
+  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      const start = touchStartRef.current;
+      const touch = event.changedTouches[0];
+      touchStartRef.current = null;
+
+      if (!start || !touch) return;
+
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      if (absX > absY && absX > SWIPE_X_THRESHOLD) {
+        lastGestureAtRef.current = Date.now();
+        if (deltaX < 0 && canGoNext) {
+          onNavigate(activeIndex + 1);
+        } else if (deltaX > 0 && canGoPrev) {
+          onNavigate(activeIndex - 1);
+        }
+        return;
+      }
+
+      if (absY > absX && deltaY > SWIPE_Y_THRESHOLD) {
+        lastGestureAtRef.current = Date.now();
+        onClose();
+      }
+    },
+    [activeIndex, canGoNext, canGoPrev, onClose, onNavigate]
+  );
+
   return (
     <div className="fixed inset-0 z-50 bg-black/90 text-white backdrop-blur-md">
       <div
@@ -130,7 +180,7 @@ export default function VideoPlayer({
       />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(249,115,22,0.2),transparent_36%),linear-gradient(180deg,rgba(5,5,5,0.25),rgba(5,5,5,0.92))]" />
 
-      <div className="relative flex min-h-screen items-center justify-center p-3 sm:p-6">
+      <div className="relative flex min-h-screen items-center justify-center p-2 sm:p-6">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/35 text-white/90 backdrop-blur-sm transition-colors hover:bg-black/55 sm:right-6 sm:top-6"
@@ -162,8 +212,8 @@ export default function VideoPlayer({
             })}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-center">
-            <div className="order-2 flex flex-col gap-4 px-1 lg:order-1 lg:max-w-md">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-center lg:gap-4">
+            <div className="order-2 flex flex-col gap-3 px-1 pb-2 lg:order-1 lg:max-w-md lg:gap-4 lg:pb-0">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/90">
                   Live Venue Story
@@ -174,6 +224,9 @@ export default function VideoPlayer({
                 <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-300">
                   Quick, current clips that answer the only question that matters:
                   should you pull up tonight?
+                </p>
+                <p className="mt-2 text-xs text-zinc-400 lg:hidden">
+                  Swipe left or right to move between clips. Swipe down to close.
                 </p>
               </div>
 
@@ -193,7 +246,7 @@ export default function VideoPlayer({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                <div className="hidden items-center justify-between gap-3 sm:flex">
                   <button
                     onClick={() => onNavigate(activeIndex - 1)}
                     disabled={!canGoPrev}
@@ -233,6 +286,29 @@ export default function VideoPlayer({
                   </button>
                 </div>
 
+                <div className="flex items-center justify-between gap-2 sm:hidden">
+                  <button
+                    onClick={() => onNavigate(activeIndex - 1)}
+                    disabled={!canGoPrev}
+                    className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-white/10 px-3 text-sm text-white/85 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={handleTogglePlayback}
+                    className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-white px-3 text-sm font-medium text-zinc-950 transition-colors hover:bg-orange-100"
+                  >
+                    {playing ? "Pause" : "Play"}
+                  </button>
+                  <button
+                    onClick={() => onNavigate(activeIndex + 1)}
+                    disabled={!canGoNext}
+                    className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-white/10 px-3 text-sm text-white/85 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+
                 <div className="flex items-center justify-between text-xs text-zinc-400">
                   <span>
                     Clip {activeIndex + 1} of {clips.length}
@@ -245,7 +321,11 @@ export default function VideoPlayer({
             </div>
 
             <div className="order-1 flex justify-center lg:order-2">
-              <div className="relative w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+              <div
+                className="relative w-full max-w-sm overflow-hidden rounded-[1.75rem] border border-white/10 bg-black shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:rounded-[2rem]"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 {!ready && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-white" />
@@ -268,7 +348,7 @@ export default function VideoPlayer({
                 </div>
 
                 <button
-                  onClick={() => setPlaying((prev) => !prev)}
+                  onClick={handleTogglePlayback}
                   className="absolute inset-0 z-10"
                   aria-label={playing ? "Pause" : "Play"}
                 >
@@ -286,7 +366,7 @@ export default function VideoPlayer({
                 <button
                   onClick={() => onNavigate(activeIndex - 1)}
                   disabled={!canGoPrev}
-                  className="absolute left-3 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-30"
+                  className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-30 sm:inline-flex"
                   aria-label="Previous clip"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -297,13 +377,18 @@ export default function VideoPlayer({
                 <button
                   onClick={() => onNavigate(activeIndex + 1)}
                   disabled={!canGoNext}
-                  className="absolute right-3 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-30"
+                  className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-30 sm:inline-flex"
                   aria-label="Next clip"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </button>
+
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-4 pb-4 text-[11px] uppercase tracking-[0.22em] text-zinc-300 sm:hidden">
+                  <span>{canGoPrev ? "Swipe right" : "First clip"}</span>
+                  <span>{canGoNext ? "Swipe left" : "Last clip"}</span>
+                </div>
               </div>
             </div>
           </div>
