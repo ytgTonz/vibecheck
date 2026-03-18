@@ -256,6 +256,19 @@ export async function recordClipView(
   return body as { id: string; views: number };
 }
 
+/** Delete a clip the current user is allowed to manage. */
+export async function deleteClip(id: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/clips/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to delete clip: ${res.status}`);
+  }
+}
+
 // ─── Feedback ───────────────────────────────────────────────────────────────
 
 /** Submit user feedback. */

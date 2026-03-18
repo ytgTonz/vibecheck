@@ -10,6 +10,7 @@ import {
   generateInvite,
   fetchVenuePromoters,
   removePromoter,
+  deleteClip,
   useAuthStore,
   VenueWithStats,
   VenuePromoter,
@@ -51,8 +52,23 @@ export default function DashboardPage() {
   const [promoters, setPromoters] = useState<Record<string, VenuePromoter[]>>({});
   const [invites, setInvites] = useState<Record<string, Invite>>({});
   const [loadingPromoters, setLoadingPromoters] = useState<Record<string, boolean>>({});
+  const [deletingClipIds, setDeletingClipIds] = useState<Record<string, boolean>>({});
+  const [openClipMenuId, setOpenClipMenuId] = useState<string | null>(null);
 
   const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
+
+  const loadDashboard = async (authToken: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const nextVenues = await fetchMyVenues(authToken);
+      setVenues(nextVenues);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     hydrate();
@@ -67,14 +83,33 @@ export default function DashboardPage() {
       return;
     }
 
-    setLoading(true);
-    fetchMyVenues(token)
-      .then(setVenues)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load dashboard")
-      )
-      .finally(() => setLoading(false));
+    loadDashboard(token);
   }, [hydrated, user, token, router]);
+
+  useEffect(() => {
+    if (!openClipMenuId) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest("[data-clip-menu]")) return;
+      setOpenClipMenuId(null);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenClipMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openClipMenuId]);
 
   /** Load promoters for a venue (owner only). */
   const loadPromoters = async (venueId: string) => {
@@ -112,6 +147,21 @@ export default function DashboardPage() {
       }));
     } catch {
       // silently fail
+    }
+  };
+
+  /** Delete a clip and refresh the venue stats/list. */
+  const handleDeleteClip = async (clipId: string) => {
+    if (!token) return;
+    setOpenClipMenuId(null);
+    setDeletingClipIds((prev) => ({ ...prev, [clipId]: true }));
+    try {
+      await deleteClip(clipId, token);
+      await loadDashboard(token);
+    } catch {
+      // silently fail
+    } finally {
+      setDeletingClipIds((prev) => ({ ...prev, [clipId]: false }));
     }
   };
 
@@ -284,6 +334,35 @@ export default function DashboardPage() {
                         <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
                       </svg>
                       {clip.views}
+                    </div>
+
+                    <div className="relative shrink-0" data-clip-menu>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenClipMenuId((current) =>
+                            current === clip.id ? null : clip.id
+                          )
+                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
+                        aria-haspopup="menu"
+                        aria-expanded={openClipMenuId === clip.id}
+                        aria-label="Clip actions"
+                      >
+                        <span className="text-lg leading-none">...</span>
+                      </button>
+
+                      {openClipMenuId === clip.id && (
+                        <div className="absolute right-0 top-10 z-10 w-36 max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-lg">
+                        <button
+                          onClick={() => handleDeleteClip(clip.id)}
+                          disabled={!!deletingClipIds[clip.id]}
+                          className="block w-full rounded px-3 py-2 text-left text-xs text-red-400 transition-colors hover:bg-zinc-800 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {deletingClipIds[clip.id] ? "Removing..." : "Remove"}
+                        </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

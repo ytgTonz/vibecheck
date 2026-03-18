@@ -94,4 +94,43 @@ router.post('/:id/view', async (req: Request, res: Response) => {
   res.json(updated);
 });
 
+// DELETE /clips/:id — remove a clip if the user is linked to the venue
+router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const clip = await prisma.clip.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      venueId: true,
+      videoUrl: true,
+    },
+  });
+
+  if (!clip) {
+    res.status(404).json({ error: 'Clip not found' });
+    return;
+  }
+
+  if (!(await isVenueMember(req.user!.userId, clip.venueId))) {
+    res.status(403).json({ error: 'You are not authorized to delete this clip' });
+    return;
+  }
+
+  await prisma.clip.delete({ where: { id } });
+
+  // Best effort: clean up uploaded Cloudinary assets we own.
+  const match = clip.videoUrl.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-z0-9]+$/i);
+  const publicId = match?.[1];
+  if (publicId?.startsWith('vibecheck/clips/')) {
+    try {
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+    } catch {
+      // Ignore storage cleanup failures; the clip is already removed from the app.
+    }
+  }
+
+  res.status(204).end();
+});
+
 export default router;
