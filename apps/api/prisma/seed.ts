@@ -89,7 +89,10 @@ const venues = [
 ];
 
 // Cloudinary sample video URLs
-const CLOUD_NAME = 'yola';
+const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+if (!CLOUD_NAME) {
+  throw new Error('CLOUDINARY_CLOUD_NAME is not set in environment variables');
+}
 const sampleVideos = [
   {
     videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/samples/sea-turtle.mp4`,

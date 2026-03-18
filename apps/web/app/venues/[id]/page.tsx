@@ -3,9 +3,18 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { setBaseUrl, fetchVenue, fetchVenueClips, Venue, Clip } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
-import VideoPlayer from "../../components/VideoPlayer";
+
+const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex aspect-video items-center justify-center rounded-xl bg-black">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-white" />
+    </div>
+  ),
+});
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);

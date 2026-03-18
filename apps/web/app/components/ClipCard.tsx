@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Clip } from "@vibecheck/shared";
 
 /** Format seconds as m:ss (e.g. 30 → "0:30", 95 → "1:35"). */
@@ -34,11 +35,12 @@ export default function ClipCard({
     >
       {/* Thumbnail */}
       {clip.thumbnail ? (
-        <img
+        <Image
           src={clip.thumbnail}
           alt={clip.caption || "Clip thumbnail"}
-          className="h-full w-full object-cover"
-          loading="lazy"
+          fill
+          sizes="(max-width: 640px) 100vw, 50vw"
+          className="object-cover"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-zinc-400 dark:text-zinc-600">
