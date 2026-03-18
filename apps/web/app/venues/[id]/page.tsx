@@ -51,7 +51,7 @@ export default function VenueDetailPage() {
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [playingClip, setPlayingClip] = useState<Clip | null>(null);
+  const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -102,9 +102,11 @@ export default function VenueDetailPage() {
 
   // Most recent clip determines "last updated"
   const lastClipDate = clips.length > 0 ? clips[0].createdAt : null;
+  const featuredClip = clips[0] ?? null;
+  const railClips = clips.slice(1);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       {/* Back link */}
       <Link
         href="/"
@@ -113,18 +115,130 @@ export default function VenueDetailPage() {
         &larr; All venues
       </Link>
 
-      {/* Venue info card */}
-      <div className="mb-8 rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        {/* Header row */}
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{venue.name}</h1>
-          <span className="shrink-0 rounded-full bg-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-            {venueTypeLabel[venue.type] ?? venue.type}
-          </span>
+      <section className="mb-8 overflow-hidden rounded-[2rem] border border-zinc-200/70 bg-[linear-gradient(135deg,#120a07_0%,#2c170d_36%,#0b0c10_100%)] text-white shadow-[0_28px_80px_rgba(17,12,10,0.18)] dark:border-zinc-800">
+        <div className="grid gap-8 px-5 py-6 sm:px-7 sm:py-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-center">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-white/15 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-100/85">
+                Live Venue Feed
+              </span>
+              <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-zinc-200">
+                {venueTypeLabel[venue.type] ?? venue.type}
+              </span>
+            </div>
+
+            <h1 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+              {venue.name}
+            </h1>
+
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-200/85 sm:text-base">
+              Fast, recent clips that show whether the room is warm, packed, or worth the drive.
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/8 px-3 py-1.5 text-sm text-zinc-100/90">
+                {venue.location}
+              </span>
+              {lastClipDate && (
+                <span className="rounded-full bg-white/8 px-3 py-1.5 text-sm text-zinc-100/90">
+                  Updated {timeAgo(lastClipDate)}
+                </span>
+              )}
+              {clips.length > 0 && (
+                <span className="rounded-full bg-white/8 px-3 py-1.5 text-sm text-zinc-100/90">
+                  {clips.length} clips live
+                </span>
+              )}
+              {user && venue.ownerId === user.id && (
+                <span className="rounded-full bg-emerald-400/18 px-3 py-1.5 text-sm font-medium text-emerald-200">
+                  You own this venue
+                </span>
+              )}
+            </div>
+
+            {venue.musicGenre.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {venue.musicGenre.map((genre) => (
+                  <span
+                    key={genre}
+                    className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.16em] text-zinc-100/85"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="lg:justify-self-end">
+            {featuredClip ? (
+              <ClipCard
+                clip={featuredClip}
+                featured
+                onPlay={() => setActiveClipIndex(0)}
+              />
+            ) : (
+              <div className="flex h-[28rem] w-full items-end rounded-[1.75rem] border border-white/10 bg-black/30 p-6 sm:h-[32rem] sm:max-w-md">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-200/80">
+                    No clips yet
+                  </p>
+                  <p className="mt-3 max-w-sm text-2xl font-semibold leading-tight text-white">
+                    This venue is waiting for its first vibe drop.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-100">
+              {featuredClip ? "More Stories" : "Story Rail"}
+            </h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Tap through the latest clips like status updates, not gallery cards.
+            </p>
+          </div>
         </div>
 
-        {/* Details grid */}
-        <dl className="grid gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-6">
+        {clips.length === 0 ? (
+          <p className="rounded-2xl border border-zinc-200 bg-zinc-50 px-5 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            No clips yet. Be the first to share the vibe.
+          </p>
+        ) : railClips.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-5 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+            One live clip is up now. More stories will stack here as the night fills out.
+          </p>
+        ) : (
+          <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+            <div className="flex gap-4">
+              {railClips.map((clip, index) => (
+                <ClipCard
+                  key={clip.id}
+                  clip={clip}
+                  onPlay={() => setActiveClipIndex(index + 1)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-[1.75rem] border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">Venue Details</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              The practical stuff after the vibe passes the test.
+            </p>
+          </div>
+        </div>
+
+        <dl className="grid gap-y-4 text-sm sm:grid-cols-2 sm:gap-x-8">
           <div>
             <dt className="text-zinc-500 dark:text-zinc-400">Location</dt>
             <dd className="font-medium">{venue.location}</dd>
@@ -139,7 +253,7 @@ export default function VenueDetailPage() {
 
           {venue.musicGenre.length > 0 && (
             <div className="sm:col-span-2">
-              <dt className="mb-1 text-zinc-500 dark:text-zinc-400">Music</dt>
+              <dt className="mb-2 text-zinc-500 dark:text-zinc-400">Music</dt>
               <dd className="flex flex-wrap gap-2">
                 {venue.musicGenre.map((genre) => (
                   <span
@@ -167,52 +281,18 @@ export default function VenueDetailPage() {
             </div>
           )}
         </dl>
-
-        {/* Last updated */}
-        {lastClipDate && (
-          <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
-            Last updated {timeAgo(lastClipDate)}
-          </p>
-        )}
-
-        {/* Owner badge */}
-        {user && venue.ownerId === user.id && (
-          <p className="mt-4 text-xs font-medium text-green-400">
-            You own this venue
-          </p>
-        )}
-      </div>
-
-      {/* Video player (when a clip is selected) */}
-      {playingClip && (
-        <div className="mb-8">
-          <VideoPlayer
-            key={playingClip.id}
-            clip={playingClip}
-            onClose={() => setPlayingClip(null)}
-            onView={() => handleView(playingClip.id)}
-          />
-        </div>
-      )}
-
-      {/* Clips section */}
-      <section>
-        <h2 className="mb-4 text-lg font-semibold">
-          Vibe Clips {clips.length > 0 && <span className="text-zinc-500">({clips.length})</span>}
-        </h2>
-
-        {clips.length === 0 ? (
-          <p className="text-sm text-zinc-400 dark:text-zinc-500">
-            No clips yet. Be the first to share the vibe!
-          </p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {clips.map((clip) => (
-              <ClipCard key={clip.id} clip={clip} onPlay={setPlayingClip} />
-            ))}
-          </div>
-        )}
       </section>
+
+      {activeClipIndex !== null && clips[activeClipIndex] && (
+        <VideoPlayer
+          clips={clips}
+          activeIndex={activeClipIndex}
+          venueName={venue.name}
+          onClose={() => setActiveClipIndex(null)}
+          onNavigate={setActiveClipIndex}
+          onView={handleView}
+        />
+      )}
     </div>
   );
 }
