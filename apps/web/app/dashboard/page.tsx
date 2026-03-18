@@ -159,12 +159,22 @@ export default function DashboardPage() {
               <h2 className="text-xl font-bold">{venue.name}</h2>
               <p className="text-sm text-zinc-400">{venue.location}</p>
             </div>
-            <Link
-              href={`/venues/${venue.id}`}
-              className="shrink-0 text-sm text-zinc-400 hover:text-white"
-            >
-              View page &rarr;
-            </Link>
+            <div className="flex shrink-0 gap-3">
+              {venue.ownerId === user?.id && (
+                <Link
+                  href={`/dashboard/edit/${venue.id}`}
+                  className="text-sm text-zinc-400 hover:text-white"
+                >
+                  Edit
+                </Link>
+              )}
+              <Link
+                href={`/venues/${venue.id}`}
+                className="text-sm text-zinc-400 hover:text-white"
+              >
+                View &rarr;
+              </Link>
+            </div>
           </div>
 
           {/* Stats cards */}

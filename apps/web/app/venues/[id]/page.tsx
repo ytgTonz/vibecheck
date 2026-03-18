@@ -152,6 +152,20 @@ export default function VenueDetailPage() {
               </dd>
             </div>
           )}
+
+          {venue.coverCharge && (
+            <div>
+              <dt className="text-zinc-500 dark:text-zinc-400">Cover</dt>
+              <dd className="font-medium">{venue.coverCharge}</dd>
+            </div>
+          )}
+
+          {venue.drinkPrices && (
+            <div className="sm:col-span-2">
+              <dt className="text-zinc-500 dark:text-zinc-400">Drinks</dt>
+              <dd className="whitespace-pre-line font-medium">{venue.drinkPrices}</dd>
+            </div>
+          )}
         </dl>
 
         {/* Last updated */}

@@ -8,6 +8,8 @@ export interface Venue {
   city: string;
   hours: string | null;
   musicGenre: string[];
+  coverCharge: string | null;
+  drinkPrices: string | null;
   ownerId: string;
   createdAt: string; // ISO date string (JSON serialised from Date)
   updatedAt: string;

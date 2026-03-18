@@ -178,4 +178,37 @@ router.delete('/:id/promoters/:userId', requireAuth, async (req: Request, res: R
   res.status(204).end();
 });
 
+// PATCH /venues/:id — update venue details (owner only)
+const ALLOWED_FIELDS = ['name', 'type', 'location', 'hours', 'musicGenre', 'coverCharge', 'drinkPrices'] as const;
+
+router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.userId;
+
+  if (!(await isVenueOwner(userId, id))) {
+    res.status(403).json({ error: 'Only the venue owner can edit venue details' });
+    return;
+  }
+
+  // Pick only allowed fields from the request body
+  const data: Record<string, unknown> = {};
+  for (const field of ALLOWED_FIELDS) {
+    if (req.body[field] !== undefined) {
+      data[field] = req.body[field];
+    }
+  }
+
+  if (Object.keys(data).length === 0) {
+    res.status(400).json({ error: 'No valid fields to update' });
+    return;
+  }
+
+  const updated = await prisma.venue.update({
+    where: { id },
+    data,
+  });
+
+  res.json(updated);
+});
+
 export default router;

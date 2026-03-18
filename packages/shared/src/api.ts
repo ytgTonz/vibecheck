@@ -121,6 +121,8 @@ export interface VenueWithStats {
   city: string;
   hours: string | null;
   musicGenre: string[];
+  coverCharge: string | null;
+  drinkPrices: string | null;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
@@ -152,6 +154,30 @@ export async function fetchMyVenues(token: string): Promise<VenueWithStats[]> {
   }
 
   return body as VenueWithStats[];
+}
+
+/** Update venue details (owner only). */
+export async function updateVenue(
+  venueId: string,
+  data: Partial<Pick<Venue, 'name' | 'type' | 'location' | 'hours' | 'musicGenre' | 'coverCharge' | 'drinkPrices'>>,
+  token: string
+): Promise<Venue> {
+  const res = await fetch(`${baseUrl}/venues/${venueId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to update venue: ${res.status}`);
+  }
+
+  return body as Venue;
 }
 
 // ─── Invite & promoter management ───────────────────────────────────────────

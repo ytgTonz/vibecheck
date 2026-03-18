@@ -15,9 +15,11 @@ model Venue {
   type       VenueType
   location   String
   city       String    @default("East London, Eastern Cape")
-  hours      String?
-  musicGenre String[]
-  ownerId    String
+  hours       String?
+  musicGenre  String[]
+  coverCharge String?
+  drinkPrices String?
+  ownerId     String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 

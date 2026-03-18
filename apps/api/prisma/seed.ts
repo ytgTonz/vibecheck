@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcrypt';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+const SALT_ROUNDS = 10;
 
 const venues = [
   {
@@ -88,6 +90,12 @@ const venues = [
   },
 ];
 
+const seedOwners = venues.map((venue, index) => ({
+  email: `owner${index + 1}@vibecheck.local`,
+  name: `${venue.name} Owner`,
+  role: 'VENUE_OWNER' as const,
+}));
+
 // Cloudinary sample video URLs
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 if (!CLOUD_NAME) {
@@ -133,15 +141,43 @@ const sampleVideos = [
 ];
 
 async function main() {
-  // Clear existing data (clips first due to foreign key)
+  // Clear existing data in foreign-key order.
   console.log('Clearing old data...');
   await prisma.clip.deleteMany();
+  await prisma.invite.deleteMany();
+  await prisma.venuePromoter.deleteMany();
   await prisma.venue.deleteMany();
+  await prisma.user.deleteMany();
+
+  console.log('Seeding venue owners...');
+
+  const ownerPassword = await bcrypt.hash('seed-owner-password', SALT_ROUNDS);
+  const createdOwners = await Promise.all(
+    seedOwners.map((owner) =>
+      prisma.user.create({
+        data: {
+          email: owner.email,
+          name: owner.name,
+          password: ownerPassword,
+          role: owner.role,
+        },
+      })
+    )
+  );
+
+  console.log(`✓ ${createdOwners.length} owners seeded`);
 
   console.log('Seeding venues...');
 
   const createdVenues = await Promise.all(
-    venues.map((v) => prisma.venue.create({ data: v }))
+    venues.map((venue, index) =>
+      prisma.venue.create({
+        data: {
+          ...venue,
+          owner: { connect: { id: createdOwners[index]!.id } },
+        },
+      })
+    )
   );
 
   console.log(`✓ ${createdVenues.length} venues seeded`);
