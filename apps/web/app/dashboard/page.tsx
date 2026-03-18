@@ -7,8 +7,13 @@ import Image from "next/image";
 import {
   setBaseUrl,
   fetchMyVenues,
+  generateInvite,
+  fetchVenuePromoters,
+  removePromoter,
   useAuthStore,
   VenueWithStats,
+  VenuePromoter,
+  Invite,
 } from "@vibecheck/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -42,6 +47,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Promoter management state (keyed by venueId)
+  const [promoters, setPromoters] = useState<Record<string, VenuePromoter[]>>({});
+  const [invites, setInvites] = useState<Record<string, Invite>>({});
+  const [loadingPromoters, setLoadingPromoters] = useState<Record<string, boolean>>({});
+
+  const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
+
   useEffect(() => {
     hydrate();
     setHydrated(true);
@@ -55,11 +67,6 @@ export default function DashboardPage() {
       return;
     }
 
-    if (user.role !== "VENUE_OWNER" && user.role !== "ADMIN") {
-      router.replace("/");
-      return;
-    }
-
     setLoading(true);
     fetchMyVenues(token)
       .then(setVenues)
@@ -68,6 +75,45 @@ export default function DashboardPage() {
       )
       .finally(() => setLoading(false));
   }, [hydrated, user, token, router]);
+
+  /** Load promoters for a venue (owner only). */
+  const loadPromoters = async (venueId: string) => {
+    if (!token) return;
+    setLoadingPromoters((prev) => ({ ...prev, [venueId]: true }));
+    try {
+      const list = await fetchVenuePromoters(venueId, token);
+      setPromoters((prev) => ({ ...prev, [venueId]: list }));
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingPromoters((prev) => ({ ...prev, [venueId]: false }));
+    }
+  };
+
+  /** Generate an invite code for a venue. */
+  const handleGenerateInvite = async (venueId: string) => {
+    if (!token) return;
+    try {
+      const invite = await generateInvite(venueId, token);
+      setInvites((prev) => ({ ...prev, [venueId]: invite }));
+    } catch {
+      // silently fail
+    }
+  };
+
+  /** Remove a promoter from a venue. */
+  const handleRemovePromoter = async (venueId: string, userId: string) => {
+    if (!token) return;
+    try {
+      await removePromoter(venueId, userId, token);
+      setPromoters((prev) => ({
+        ...prev,
+        [venueId]: (prev[venueId] || []).filter((p) => p.userId !== userId),
+      }));
+    } catch {
+      // silently fail
+    }
+  };
 
   if (!hydrated || loading) {
     return (
@@ -90,11 +136,9 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="mb-4 text-2xl font-bold">Venue Dashboard</h1>
         <p className="text-zinc-400">
-          You haven&apos;t claimed any venues yet. Visit a{" "}
-          <Link href="/" className="text-white underline hover:text-zinc-300">
-            venue page
-          </Link>{" "}
-          and click &quot;Claim this venue&quot; to get started.
+          {isOwner
+            ? "You haven't registered a venue yet."
+            : "You haven't been invited to any venues yet. Ask a venue owner for an invite code."}
         </p>
       </div>
     );
@@ -140,7 +184,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent clips */}
-          <div>
+          <div className="mb-6">
             <h3 className="mb-3 text-sm font-semibold text-zinc-300">
               Recent Clips
             </h3>
@@ -197,6 +241,84 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* Manage Promoters (owner only) */}
+          {isOwner && venue.ownerId === user?.id && (
+            <div className="border-t border-zinc-800 pt-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-zinc-300">
+                  Promoters
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => loadPromoters(venue.id)}
+                    className="text-xs text-zinc-400 hover:text-white"
+                  >
+                    {loadingPromoters[venue.id] ? "Loading..." : "Refresh"}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateInvite(venue.id)}
+                    className="rounded bg-zinc-800 px-2 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-700"
+                  >
+                    Generate invite
+                  </button>
+                </div>
+              </div>
+
+              {/* Show generated invite code */}
+              {invites[venue.id] && (
+                <div className="mb-3 rounded-lg bg-zinc-800 p-3">
+                  <p className="text-xs text-zinc-400">
+                    Invite code (expires in 7 days):
+                  </p>
+                  <p className="mt-1 font-mono text-lg font-bold tracking-widest text-white">
+                    {invites[venue.id].code}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Share this with your promoter to let them sign up
+                  </p>
+                </div>
+              )}
+
+              {/* Promoter list */}
+              {promoters[venue.id] && promoters[venue.id].length > 0 ? (
+                <div className="space-y-2">
+                  {promoters[venue.id].map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          {p.user?.name || "Unknown"}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {p.user?.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRemovePromoter(venue.id, p.userId)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : promoters[venue.id] ? (
+                <p className="text-sm text-zinc-500">
+                  No promoters yet. Generate an invite code to add one.
+                </p>
+              ) : (
+                <button
+                  onClick={() => loadPromoters(venue.id)}
+                  className="text-sm text-zinc-400 hover:text-white"
+                >
+                  Load promoters
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ))}
     </div>

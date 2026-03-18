@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, claimVenue, Venue, Clip, useAuthStore, UserRole } from "@vibecheck/shared";
+import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, Venue, Clip, useAuthStore } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
 
 const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
@@ -45,14 +45,13 @@ function timeAgo(iso: string): string {
 
 export default function VenueDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, token, setRole } = useAuthStore();
+  const { user } = useAuthStore();
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playingClip, setPlayingClip] = useState<Clip | null>(null);
-  const [claiming, setClaiming] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -81,21 +80,6 @@ export default function VenueDetailPage() {
       })
       .catch(() => {});
   }, []);
-
-  /** Claim this venue as the current user. */
-  const handleClaim = useCallback(async () => {
-    if (!id || !token) return;
-    setClaiming(true);
-    try {
-      const updated = await claimVenue(id, token);
-      setVenue(updated);
-      setRole(UserRole.VENUE_OWNER);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to claim venue");
-    } finally {
-      setClaiming(false);
-    }
-  }, [id, token]);
 
   if (loading) {
     return (
@@ -177,19 +161,8 @@ export default function VenueDetailPage() {
           </p>
         )}
 
-        {/* Claim button — shown to logged-in users when venue is unclaimed */}
-        {user && !venue.claimedBy && (
-          <button
-            onClick={handleClaim}
-            disabled={claiming}
-            className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 disabled:opacity-50"
-          >
-            {claiming ? "Claiming..." : "Claim this venue"}
-          </button>
-        )}
-
-        {/* Owned badge */}
-        {user && venue.claimedBy === user.id && (
+        {/* Owner badge */}
+        {user && venue.ownerId === user.id && (
           <p className="mt-4 text-xs font-medium text-green-400">
             You own this venue
           </p>

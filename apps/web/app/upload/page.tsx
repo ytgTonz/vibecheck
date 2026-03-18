@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { setBaseUrl, useAuthStore, fetchVenues, Venue } from "@vibecheck/shared";
+import { setBaseUrl, useAuthStore, fetchMyVenues, VenueWithStats } from "@vibecheck/shared";
 import {
   compressVideo,
   shouldCompress,
@@ -31,7 +31,7 @@ export default function UploadPage() {
   const { user, token, hydrate } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [venueId, setVenueId] = useState("");
   const [musicGenre, setMusicGenre] = useState("");
   const [caption, setCaption] = useState("");
@@ -59,10 +59,15 @@ export default function UploadPage() {
     }
   }, [hydrated, user, router]);
 
-  // Load venues for the dropdown
+  // Load only venues the user is linked to (owner or promoter)
   useEffect(() => {
-    fetchVenues().then(setVenues).catch(() => {});
-  }, []);
+    if (!token) return;
+    fetchMyVenues(token).then((v) => {
+      setVenues(v);
+      // Auto-select if only one venue
+      if (v.length === 1) setVenueId(v[0].id);
+    }).catch(() => {});
+  }, [token]);
 
   // Create a video preview URL when a file is selected
   useEffect(() => {

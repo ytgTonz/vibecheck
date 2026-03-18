@@ -1,4 +1,4 @@
-import { Venue, Clip, AuthResponse } from './types';
+import { Venue, Clip, AuthResponse, Invite, VenuePromoter } from './types';
 
 /**
  * API base URL — set once at app startup via setBaseUrl().
@@ -30,6 +30,8 @@ async function apiFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// ─── Public venue endpoints ──────────────────────────────────────────────────
+
 /** Fetch all venues, sorted by name. */
 export function fetchVenues(): Promise<Venue[]> {
   return apiFetch<Venue[]>('/venues');
@@ -45,16 +47,38 @@ export function fetchVenueClips(venueId: string): Promise<Clip[]> {
   return apiFetch<Clip[]>(`/venues/${venueId}/clips`);
 }
 
-/** Register a new user account. */
-export async function register(
-  email: string,
-  password: string,
-  name: string
-): Promise<AuthResponse> {
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+export interface RegisterAsOwnerPayload {
+  accountType: 'owner';
+  email: string;
+  password: string;
+  name: string;
+  venue: {
+    name: string;
+    type: string;
+    location: string;
+    hours?: string;
+    musicGenre?: string[];
+  };
+}
+
+export interface RegisterAsPromoterPayload {
+  accountType: 'promoter';
+  email: string;
+  password: string;
+  name: string;
+  inviteCode: string;
+}
+
+export type RegisterPayload = RegisterAsOwnerPayload | RegisterAsPromoterPayload;
+
+/** Register a new user account (owner with venue details, or promoter with invite code). */
+export async function register(payload: RegisterPayload): Promise<AuthResponse> {
   const res = await fetch(`${baseUrl}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify(payload),
   });
 
   const body = await res.json();
@@ -86,6 +110,8 @@ export async function login(
   return body as AuthResponse;
 }
 
+// ─── Protected venue endpoints ───────────────────────────────────────────────
+
 /** Venue with dashboard stats, returned by fetchMyVenues(). */
 export interface VenueWithStats {
   id: string;
@@ -95,7 +121,7 @@ export interface VenueWithStats {
   city: string;
   hours: string | null;
   musicGenre: string[];
-  claimedBy: string | null;
+  ownerId: string;
   createdAt: string;
   updatedAt: string;
   stats: {
@@ -113,7 +139,7 @@ export interface VenueWithStats {
   }[];
 }
 
-/** Fetch venues owned by the current user with stats (auth required). */
+/** Fetch venues the current user owns or is a promoter for, with stats. */
 export async function fetchMyVenues(token: string): Promise<VenueWithStats[]> {
   const res = await fetch(`${baseUrl}/venues/my/venues`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -128,12 +154,14 @@ export async function fetchMyVenues(token: string): Promise<VenueWithStats[]> {
   return body as VenueWithStats[];
 }
 
-/** Claim a venue as the current user (auth required). */
-export async function claimVenue(
+// ─── Invite & promoter management ───────────────────────────────────────────
+
+/** Generate an invite code for a venue (owner only). */
+export async function generateInvite(
   venueId: string,
   token: string
-): Promise<Venue> {
-  const res = await fetch(`${baseUrl}/venues/${venueId}/claim`, {
+): Promise<Invite> {
+  const res = await fetch(`${baseUrl}/venues/${venueId}/invite`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -141,11 +169,48 @@ export async function claimVenue(
   const body = await res.json();
 
   if (!res.ok) {
-    throw new Error(body.error || `Claim failed: ${res.status}`);
+    throw new Error(body.error || `Failed to generate invite: ${res.status}`);
   }
 
-  return body as Venue;
+  return body as Invite;
 }
+
+/** Fetch promoters linked to a venue (owner only). */
+export async function fetchVenuePromoters(
+  venueId: string,
+  token: string
+): Promise<VenuePromoter[]> {
+  const res = await fetch(`${baseUrl}/venues/${venueId}/promoters`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to fetch promoters: ${res.status}`);
+  }
+
+  return body as VenuePromoter[];
+}
+
+/** Remove a promoter from a venue (owner only). */
+export async function removePromoter(
+  venueId: string,
+  userId: string,
+  token: string
+): Promise<void> {
+  const res = await fetch(`${baseUrl}/venues/${venueId}/promoters/${userId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to remove promoter: ${res.status}`);
+  }
+}
+
+// ─── Clip actions ────────────────────────────────────────────────────────────
 
 /** Record a view for a clip. Returns the updated view count. */
 export async function recordClipView(

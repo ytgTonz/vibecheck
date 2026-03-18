@@ -17,11 +17,14 @@ model Venue {
   city       String    @default("East London, Eastern Cape")
   hours      String?
   musicGenre String[]
-  claimedBy  String?   // user ID of the venue owner, if claimed
+  ownerId    String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  clips Clip[]
+  owner     User            @relation("OwnedVenues", fields: [ownerId], references: [id])
+  clips     Clip[]
+  promoters VenuePromoter[]
+  invites   Invite[]
 }
 
 model Clip {
@@ -30,7 +33,7 @@ model Clip {
   thumbnail  String?
   duration   Int      // length of the clip in seconds
   venueId    String
-  uploadedBy String   // user ID of the promoter who posted this
+  uploadedBy String   // user ID of the person who posted this
   musicGenre String?
   caption    String?
   views      Int      @default(0)
@@ -44,8 +47,39 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      UserRole @default(PROMOTER)
+  role      UserRole @default(VENUE_PROMOTER)
   createdAt DateTime @default(now())
+
+  ownedVenues    Venue[]         @relation("OwnedVenues")
+  venueLinks     VenuePromoter[]
+  createdInvites Invite[]
+}
+
+model VenuePromoter {
+  id        String   @id @default(cuid())
+  userId    String
+  venueId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, venueId])
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  venueId   String
+  createdBy String
+  used      Boolean   @default(false)
+  usedBy    String?
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  venue   Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  creator User  @relation(fields: [createdBy], references: [id])
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -61,7 +95,7 @@ enum VenueType {
 }
 
 enum UserRole {
-  PROMOTER
+  VENUE_PROMOTER
   VENUE_OWNER
   ADMIN
 }

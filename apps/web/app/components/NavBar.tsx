@@ -24,14 +24,12 @@ export default function NavBar() {
           <div className="flex items-center gap-4 text-sm">
             {user ? (
               <>
-                {(user.role === "VENUE_OWNER" || user.role === "ADMIN") && (
-                  <Link
-                    href="/dashboard"
-                    className="text-zinc-400 transition-colors hover:text-zinc-200"
-                  >
-                    Dashboard
-                  </Link>
-                )}
+                <Link
+                  href="/dashboard"
+                  className="text-zinc-400 transition-colors hover:text-zinc-200"
+                >
+                  Dashboard
+                </Link>
                 <Link
                   href="/upload"
                   className="rounded-lg bg-white px-3 py-1.5 font-medium text-zinc-900 transition-colors hover:bg-zinc-200"

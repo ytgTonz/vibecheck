@@ -11,13 +11,40 @@ if (!JWT_SECRET) {
 }
 
 const SALT_ROUNDS = 10;
+const INVITE_EXPIRY_DAYS = 7;
+
+/** Build a JWT and user response object. */
+function buildAuthResponse(user: { id: string; email: string; name: string; role: string; createdAt: Date }) {
+  const token = jwt.sign(
+    { userId: user.id, role: user.role },
+    JWT_SECRET!,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt.toISOString(),
+    },
+  };
+}
 
 // POST /auth/register
 router.post('/register', async (req: Request, res: Response) => {
-  const { email, password, name } = req.body;
+  const { accountType, email, password, name } = req.body;
 
-  if (!email || !password || !name) {
-    res.status(400).json({ error: 'email, password, and name are required' });
+  // Common validation
+  if (!accountType || !email || !password || !name) {
+    res.status(400).json({ error: 'accountType, email, password, and name are required' });
+    return;
+  }
+
+  if (accountType !== 'owner' && accountType !== 'promoter') {
+    res.status(400).json({ error: 'accountType must be "owner" or "promoter"' });
     return;
   }
 
@@ -35,30 +62,100 @@ router.post('/register', async (req: Request, res: Response) => {
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-    },
+  // ─── Owner registration ──────────────────────────────────────────────
+  if (accountType === 'owner') {
+    const { venue } = req.body;
+
+    if (!venue?.name || !venue?.type || !venue?.location) {
+      res.status(400).json({ error: 'Venue name, type, and location are required' });
+      return;
+    }
+
+    const [user] = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          role: 'VENUE_OWNER',
+        },
+      });
+
+      await tx.venue.create({
+        data: {
+          name: venue.name,
+          type: venue.type,
+          location: venue.location,
+          hours: venue.hours ?? null,
+          musicGenre: venue.musicGenre ?? [],
+          ownerId: user.id,
+        },
+      });
+
+      return [user];
+    });
+
+    res.status(201).json(buildAuthResponse(user));
+    return;
+  }
+
+  // ─── Promoter registration (with invite code) ────────────────────────
+  const { inviteCode } = req.body;
+
+  if (!inviteCode) {
+    res.status(400).json({ error: 'Invite code is required for promoter registration' });
+    return;
+  }
+
+  const invite = await prisma.invite.findUnique({
+    where: { code: inviteCode.toUpperCase() },
   });
 
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+  if (!invite) {
+    res.status(404).json({ error: 'Invalid invite code' });
+    return;
+  }
 
-  res.status(201).json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
-    },
+  if (invite.used) {
+    res.status(410).json({ error: 'This invite code has already been used' });
+    return;
+  }
+
+  if (invite.expiresAt < new Date()) {
+    res.status(410).json({ error: 'This invite code has expired' });
+    return;
+  }
+
+  const [user] = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        role: 'VENUE_PROMOTER',
+      },
+    });
+
+    await tx.venuePromoter.create({
+      data: {
+        userId: user.id,
+        venueId: invite.venueId,
+      },
+    });
+
+    await tx.invite.update({
+      where: { id: invite.id },
+      data: {
+        used: true,
+        usedBy: user.id,
+        usedAt: new Date(),
+      },
+    });
+
+    return [user];
   });
+
+  res.status(201).json(buildAuthResponse(user));
 });
 
 // POST /auth/login
@@ -82,22 +179,7 @@ router.post('/login', async (req: Request, res: Response) => {
     return;
   }
 
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  res.json({
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
-    },
-  });
+  res.json(buildAuthResponse(user));
 });
 
 export default router;

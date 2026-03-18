@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '../types';
-import { login as apiLogin, register as apiRegister } from '../api';
+import { login as apiLogin, register as apiRegister, RegisterPayload } from '../api';
 
 interface AuthState {
   /** The authenticated user, or null if logged out. */
@@ -16,16 +16,13 @@ interface AuthState {
   error: string | null;
 
   /** Register a new account and store the token. */
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
 
   /** Log in and store the token. */
   login: (email: string, password: string) => Promise<void>;
 
   /** Log out and clear stored auth. */
   logout: () => void;
-
-  /** Update the stored user's role (e.g. after claiming a venue). */
-  setRole: (role: User['role']) => void;
 
   /** Restore auth from localStorage (call on app load). */
   hydrate: () => void;
@@ -37,10 +34,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: false,
   error: null,
 
-  register: async (email, password, name) => {
+  register: async (payload) => {
     set({ loading: true, error: null });
     try {
-      const { token, user } = await apiRegister(email, password, name);
+      const { token, user } = await apiRegister(payload);
       localStorage.setItem('vibecheck_token', token);
       localStorage.setItem('vibecheck_user', JSON.stringify(user));
       set({ token, user, loading: false });
@@ -63,15 +60,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ error: message, loading: false });
       throw err;
     }
-  },
-
-  setRole: (role) => {
-    set((state) => {
-      if (!state.user) return state;
-      const updated = { ...state.user, role };
-      localStorage.setItem('vibecheck_user', JSON.stringify(updated));
-      return { user: updated };
-    });
   },
 
   logout: () => {

@@ -4,6 +4,7 @@ import streamifier from 'streamifier';
 import cloudinary from '../lib/cloudinary';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { isVenueMember } from '../lib/venueAuth';
 
 const router = Router();
 
@@ -29,6 +30,12 @@ router.post('/', requireAuth, upload.single('video'),
   const venue = await prisma.venue.findUnique({ where: { id: venueId } });
   if (!venue) {
     res.status(404).json({ error: 'Venue not found' });
+    return;
+  }
+
+  // Verify user is owner or linked promoter of this venue
+  if (!(await isVenueMember(req.user!.userId, venueId))) {
+    res.status(403).json({ error: 'You are not authorized to upload to this venue' });
     return;
   }
 

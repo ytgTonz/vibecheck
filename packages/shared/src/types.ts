@@ -8,7 +8,7 @@ export interface Venue {
   city: string;
   hours: string | null;
   musicGenre: string[];
-  claimedBy: string | null;
+  ownerId: string;
   createdAt: string; // ISO date string (JSON serialised from Date)
   updatedAt: string;
   lastClipAt: string | null; // most recent clip timestamp (from GET /venues)
@@ -38,4 +38,23 @@ export interface User {
 export interface AuthResponse {
   token: string;
   user: User;
+}
+
+export interface VenuePromoter {
+  id: string;
+  userId: string;
+  venueId: string;
+  createdAt: string;
+  user?: { id: string; name: string; email: string };
+}
+
+export interface Invite {
+  id: string;
+  code: string;
+  venueId: string;
+  createdBy: string;
+  used: boolean;
+  usedAt: string | null;
+  expiresAt: string;
+  createdAt: string;
 }

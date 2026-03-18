@@ -9,7 +9,7 @@ export enum VenueType {
 }
 
 export enum UserRole {
-  PROMOTER = 'PROMOTER',
+  VENUE_PROMOTER = 'VENUE_PROMOTER',
   VENUE_OWNER = 'VENUE_OWNER',
   ADMIN = 'ADMIN',
 }
