@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import venueRoutes from './routes/venues';
 import clipRoutes from './routes/clips';
 import authRoutes from './routes/auth';
+import feedbackRoutes from './routes/feedback';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.get('/health', (_req, res) => {
 app.use('/auth', authRoutes);
 app.use('/venues', venueRoutes);
 app.use('/clips', clipRoutes);
+app.use('/feedback', feedbackRoutes);
 
 app.listen(PORT, () => {
   console.log(`VibeCheck API running on port ${PORT}`);

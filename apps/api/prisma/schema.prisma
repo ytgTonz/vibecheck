@@ -55,6 +55,7 @@ model User {
   ownedVenues    Venue[]         @relation("OwnedVenues")
   venueLinks     VenuePromoter[]
   createdInvites Invite[]
+  feedback       Feedback[]
 }
 
 model VenuePromoter {
@@ -84,6 +85,17 @@ model Invite {
   creator User  @relation(fields: [createdBy], references: [id])
 }
 
+model Feedback {
+  id        String           @id @default(cuid())
+  category  FeedbackCategory
+  rating    FeedbackRating
+  message   String?
+  userId    String
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum VenueType {
@@ -100,4 +112,16 @@ enum UserRole {
   VENUE_PROMOTER
   VENUE_OWNER
   ADMIN
+}
+
+enum FeedbackCategory {
+  BUG
+  SUGGESTION
+  GENERAL
+}
+
+enum FeedbackRating {
+  BAD
+  NEUTRAL
+  GOOD
 }

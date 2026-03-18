@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@vibecheck/shared";
+import FeedbackButton from "./FeedbackButton";
 
 export default function NavBar() {
   const { user, logout, hydrate } = useAuthStore();
@@ -36,6 +37,7 @@ export default function NavBar() {
                 >
                   Upload
                 </Link>
+                <FeedbackButton />
                 <span className="text-zinc-400">{user.name}</span>
                 <button
                   onClick={logout}

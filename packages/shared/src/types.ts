@@ -1,4 +1,4 @@
-import { VenueType, UserRole } from './enums';
+import { VenueType, UserRole, FeedbackCategory, FeedbackRating } from './enums';
 
 export interface Venue {
   id: string;
@@ -58,5 +58,14 @@ export interface Invite {
   used: boolean;
   usedAt: string | null;
   expiresAt: string;
+  createdAt: string;
+}
+
+export interface Feedback {
+  id: string;
+  category: FeedbackCategory;
+  rating: FeedbackRating;
+  message: string | null;
+  userId: string;
   createdAt: string;
 }

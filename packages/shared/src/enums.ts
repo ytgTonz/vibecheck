@@ -13,3 +13,15 @@ export enum UserRole {
   VENUE_OWNER = 'VENUE_OWNER',
   ADMIN = 'ADMIN',
 }
+
+export enum FeedbackCategory {
+  BUG = 'BUG',
+  SUGGESTION = 'SUGGESTION',
+  GENERAL = 'GENERAL',
+}
+
+export enum FeedbackRating {
+  BAD = 'BAD',
+  NEUTRAL = 'NEUTRAL',
+  GOOD = 'GOOD',
+}

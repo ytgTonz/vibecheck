@@ -1,4 +1,5 @@
-import { Venue, Clip, AuthResponse, Invite, VenuePromoter } from './types';
+import { Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback } from './types';
+import { FeedbackCategory, FeedbackRating } from './enums';
 
 /**
  * API base URL — set once at app startup via setBaseUrl().
@@ -253,4 +254,29 @@ export async function recordClipView(
   }
 
   return body as { id: string; views: number };
+}
+
+// ─── Feedback ───────────────────────────────────────────────────────────────
+
+/** Submit user feedback. */
+export async function submitFeedback(
+  data: { category: FeedbackCategory; rating: FeedbackRating; message?: string },
+  token: string
+): Promise<Feedback> {
+  const res = await fetch(`${baseUrl}/feedback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to submit feedback: ${res.status}`);
+  }
+
+  return body as Feedback;
 }
