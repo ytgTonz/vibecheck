@@ -34,3 +34,8 @@ export interface User {
   role: UserRole;
   createdAt: string;
 }
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}

@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import venueRoutes from './routes/venues';
 import clipRoutes from './routes/clips';
+import authRoutes from './routes/auth';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Routes
+app.use('/auth', authRoutes);
 app.use('/venues', venueRoutes);
 app.use('/clips', clipRoutes);
 

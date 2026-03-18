@@ -1,4 +1,4 @@
-import { Venue, Clip } from './types';
+import { Venue, Clip, AuthResponse } from './types';
 
 /**
  * API base URL — set once at app startup via setBaseUrl().
@@ -43,4 +43,45 @@ export function fetchVenue(id: string): Promise<Venue> {
 /** Fetch all clips for a venue, newest first. */
 export function fetchVenueClips(venueId: string): Promise<Clip[]> {
   return apiFetch<Clip[]>(`/venues/${venueId}/clips`);
+}
+
+/** Register a new user account. */
+export async function register(
+  email: string,
+  password: string,
+  name: string
+): Promise<AuthResponse> {
+  const res = await fetch(`${baseUrl}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name }),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Registration failed: ${res.status}`);
+  }
+
+  return body as AuthResponse;
+}
+
+/** Log in with email and password. */
+export async function login(
+  email: string,
+  password: string
+): Promise<AuthResponse> {
+  const res = await fetch(`${baseUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Login failed: ${res.status}`);
+  }
+
+  return body as AuthResponse;
 }

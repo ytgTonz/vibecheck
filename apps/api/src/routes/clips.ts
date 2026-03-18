@@ -3,24 +3,25 @@ import multer from 'multer';
 import streamifier from 'streamifier';
 import cloudinary from '../lib/cloudinary';
 import prisma from '../lib/prisma';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
 // multer configured to hold the file in memory (not saved to disk)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// POST /clips — upload a video clip and save it to the database
-router.post('/', upload.single('video'),
+// POST /clips — upload a video clip and save it to the database (auth required)
+router.post('/', requireAuth, upload.single('video'),
  async (req: Request, res: Response) => {
-  const { venueId, uploadedBy, musicGenre, caption } = req.body;
+  const { venueId, musicGenre, caption } = req.body;
 
   if (!req.file) {
     res.status(400).json({ error: 'No video file provided' });
     return;
   }
 
-  if (!venueId || !uploadedBy) {
-    res.status(400).json({ error: 'venueId and uploadedBy are required' });
+  if (!venueId) {
+    res.status(400).json({ error: 'venueId is required' });
     return;
   }
 
@@ -58,7 +59,7 @@ router.post('/', upload.single('video'),
       thumbnail: uploadResult.thumbnail_url,
       duration: uploadResult.duration,
       venueId,
-      uploadedBy,
+      uploadedBy: req.user!.userId,
       musicGenre: musicGenre ?? null,
       caption: caption ?? null,
     },
