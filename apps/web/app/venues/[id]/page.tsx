@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { setBaseUrl, fetchVenue, fetchVenueClips, Venue, Clip } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
+import VideoPlayer from "../../components/VideoPlayer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
@@ -143,25 +144,10 @@ export default function VenueDetailPage() {
       {/* Video player (when a clip is selected) */}
       {playingClip && (
         <div className="mb-8">
-          <div className="relative overflow-hidden rounded-xl bg-black aspect-video">
-            <video
-              key={playingClip.id}
-              src={playingClip.videoUrl}
-              controls
-              autoPlay
-              playsInline
-              className="h-full w-full"
-            />
-          </div>
-          {playingClip.caption && (
-            <p className="mt-2 text-sm text-zinc-300">{playingClip.caption}</p>
-          )}
-          <button
-            onClick={() => setPlayingClip(null)}
-            className="mt-2 text-xs text-zinc-500 hover:text-zinc-300"
-          >
-            Close player
-          </button>
+          <VideoPlayer
+            clip={playingClip}
+            onClose={() => setPlayingClip(null)}
+          />
         </div>
       )}
 
