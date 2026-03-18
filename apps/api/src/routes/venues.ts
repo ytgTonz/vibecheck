@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -56,6 +57,39 @@ router.get('/:id/clips', async (req: Request, res: Response) => {
   });
 
   res.json(clips);
+});
+
+// POST /venues/:id/claim — claim a venue as owner (auth required)
+router.post('/:id/claim', requireAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.userId;
+
+  // Check venue exists
+  const venue = await prisma.venue.findUnique({ where: { id } });
+  if (!venue) {
+    res.status(404).json({ error: 'Venue not found' });
+    return;
+  }
+
+  // Check not already claimed
+  if (venue.claimedBy) {
+    res.status(409).json({ error: 'This venue has already been claimed' });
+    return;
+  }
+
+  // Claim the venue and promote user to VENUE_OWNER in a transaction
+  const [updatedVenue] = await prisma.$transaction([
+    prisma.venue.update({
+      where: { id },
+      data: { claimedBy: userId },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: { role: 'VENUE_OWNER' },
+    }),
+  ]);
+
+  res.json(updatedVenue);
 });
 
 export default router;
