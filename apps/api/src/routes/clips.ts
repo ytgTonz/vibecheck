@@ -68,4 +68,23 @@ router.post('/', requireAuth, upload.single('video'),
   res.status(201).json(clip);
 });
 
+// POST /clips/:id/view — increment the view count for a clip (public, no auth)
+router.post('/:id/view', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const clip = await prisma.clip.findUnique({ where: { id } });
+  if (!clip) {
+    res.status(404).json({ error: 'Clip not found' });
+    return;
+  }
+
+  const updated = await prisma.clip.update({
+    where: { id },
+    data: { views: { increment: 1 } },
+    select: { id: true, views: true },
+  });
+
+  res.json(updated);
+});
+
 export default router;

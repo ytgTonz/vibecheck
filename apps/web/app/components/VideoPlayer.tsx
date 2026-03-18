@@ -7,9 +7,11 @@ import { Clip } from "@vibecheck/shared";
 export default function VideoPlayer({
   clip,
   onClose,
+  onView,
 }: {
   clip: Clip;
   onClose: () => void;
+  onView?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [playing, setPlaying] = useState(true);
@@ -17,6 +19,7 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [ready, setReady] = useState(false);
+  const viewRecorded = useRef(false);
 
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -30,7 +33,13 @@ export default function VideoPlayer({
 
   const handleTimeUpdate = useCallback((e: SyntheticEvent<HTMLVideoElement>) => {
     setCurrentTime(e.currentTarget.currentTime);
-  }, []);
+
+    // Record a view on first actual playback (time > 0 means media is playing)
+    if (!viewRecorded.current && e.currentTarget.currentTime > 0 && onView) {
+      viewRecorded.current = true;
+      onView();
+    }
+  }, [onView]);
 
   const handleLoadedMetadata = useCallback((e: SyntheticEvent<HTMLVideoElement>) => {
     setDuration(e.currentTarget.duration);

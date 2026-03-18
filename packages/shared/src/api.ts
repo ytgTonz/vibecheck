@@ -85,3 +85,20 @@ export async function login(
 
   return body as AuthResponse;
 }
+
+/** Record a view for a clip. Returns the updated view count. */
+export async function recordClipView(
+  id: string
+): Promise<{ id: string; views: number }> {
+  const res = await fetch(`${baseUrl}/clips/${id}/view`, {
+    method: 'POST',
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `View tracking failed: ${res.status}`);
+  }
+
+  return body as { id: string; views: number };
+}

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { setBaseUrl, fetchVenue, fetchVenueClips, Venue, Clip } from "@vibecheck/shared";
+import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, Venue, Clip } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
 
 const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
@@ -68,6 +68,17 @@ export default function VenueDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  /** Record a view and update the local clip count immediately. */
+  const handleView = useCallback((clipId: string) => {
+    recordClipView(clipId)
+      .then(({ views }) => {
+        setClips((prev) =>
+          prev.map((c) => (c.id === clipId ? { ...c, views } : c))
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   if (loading) {
     return (
@@ -156,6 +167,7 @@ export default function VenueDetailPage() {
           <VideoPlayer
             clip={playingClip}
             onClose={() => setPlayingClip(null)}
+            onView={() => handleView(playingClip.id)}
           />
         </div>
       )}

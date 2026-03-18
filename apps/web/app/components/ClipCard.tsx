@@ -48,6 +48,16 @@ export default function ClipCard({
         </div>
       )}
 
+      {/* View count badge */}
+      {clip.views > 0 && (
+        <span className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
+          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+          </svg>
+          {clip.views}
+        </span>
+      )}
+
       {/* Play icon overlay */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
         <svg
@@ -73,7 +83,6 @@ export default function ClipCard({
         )}
         <div className="flex items-center gap-2 text-xs text-zinc-300">
           <span>{timeAgo(clip.createdAt)}</span>
-          {clip.views > 0 && <span>{clip.views} views</span>}
         </div>
       </div>
     </button>
