@@ -86,6 +86,67 @@ export async function login(
   return body as AuthResponse;
 }
 
+/** Venue with dashboard stats, returned by fetchMyVenues(). */
+export interface VenueWithStats {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  city: string;
+  hours: string | null;
+  musicGenre: string[];
+  claimedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  stats: {
+    totalClips: number;
+    totalViews: number;
+    clipsThisWeek: number;
+  };
+  recentClips: {
+    id: string;
+    views: number;
+    createdAt: string;
+    caption: string | null;
+    thumbnail: string | null;
+    duration: number;
+  }[];
+}
+
+/** Fetch venues owned by the current user with stats (auth required). */
+export async function fetchMyVenues(token: string): Promise<VenueWithStats[]> {
+  const res = await fetch(`${baseUrl}/venues/my/venues`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to fetch venues: ${res.status}`);
+  }
+
+  return body as VenueWithStats[];
+}
+
+/** Claim a venue as the current user (auth required). */
+export async function claimVenue(
+  venueId: string,
+  token: string
+): Promise<Venue> {
+  const res = await fetch(`${baseUrl}/venues/${venueId}/claim`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Claim failed: ${res.status}`);
+  }
+
+  return body as Venue;
+}
+
 /** Record a view for a clip. Returns the updated view count. */
 export async function recordClipView(
   id: string

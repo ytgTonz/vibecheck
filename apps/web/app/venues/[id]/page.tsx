@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, claimVenue, Venue, Clip, useAuthStore } from "@vibecheck/shared";
+import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, claimVenue, Venue, Clip, useAuthStore, UserRole } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
 
 const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
@@ -45,7 +45,7 @@ function timeAgo(iso: string): string {
 
 export default function VenueDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, token } = useAuthStore();
+  const { user, token, setRole } = useAuthStore();
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
@@ -89,6 +89,7 @@ export default function VenueDetailPage() {
     try {
       const updated = await claimVenue(id, token);
       setVenue(updated);
+      setRole(UserRole.VENUE_OWNER);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to claim venue");
     } finally {

@@ -24,6 +24,9 @@ interface AuthState {
   /** Log out and clear stored auth. */
   logout: () => void;
 
+  /** Update the stored user's role (e.g. after claiming a venue). */
+  setRole: (role: User['role']) => void;
+
   /** Restore auth from localStorage (call on app load). */
   hydrate: () => void;
 }
@@ -60,6 +63,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ error: message, loading: false });
       throw err;
     }
+  },
+
+  setRole: (role) => {
+    set((state) => {
+      if (!state.user) return state;
+      const updated = { ...state.user, role };
+      localStorage.setItem('vibecheck_user', JSON.stringify(updated));
+      return { user: updated };
+    });
   },
 
   logout: () => {

@@ -59,6 +59,44 @@ router.get('/:id/clips', async (req: Request, res: Response) => {
   res.json(clips);
 });
 
+// GET /venues/my — return venues owned by the current user with stats
+router.get('/my/venues', requireAuth, async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+
+  const venues = await prisma.venue.findMany({
+    where: { claimedBy: userId },
+    include: {
+      clips: {
+        select: {
+          id: true,
+          views: true,
+          createdAt: true,
+          caption: true,
+          thumbnail: true,
+          duration: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+  // Calculate stats for each venue
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const result = venues.map(({ clips, ...venue }) => ({
+    ...venue,
+    stats: {
+      totalClips: clips.length,
+      totalViews: clips.reduce((sum, c) => sum + c.views, 0),
+      clipsThisWeek: clips.filter((c) => new Date(c.createdAt) >= weekAgo).length,
+    },
+    recentClips: clips.slice(0, 5),
+  }));
+
+  res.json(result);
+});
+
 // POST /venues/:id/claim — claim a venue as owner (auth required)
 router.post('/:id/claim', requireAuth, async (req: Request, res: Response) => {
   const { id } = req.params;
