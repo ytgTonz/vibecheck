@@ -13,6 +13,7 @@ export interface Venue {
   ownerId: string;
   createdAt: string; // ISO date string (JSON serialised from Date)
   updatedAt: string;
+  clipCount: number;
   lastClipAt: string | null; // most recent clip timestamp (from GET /venues)
 }
 
