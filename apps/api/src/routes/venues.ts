@@ -15,6 +15,9 @@ router.get('/', async (_req: Request, res: Response) => {
   const venues = await prisma.venue.findMany({
     orderBy: { name: 'asc' },
     include: {
+      _count: {
+        select: { clips: true },
+      },
       clips: {
         orderBy: { createdAt: 'desc' },
         take: 1,
@@ -24,8 +27,9 @@ router.get('/', async (_req: Request, res: Response) => {
   });
 
   // Flatten: add lastClipAt field, remove nested clips array
-  const result = venues.map(({ clips, ...venue }) => ({
+  const result = venues.map(({ clips, _count, ...venue }) => ({
     ...venue,
+    clipCount: _count.clips,
     lastClipAt: clips[0]?.createdAt ?? null,
   }));
 
