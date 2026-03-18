@@ -1,6 +1,19 @@
 import Link from "next/link";
 import { Venue } from "@vibecheck/shared";
 
+/** Format an ISO date string as a relative "time ago" label. */
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 /** Human-readable labels for venue types. */
 const venueTypeLabel: Record<string, string> = {
   NIGHTCLUB: "Nightclub",
@@ -48,6 +61,13 @@ export default function VenueCard({ venue }: { venue: Venue }) {
             </span>
           ))}
         </div>
+      )}
+
+      {/* Last updated */}
+      {venue.lastClipAt && (
+        <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500">
+          Updated {timeAgo(venue.lastClipAt)}
+        </p>
       )}
     </Link>
   );

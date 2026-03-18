@@ -88,12 +88,83 @@ const venues = [
   },
 ];
 
+// Cloudinary sample video URLs
+const CLOUD_NAME = 'yola';
+const sampleVideos = [
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/samples/sea-turtle.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/samples/sea-turtle.jpg`,
+    duration: 30,
+    caption: 'Friday night vibes',
+  },
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/samples/elephants.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/samples/elephants.jpg`,
+    duration: 25,
+    caption: 'Weekend energy',
+  },
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/samples/cld-sample-video.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/samples/cld-sample-video.jpg`,
+    duration: 20,
+    caption: 'Saturday crowd check',
+  },
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v1773819944/club-1_nidrc3.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/v1773819944/club-1_nidrc3.jpg`,
+    duration: 15,
+    caption: 'Dance floor heating up',
+  },
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v1773819966/club-2_zpvp9v.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/v1773819966/club-2_zpvp9v.jpg`,
+    duration: 15,
+    caption: 'Late night energy',
+  },
+  {
+    videoUrl: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/v1773819975/club-3_grgo2d.mp4`,
+    thumbnail: `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_1/v1773819975/club-3_grgo2d.jpg`,
+    duration: 15,
+    caption: 'Vibe check incoming',
+  },
+];
+
 async function main() {
+  // Clear existing data (clips first due to foreign key)
+  console.log('Clearing old data...');
+  await prisma.clip.deleteMany();
+  await prisma.venue.deleteMany();
+
   console.log('Seeding venues...');
 
-  await prisma.venue.createMany({ data: venues });
+  const createdVenues = await Promise.all(
+    venues.map((v) => prisma.venue.create({ data: v }))
+  );
 
-  console.log(`✓ ${venues.length} venues seeded`);
+  console.log(`✓ ${createdVenues.length} venues seeded`);
+
+  // Seed 3 sample clips for each venue
+  console.log('Seeding clips...');
+
+  let clipCount = 0;
+  for (const venue of createdVenues) {
+    for (const sample of sampleVideos) {
+      await prisma.clip.create({
+        data: {
+          videoUrl: sample.videoUrl,
+          thumbnail: sample.thumbnail,
+          duration: sample.duration,
+          venueId: venue.id,
+          uploadedBy: 'seed-promoter',
+          musicGenre: venue.musicGenre[0] ?? null,
+          caption: sample.caption,
+        },
+      });
+      clipCount++;
+    }
+  }
+
+  console.log(`✓ ${clipCount} clips seeded`);
 }
 
 main()

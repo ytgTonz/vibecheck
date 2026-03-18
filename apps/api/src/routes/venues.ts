@@ -3,12 +3,26 @@ import prisma from '../lib/prisma';
 
 const router = Router();
 
-// GET /venues — return all venues
+// GET /venues — return all venues with their latest clip timestamp
 router.get('/', async (_req: Request, res: Response) => {
   const venues = await prisma.venue.findMany({
     orderBy: { name: 'asc' },
+    include: {
+      clips: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
   });
-  res.json(venues);
+
+  // Flatten: add lastClipAt field, remove nested clips array
+  const result = venues.map(({ clips, ...venue }) => ({
+    ...venue,
+    lastClipAt: clips[0]?.createdAt ?? null,
+  }));
+
+  res.json(result);
 });
 
 // GET /venues/:id — return a single venue by ID

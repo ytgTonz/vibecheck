@@ -11,6 +11,7 @@ export interface Venue {
   claimedBy: string | null;
   createdAt: string; // ISO date string (JSON serialised from Date)
   updatedAt: string;
+  lastClipAt: string | null; // most recent clip timestamp (from GET /venues)
 }
 
 export interface Clip {
