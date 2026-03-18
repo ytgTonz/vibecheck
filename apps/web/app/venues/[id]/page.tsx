@@ -84,7 +84,31 @@ export default function VenueDetailPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <p className="text-zinc-400 dark:text-zinc-500">Loading venue...</p>
+        <div className="mb-6 h-4 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="animate-pulse rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="h-7 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-6 w-20 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          <div className="grid gap-y-3 sm:grid-cols-2 sm:gap-x-6">
+            <div>
+              <div className="mb-1 h-3 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-4 w-32 rounded bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+            <div>
+              <div className="mb-1 h-3 w-12 rounded bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-4 w-28 rounded bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-8">
+          <div className="mb-4 h-5 w-24 rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="aspect-video animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -92,10 +116,12 @@ export default function VenueDetailPage() {
   if (error || !venue) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <p className="text-red-600 dark:text-red-400">{error || "Venue not found"}</p>
-        <Link href="/" className="mt-4 inline-block text-sm text-zinc-500 hover:text-zinc-300">
-          &larr; Back to venues
-        </Link>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/30">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">{error || "Venue not found"}</p>
+          <Link href="/" className="mt-3 inline-block text-xs text-red-500 hover:text-red-400 dark:text-red-400 dark:hover:text-red-300">
+            &larr; Back to venues
+          </Link>
+        </div>
       </div>
     );
   }

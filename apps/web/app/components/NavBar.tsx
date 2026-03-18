@@ -22,7 +22,7 @@ export default function NavBar() {
         </Link>
 
         {hydrated && (
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
             {user ? (
               <>
                 <Link
@@ -38,7 +38,7 @@ export default function NavBar() {
                   Upload
                 </Link>
                 <FeedbackButton />
-                <span className="text-zinc-400">{user.name}</span>
+                <span className="hidden text-zinc-400 sm:inline">{user.name}</span>
                 <button
                   onClick={logout}
                   className="text-zinc-500 transition-colors hover:text-zinc-300"

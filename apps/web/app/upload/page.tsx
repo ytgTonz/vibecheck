@@ -189,8 +189,23 @@ export default function UploadPage() {
   // Don't render until hydration is done
   if (!hydrated || !user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16">
-        <p className="text-zinc-400">Loading...</p>
+      <div className="mx-auto max-w-lg px-4 py-8">
+        <div className="mb-6 h-4 w-16 rounded bg-zinc-800" />
+        <div className="mb-6 h-7 w-36 rounded bg-zinc-800" />
+        <div className="animate-pulse space-y-5">
+          <div>
+            <div className="mb-1 h-3 w-12 rounded bg-zinc-800" />
+            <div className="h-24 w-full rounded-lg border border-dashed border-zinc-700 bg-zinc-900" />
+          </div>
+          <div>
+            <div className="mb-1 h-3 w-14 rounded bg-zinc-800" />
+            <div className="h-10 w-full rounded-lg bg-zinc-800" />
+          </div>
+          <div>
+            <div className="mb-1 h-3 w-24 rounded bg-zinc-800" />
+            <div className="h-10 w-full rounded-lg bg-zinc-800" />
+          </div>
+        </div>
       </div>
     );
   }

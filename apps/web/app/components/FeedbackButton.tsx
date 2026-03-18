@@ -92,7 +92,7 @@ export default function FeedbackButton() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-xl">
+        <div className="absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-700 bg-zinc-900 p-4 shadow-xl">
           {submitted ? (
             <p className="text-center text-sm text-green-400">
               Thanks for your feedback!

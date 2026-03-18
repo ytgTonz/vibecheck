@@ -118,7 +118,32 @@ export default function DashboardPage() {
   if (!hydrated || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <p className="text-zinc-400">Loading dashboard...</p>
+        <div className="mb-6 h-7 w-48 rounded bg-zinc-800" />
+        <div className="animate-pulse rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-4">
+            <div className="mb-1 h-6 w-36 rounded bg-zinc-800" />
+            <div className="h-4 w-48 rounded bg-zinc-800" />
+          </div>
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-lg bg-zinc-800 p-4">
+                <div className="mx-auto mb-2 h-7 w-12 rounded bg-zinc-700" />
+                <div className="mx-auto h-3 w-16 rounded bg-zinc-700" />
+              </div>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg bg-zinc-800/50 p-3">
+                <div className="h-12 w-20 shrink-0 rounded bg-zinc-700" />
+                <div className="flex-1">
+                  <div className="mb-1 h-4 w-32 rounded bg-zinc-700" />
+                  <div className="h-3 w-20 rounded bg-zinc-700" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -126,7 +151,16 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <p className="text-red-400">{error}</p>
+        <h1 className="mb-6 text-2xl font-bold">Venue Dashboard</h1>
+        <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-400">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-3 text-xs text-red-400 hover:text-red-300"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
@@ -134,12 +168,17 @@ export default function DashboardPage() {
   if (venues.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-bold">Venue Dashboard</h1>
-        <p className="text-zinc-400">
-          {isOwner
-            ? "You haven't registered a venue yet."
-            : "You haven't been invited to any venues yet. Ask a venue owner for an invite code."}
-        </p>
+        <h1 className="mb-6 text-2xl font-bold">Venue Dashboard</h1>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+          <p className="text-lg font-medium text-zinc-300">
+            {isOwner ? "No venues yet" : "No venues linked"}
+          </p>
+          <p className="mt-2 text-sm text-zinc-500">
+            {isOwner
+              ? "You haven't registered a venue yet."
+              : "You haven't been invited to any venues yet. Ask a venue owner for an invite code."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -178,7 +217,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats cards */}
-          <div className="mb-6 grid grid-cols-3 gap-4">
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="rounded-lg bg-zinc-800 p-4 text-center">
               <p className="text-2xl font-bold">{venue.stats.totalViews}</p>
               <p className="text-xs text-zinc-400">Total Views</p>

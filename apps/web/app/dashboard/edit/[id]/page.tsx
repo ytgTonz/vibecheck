@@ -135,7 +135,16 @@ export default function EditVenuePage() {
   if (!hydrated || loading) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
-        <p className="text-zinc-400">Loading...</p>
+        <div className="mb-6 h-4 w-32 rounded bg-zinc-800" />
+        <div className="mb-6 h-7 w-28 rounded bg-zinc-800" />
+        <div className="animate-pulse space-y-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i}>
+              <div className="mb-1 h-3 w-20 rounded bg-zinc-800" />
+              <div className="h-10 w-full rounded-lg bg-zinc-800" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -143,7 +152,12 @@ export default function EditVenuePage() {
   if (error && !venue) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
-        <p className="text-red-400">{error}</p>
+        <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-400">{error}</p>
+          <Link href="/dashboard" className="mt-3 inline-block text-xs text-red-400 hover:text-red-300">
+            &larr; Back to dashboard
+          </Link>
+        </div>
       </div>
     );
   }
@@ -152,10 +166,12 @@ export default function EditVenuePage() {
   if (venue && user && venue.ownerId !== user.id) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
-        <p className="text-red-400">You don&apos;t have permission to edit this venue.</p>
-        <Link href="/dashboard" className="mt-4 inline-block text-sm text-zinc-400 hover:text-white">
-          &larr; Back to dashboard
-        </Link>
+        <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
+          <p className="text-sm font-medium text-red-400">You don&apos;t have permission to edit this venue.</p>
+          <Link href="/dashboard" className="mt-3 inline-block text-xs text-red-400 hover:text-red-300">
+            &larr; Back to dashboard
+          </Link>
+        </div>
       </div>
     );
   }
