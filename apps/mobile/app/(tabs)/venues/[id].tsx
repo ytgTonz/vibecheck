@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -6,6 +6,7 @@ import {
   Modal,
   PanResponder,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -362,23 +363,30 @@ export default function VenueDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = useCallback(async () => {
+    if (!id) return;
+    setError(null);
+    try {
+      const [venueData, clipsData] = await Promise.all([fetchVenue(id), fetchVenueClips(id)]);
+      setVenue(venueData);
+      setClips(clipsData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load venue');
+    }
+  }, [id]);
 
   useEffect(() => {
-    if (!id) return;
-
     setLoading(true);
-    setError(null);
+    loadData().finally(() => setLoading(false));
+  }, [loadData]);
 
-    Promise.all([fetchVenue(id), fetchVenueClips(id)])
-      .then(([venueData, clipsData]) => {
-        setVenue(venueData);
-        setClips(clipsData);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load venue');
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const handleView = (clipId: string) => {
     recordClipView(clipId)
@@ -422,7 +430,18 @@ export default function VenueDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#a1a1aa"
+            colors={['#a1a1aa']}
+          />
+        }
+      >
         <View className="px-4 pt-2">
           <Pressable onPress={() => router.back()} className="mb-5 self-start">
             <Text className="text-sm text-zinc-400">← All venues</Text>

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { setBaseUrl, useVenueStore, Venue } from '@vibecheck/shared';
 import VenueCard from '@/components/VenueCard';
@@ -15,15 +15,45 @@ export default function BrowseScreen() {
   const loading = useVenueStore((s) => s.loading);
   const error = useVenueStore((s) => s.error);
   const loadVenues = useVenueStore((s) => s.loadVenues);
-  const groupedVenues = useVenueStore((s) => s.groupedVenues);
-  const filteredVenues = useVenueStore((s) => s.filteredVenues);
+  const venues = useVenueStore((s) => s.venues);
+  const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
+  const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadVenues();
   }, [loadVenues]);
 
-  const groups = groupedVenues();
-  const filtered = filteredVenues();
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadVenues();
+    setRefreshing(false);
+  }, [loadVenues]);
+
+  const filtered = useMemo(() => {
+    return venues.filter((venue) => {
+      if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
+      if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
+      return true;
+    });
+  }, [venues, venueTypeFilter, musicGenreFilter]);
+
+  const groups = useMemo(() => {
+    const now = Date.now();
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const live: Venue[] = [];
+    const fresh: Venue[] = [];
+    const quiet: Venue[] = [];
+    for (const venue of filtered) {
+      if (!venue.lastClipAt) { quiet.push(venue); continue; }
+      const age = now - new Date(venue.lastClipAt).getTime();
+      if (age < TWO_HOURS) live.push(venue);
+      else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
+      else quiet.push(venue);
+    }
+    return { live, fresh, quiet };
+  }, [filtered]);
   const liveCount = groups.live.length;
 
   const featuredVenue =
@@ -78,6 +108,14 @@ export default function BrowseScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#a1a1aa"
+              colors={['#a1a1aa']}
+            />
+          }
         >
           <View className="pb-4 pt-2">
             <Text className="text-3xl font-bold text-zinc-100">VibeCheck</Text>

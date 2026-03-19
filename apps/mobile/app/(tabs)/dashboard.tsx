@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -40,6 +40,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingClipId, setDeletingClipId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -61,6 +62,13 @@ export default function DashboardScreen() {
   useEffect(() => {
     if (!token) return;
     void loadDashboard(token);
+  }, [token]);
+
+  const onRefresh = useCallback(async () => {
+    if (!token) return;
+    setRefreshing(true);
+    await loadDashboard(token);
+    setRefreshing(false);
   }, [token]);
 
   const handleDeleteClip = async (clipId: string) => {
@@ -98,7 +106,17 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#a1a1aa"
+            colors={['#a1a1aa']}
+          />
+        }
+      >
         <View className="mb-6 flex-row items-start justify-between">
           <View className="flex-1 pr-4">
             <Text className="text-3xl font-semibold text-zinc-100">Dashboard</Text>
