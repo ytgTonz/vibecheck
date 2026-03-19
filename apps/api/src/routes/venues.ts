@@ -10,6 +10,48 @@ const INVITE_EXPIRY_DAYS = 7;
 
 // ─── Public routes ───────────────────────────────────────────────────────────
 
+function getVenueActivityTier(lastClipAt: Date | null, now: number) {
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+  if (!lastClipAt) return 2;
+  const age = now - new Date(lastClipAt).getTime();
+  if (age < TWO_HOURS) return 0;
+  if (age < TWENTY_FOUR_HOURS) return 1;
+  return 2;
+}
+
+function mapVenueWithLatestClip(
+  venue: {
+    clips: { createdAt: Date; thumbnail: string | null; caption: string | null; views: number }[];
+    _count: { clips: number };
+    id: string;
+    name: string;
+    type: string;
+    location: string;
+    city: string;
+    hours: string | null;
+    musicGenre: string[];
+    coverCharge: string | null;
+    drinkPrices: string | null;
+    ownerId: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }
+) {
+  const { clips, _count, ...rest } = venue;
+  const latest = clips[0] ?? null;
+
+  return {
+    ...rest,
+    clipCount: _count.clips,
+    lastClipAt: latest?.createdAt ?? null,
+    latestClipThumbnail: latest?.thumbnail ?? null,
+    latestClipCaption: latest?.caption ?? null,
+    latestClipViews: latest?.views ?? null,
+  };
+}
+
 // GET /venues — return all venues ranked by activity
 router.get('/', async (_req: Request, res: Response) => {
   const venues = await prisma.venue.findMany({
@@ -26,34 +68,12 @@ router.get('/', async (_req: Request, res: Response) => {
   });
 
   const now = Date.now();
-  const TWO_HOURS = 2 * 60 * 60 * 1000;
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-  // Flatten and enrich with preview data
-  const enriched = venues.map(({ clips, _count, ...venue }) => {
-    const latest = clips[0] ?? null;
-    return {
-      ...venue,
-      clipCount: _count.clips,
-      lastClipAt: latest?.createdAt ?? null,
-      latestClipThumbnail: latest?.thumbnail ?? null,
-      latestClipCaption: latest?.caption ?? null,
-      latestClipViews: latest?.views ?? null,
-    };
-  });
+  const enriched = venues.map(mapVenueWithLatestClip);
 
   // Activity-based ranking: live (2h) > fresh (24h) > quiet
-  const getTier = (lastClipAt: Date | null): number => {
-    if (!lastClipAt) return 2;
-    const age = now - new Date(lastClipAt).getTime();
-    if (age < TWO_HOURS) return 0;
-    if (age < TWENTY_FOUR_HOURS) return 1;
-    return 2;
-  };
-
   enriched.sort((a, b) => {
-    const tierA = getTier(a.lastClipAt);
-    const tierB = getTier(b.lastClipAt);
+    const tierA = getVenueActivityTier(a.lastClipAt, now);
+    const tierB = getVenueActivityTier(b.lastClipAt, now);
     if (tierA !== tierB) return tierA - tierB;
 
     // Within live/fresh tiers: most recent first, tie-break by clip count
@@ -61,7 +81,8 @@ router.get('/', async (_req: Request, res: Response) => {
       const timeA = a.lastClipAt ? new Date(a.lastClipAt).getTime() : 0;
       const timeB = b.lastClipAt ? new Date(b.lastClipAt).getTime() : 0;
       if (timeB !== timeA) return timeB - timeA;
-      return b.clipCount - a.clipCount;
+      if (b.clipCount !== a.clipCount) return b.clipCount - a.clipCount;
+      return a.name.localeCompare(b.name);
     }
 
     // Quiet tier: most recent first (nulls last), tie-break by name
@@ -78,6 +99,16 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   const venue = await prisma.venue.findUnique({
     where: { id: req.params.id },
+    include: {
+      _count: {
+        select: { clips: true },
+      },
+      clips: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true, thumbnail: true, caption: true, views: true },
+      },
+    },
   });
 
   if (!venue) {
@@ -85,7 +116,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     return;
   }
 
-  res.json(venue);
+  res.json(mapVenueWithLatestClip(venue));
 });
 
 // GET /venues/:id/clips — return all clips for a venue
