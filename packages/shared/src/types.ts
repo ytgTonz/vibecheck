@@ -15,6 +15,9 @@ export interface Venue {
   updatedAt: string;
   clipCount: number;
   lastClipAt: string | null; // most recent clip timestamp (from GET /venues)
+  latestClipThumbnail: string | null;
+  latestClipCaption: string | null;
+  latestClipViews: number | null;
 }
 
 export interface Clip {

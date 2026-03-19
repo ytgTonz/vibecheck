@@ -3,6 +3,12 @@ import { Venue } from '../types';
 import { VenueType } from '../enums';
 import { fetchVenues } from '../api';
 
+export interface VenueSection {
+  live: Venue[];
+  fresh: Venue[];
+  quiet: Venue[];
+}
+
 interface VenueState {
   /** All venues from the API. */
   venues: Venue[];
@@ -33,6 +39,9 @@ interface VenueState {
 
   /** Returns venues matching the active filters. */
   filteredVenues: () => Venue[];
+
+  /** Returns filtered venues split into live/fresh/quiet sections. */
+  groupedVenues: () => VenueSection;
 }
 
 export const useVenueStore = create<VenueState>((set, get) => ({
@@ -67,5 +76,29 @@ export const useVenueStore = create<VenueState>((set, get) => ({
       if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
       return true;
     });
+  },
+
+  groupedVenues: () => {
+    const filtered = get().filteredVenues();
+    const now = Date.now();
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    const live: Venue[] = [];
+    const fresh: Venue[] = [];
+    const quiet: Venue[] = [];
+
+    for (const venue of filtered) {
+      if (!venue.lastClipAt) {
+        quiet.push(venue);
+        continue;
+      }
+      const age = now - new Date(venue.lastClipAt).getTime();
+      if (age < TWO_HOURS) live.push(venue);
+      else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
+      else quiet.push(venue);
+    }
+
+    return { live, fresh, quiet };
   },
 }));

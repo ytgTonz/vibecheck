@@ -2,7 +2,6 @@
 
 import { VenueType, useVenueStore } from "@vibecheck/shared";
 
-/** Human-readable labels for venue types. */
 const venueTypeOptions: { value: VenueType; label: string }[] = [
   { value: VenueType.NIGHTCLUB, label: "Nightclub" },
   { value: VenueType.BAR, label: "Bar" },
@@ -13,7 +12,6 @@ const venueTypeOptions: { value: VenueType; label: string }[] = [
   { value: VenueType.OTHER, label: "Other" },
 ];
 
-/** Extract unique music genres from loaded venues. */
 function useGenreOptions(): string[] {
   const venues = useVenueStore((s) => s.venues);
   const genres = new Set<string>();
@@ -36,50 +34,62 @@ export default function FilterBar() {
   const hasFilters = venueTypeFilter !== null || musicGenreFilter !== null;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {/* Venue type dropdown */}
-      <select
-        value={venueTypeFilter ?? ""}
-        onChange={(e) =>
-          setVenueTypeFilter(
-            e.target.value ? (e.target.value as VenueType) : null
-          )
-        }
-        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
-      >
-        <option value="">All types</option>
-        {venueTypeOptions.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-
-      {/* Music genre dropdown */}
-      <select
-        value={musicGenreFilter ?? ""}
-        onChange={(e) =>
-          setMusicGenreFilter(e.target.value || null)
-        }
-        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
-      >
-        <option value="">All genres</option>
-        {genreOptions.map((genre) => (
-          <option key={genre} value={genre}>
-            {genre}
-          </option>
-        ))}
-      </select>
-
-      {/* Clear filters */}
-      {hasFilters && (
+    <div className="space-y-3">
+      {/* Venue type pills */}
+      <div className="flex flex-wrap gap-2">
         <button
-          onClick={clearFilters}
-          className="rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          onClick={() => setVenueTypeFilter(null)}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            venueTypeFilter === null
+              ? "bg-white text-zinc-900"
+              : "border border-zinc-700 text-zinc-400 hover:border-zinc-500"
+          }`}
         >
-          Clear filters
+          All
         </button>
-      )}
+        {venueTypeOptions.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() =>
+              setVenueTypeFilter(
+                venueTypeFilter === opt.value ? null : opt.value
+              )
+            }
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              venueTypeFilter === opt.value
+                ? "bg-white text-zinc-900"
+                : "border border-zinc-700 text-zinc-400 hover:border-zinc-500"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Genre dropdown + clear */}
+      <div className="flex items-center gap-3">
+        <select
+          value={musicGenreFilter ?? ""}
+          onChange={(e) => setMusicGenreFilter(e.target.value || null)}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
+        >
+          <option value="">All genres</option>
+          {genreOptions.map((genre) => (
+            <option key={genre} value={genre}>
+              {genre}
+            </option>
+          ))}
+        </select>
+
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
     </div>
   );
 }

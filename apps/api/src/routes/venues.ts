@@ -10,10 +10,9 @@ const INVITE_EXPIRY_DAYS = 7;
 
 // ─── Public routes ───────────────────────────────────────────────────────────
 
-// GET /venues — return all venues with their latest clip timestamp
+// GET /venues — return all venues ranked by activity
 router.get('/', async (_req: Request, res: Response) => {
   const venues = await prisma.venue.findMany({
-    orderBy: { name: 'asc' },
     include: {
       _count: {
         select: { clips: true },
@@ -21,19 +20,58 @@ router.get('/', async (_req: Request, res: Response) => {
       clips: {
         orderBy: { createdAt: 'desc' },
         take: 1,
-        select: { createdAt: true },
+        select: { createdAt: true, thumbnail: true, caption: true, views: true },
       },
     },
   });
 
-  // Flatten: add lastClipAt field, remove nested clips array
-  const result = venues.map(({ clips, _count, ...venue }) => ({
-    ...venue,
-    clipCount: _count.clips,
-    lastClipAt: clips[0]?.createdAt ?? null,
-  }));
+  const now = Date.now();
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
-  res.json(result);
+  // Flatten and enrich with preview data
+  const enriched = venues.map(({ clips, _count, ...venue }) => {
+    const latest = clips[0] ?? null;
+    return {
+      ...venue,
+      clipCount: _count.clips,
+      lastClipAt: latest?.createdAt ?? null,
+      latestClipThumbnail: latest?.thumbnail ?? null,
+      latestClipCaption: latest?.caption ?? null,
+      latestClipViews: latest?.views ?? null,
+    };
+  });
+
+  // Activity-based ranking: live (2h) > fresh (24h) > quiet
+  const getTier = (lastClipAt: Date | null): number => {
+    if (!lastClipAt) return 2;
+    const age = now - new Date(lastClipAt).getTime();
+    if (age < TWO_HOURS) return 0;
+    if (age < TWENTY_FOUR_HOURS) return 1;
+    return 2;
+  };
+
+  enriched.sort((a, b) => {
+    const tierA = getTier(a.lastClipAt);
+    const tierB = getTier(b.lastClipAt);
+    if (tierA !== tierB) return tierA - tierB;
+
+    // Within live/fresh tiers: most recent first, tie-break by clip count
+    if (tierA < 2) {
+      const timeA = a.lastClipAt ? new Date(a.lastClipAt).getTime() : 0;
+      const timeB = b.lastClipAt ? new Date(b.lastClipAt).getTime() : 0;
+      if (timeB !== timeA) return timeB - timeA;
+      return b.clipCount - a.clipCount;
+    }
+
+    // Quiet tier: most recent first (nulls last), tie-break by name
+    const timeA = a.lastClipAt ? new Date(a.lastClipAt).getTime() : 0;
+    const timeB = b.lastClipAt ? new Date(b.lastClipAt).getTime() : 0;
+    if (timeB !== timeA) return timeB - timeA;
+    return a.name.localeCompare(b.name);
+  });
+
+  res.json(enriched);
 });
 
 // GET /venues/:id — return a single venue by ID

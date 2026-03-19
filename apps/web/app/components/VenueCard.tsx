@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Venue } from "@vibecheck/shared";
 
 /** Format an ISO date string as a relative "time ago" label. */
@@ -79,13 +80,29 @@ export default function VenueCard({ venue }: { venue: Venue }) {
     venueTypeTheme[venue.type] ?? venueTypeTheme.OTHER;
   const storyBarCount =
     venue.clipCount > 0 ? Math.min(venue.clipCount, 5) : 1;
+  const hasThumbnail = !!venue.latestClipThumbnail;
 
   return (
     <Link
       href={`/venues/${venue.id}`}
       className="group relative block overflow-hidden rounded-[1.75rem] border border-zinc-800 bg-zinc-950 p-5 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)]"
     >
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,10,12,0.12),rgba(10,10,12,0.92))]" />
+      {hasThumbnail && (
+        <Image
+          src={venue.latestClipThumbnail!}
+          alt=""
+          fill
+          className="object-cover blur-sm"
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+        />
+      )}
+      <div
+        className={`absolute inset-0 ${
+          hasThumbnail
+            ? "bg-gradient-to-t from-black/95 via-black/70 to-black/40"
+            : "bg-[linear-gradient(180deg,rgba(10,10,12,0.12),rgba(10,10,12,0.92))]"
+        }`}
+      />
       <div className="absolute inset-x-0 top-0 h-px bg-white/8" />
 
       <div className="relative">
