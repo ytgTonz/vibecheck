@@ -18,6 +18,24 @@ const roleBadgeColors: Record<string, string> = {
   VENUE_PROMOTER: "bg-green-900/50 text-green-400",
 };
 
+const PAGE_SIZE = 50;
+
+type Notice = {
+  type: "success" | "error";
+  message: string;
+};
+
+function getTargetPageAfterDelete(currentPage: number, itemCount: number, totalCount: number) {
+  const nextTotal = Math.max(0, totalCount - 1);
+  const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+
+  if (itemCount <= 1 && currentPage > 1) {
+    return Math.min(currentPage - 1, nextTotalPages);
+  }
+
+  return Math.min(currentPage, nextTotalPages);
+}
+
 export default function AdminUsersPage() {
   const { token } = useAuthStore();
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -25,6 +43,8 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const loadUsers = (p: number) => {
     if (!token) return;
@@ -46,15 +66,31 @@ export default function AdminUsersPage() {
   const handleDelete = async (userId: string, userName: string) => {
     if (!token) return;
     if (!window.confirm(`Delete user "${userName}"? This will remove all their data.`)) return;
+
+    setDeletingUserId(userId);
+    setNotice(null);
+
     try {
       await deleteAdminUser(userId, token);
-      loadUsers(page);
+      const targetPage = getTargetPageAfterDelete(page, users.length, total);
+      setNotice({ type: "success", message: `Deleted user \"${userName}\".` });
+
+      if (targetPage !== page) {
+        setPage(targetPage);
+      } else {
+        loadUsers(targetPage);
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete user");
+      setNotice({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to delete user",
+      });
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (loading) {
     return (
@@ -78,6 +114,18 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-4">
+      {notice && (
+        <div
+          className={`rounded-xl border p-4 text-sm ${
+            notice.type === "success"
+              ? "border-emerald-900/50 bg-emerald-950/30 text-emerald-300"
+              : "border-red-900/50 bg-red-950/30 text-red-400"
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
+
       <p className="text-sm text-zinc-500">{total} user{total !== 1 ? "s" : ""}</p>
 
       <div className="overflow-x-auto">
@@ -110,13 +158,14 @@ export default function AdminUsersPage() {
                 <td className="py-3 pr-4 text-xs text-zinc-500">
                   {new Date(u.createdAt).toLocaleDateString()}
                 </td>
-                <td className="py-3">
+                <td className="py-3 text-right">
                   {u.role !== "ADMIN" && (
                     <button
                       onClick={() => handleDelete(u.id, u.name)}
-                      className="text-xs text-red-400 transition-colors hover:text-red-300"
+                      disabled={deletingUserId === u.id}
+                      className="text-xs text-red-400 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Delete
+                      {deletingUserId === u.id ? "Deleting..." : "Delete"}
                     </button>
                   )}
                 </td>

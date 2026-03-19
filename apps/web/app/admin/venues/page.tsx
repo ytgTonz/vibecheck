@@ -13,6 +13,24 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
 
+const PAGE_SIZE = 50;
+
+type Notice = {
+  type: "success" | "error";
+  message: string;
+};
+
+function getTargetPageAfterDelete(currentPage: number, itemCount: number, totalCount: number) {
+  const nextTotal = Math.max(0, totalCount - 1);
+  const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+
+  if (itemCount <= 1 && currentPage > 1) {
+    return Math.min(currentPage - 1, nextTotalPages);
+  }
+
+  return Math.min(currentPage, nextTotalPages);
+}
+
 export default function AdminVenuesPage() {
   const { token } = useAuthStore();
   const [venues, setVenues] = useState<AdminVenue[]>([]);
@@ -20,6 +38,8 @@ export default function AdminVenuesPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [deletingVenueId, setDeletingVenueId] = useState<string | null>(null);
 
   const loadVenues = (p: number) => {
     if (!token) return;
@@ -41,15 +61,31 @@ export default function AdminVenuesPage() {
   const handleDelete = async (venueId: string, venueName: string) => {
     if (!token) return;
     if (!window.confirm(`Delete venue "${venueName}"? This will remove all clips, invites, and promoter links.`)) return;
+
+    setDeletingVenueId(venueId);
+    setNotice(null);
+
     try {
       await deleteAdminVenue(venueId, token);
-      loadVenues(page);
+      const targetPage = getTargetPageAfterDelete(page, venues.length, total);
+      setNotice({ type: "success", message: `Deleted venue "${venueName}".` });
+
+      if (targetPage !== page) {
+        setPage(targetPage);
+      } else {
+        loadVenues(targetPage);
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete venue");
+      setNotice({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to delete venue",
+      });
+    } finally {
+      setDeletingVenueId(null);
     }
   };
 
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (loading) {
     return (
@@ -73,6 +109,18 @@ export default function AdminVenuesPage() {
 
   return (
     <div className="space-y-4">
+      {notice && (
+        <div
+          className={`rounded-xl border p-4 text-sm ${
+            notice.type === "success"
+              ? "border-emerald-900/50 bg-emerald-950/30 text-emerald-300"
+              : "border-red-900/50 bg-red-950/30 text-red-400"
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
+
       <p className="text-sm text-zinc-500">{total} venue{total !== 1 ? "s" : ""}</p>
 
       <div className="overflow-x-auto">
@@ -111,9 +159,10 @@ export default function AdminVenuesPage() {
                 <td className="py-3">
                   <button
                     onClick={() => handleDelete(v.id, v.name)}
-                    className="text-xs text-red-400 transition-colors hover:text-red-300"
+                    disabled={deletingVenueId === v.id}
+                    className="text-xs text-red-400 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Delete
+                    {deletingVenueId === v.id ? "Deleting..." : "Delete"}
                   </button>
                 </td>
               </tr>

@@ -13,6 +13,24 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
 
+const PAGE_SIZE = 50;
+
+type Notice = {
+  type: "success" | "error";
+  message: string;
+};
+
+function getTargetPageAfterDelete(currentPage: number, itemCount: number, totalCount: number) {
+  const nextTotal = Math.max(0, totalCount - 1);
+  const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
+
+  if (itemCount <= 1 && currentPage > 1) {
+    return Math.min(currentPage - 1, nextTotalPages);
+  }
+
+  return Math.min(currentPage, nextTotalPages);
+}
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60_000);
@@ -32,6 +50,8 @@ export default function AdminClipsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [deletingClipId, setDeletingClipId] = useState<string | null>(null);
 
   const loadClips = (p: number) => {
     if (!token) return;
@@ -53,15 +73,31 @@ export default function AdminClipsPage() {
   const handleDelete = async (clipId: string) => {
     if (!token) return;
     if (!window.confirm("Delete this clip? This cannot be undone.")) return;
+
+    setDeletingClipId(clipId);
+    setNotice(null);
+
     try {
       await deleteAdminClip(clipId, token);
-      loadClips(page);
+      const targetPage = getTargetPageAfterDelete(page, clips.length, total);
+      setNotice({ type: "success", message: "Deleted clip." });
+
+      if (targetPage !== page) {
+        setPage(targetPage);
+      } else {
+        loadClips(targetPage);
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete clip");
+      setNotice({
+        type: "error",
+        message: err instanceof Error ? err.message : "Failed to delete clip",
+      });
+    } finally {
+      setDeletingClipId(null);
     }
   };
 
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   if (loading) {
     return (
@@ -86,6 +122,18 @@ export default function AdminClipsPage() {
 
   return (
     <div className="space-y-4">
+      {notice && (
+        <div
+          className={`rounded-xl border p-4 text-sm ${
+            notice.type === "success"
+              ? "border-emerald-900/50 bg-emerald-950/30 text-emerald-300"
+              : "border-red-900/50 bg-red-950/30 text-red-400"
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
+
       <p className="text-sm text-zinc-500">{total} clip{total !== 1 ? "s" : ""}</p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -127,9 +175,10 @@ export default function AdminClipsPage() {
                 </span>
                 <button
                   onClick={() => handleDelete(clip.id)}
-                  className="text-xs text-red-400 transition-colors hover:text-red-300"
+                  disabled={deletingClipId === clip.id}
+                  className="text-xs text-red-400 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Delete
+                  {deletingClipId === clip.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
