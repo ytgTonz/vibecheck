@@ -70,3 +70,38 @@ export interface Feedback {
   userId: string;
   createdAt: string;
 }
+
+// ─── Admin types ────────────────────────────────────────────────────────────
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdminStats {
+  counts: { users: number; venues: number; clips: number; feedback: number };
+  usersByRole: { role: string; count: number }[];
+  recentUsers: User[];
+  recentVenues: Venue[];
+  recentClips: Clip[];
+}
+
+export interface AdminFeedback extends Feedback {
+  user: { id: string; name: string; email: string };
+}
+
+export interface AdminUser extends User {
+  _count: { ownedVenues: number; venueLinks: number; feedback: number };
+}
+
+export interface AdminVenue extends Venue {
+  owner: { id: string; name: string; email: string };
+  _count: { clips: number; promoters: number };
+}
+
+export interface AdminClip extends Clip {
+  venue: { id: string; name: string };
+  uploader?: { id: string; name: string; email: string } | null;
+}

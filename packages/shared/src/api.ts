@@ -1,4 +1,7 @@
-import { Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback } from './types';
+import {
+  Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback,
+  PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue, AdminClip,
+} from './types';
 import { FeedbackCategory, FeedbackRating } from './enums';
 
 /**
@@ -292,4 +295,114 @@ export async function submitFeedback(
   }
 
   return body as Feedback;
+}
+
+// ─── Admin endpoints ────────────────────────────────────────────────────────
+
+/** Fetch platform-wide admin stats. */
+export async function fetchAdminStats(token: string): Promise<AdminStats> {
+  const res = await fetch(`${baseUrl}/admin/stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch admin stats: ${res.status}`);
+  return body as AdminStats;
+}
+
+/** Fetch paginated feedback with optional filters. */
+export async function fetchAdminFeedback(
+  token: string,
+  filters?: { category?: string; rating?: string; page?: number; limit?: number }
+): Promise<PaginatedResponse<AdminFeedback>> {
+  const params = new URLSearchParams();
+  if (filters?.category) params.set('category', filters.category);
+  if (filters?.rating) params.set('rating', filters.rating);
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.limit) params.set('limit', String(filters.limit));
+  const qs = params.toString();
+
+  const res = await fetch(`${baseUrl}/admin/feedback${qs ? `?${qs}` : ''}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch feedback: ${res.status}`);
+  return body as PaginatedResponse<AdminFeedback>;
+}
+
+/** Fetch paginated users with counts. */
+export async function fetchAdminUsers(
+  token: string,
+  page?: number
+): Promise<PaginatedResponse<AdminUser>> {
+  const qs = page ? `?page=${page}` : '';
+  const res = await fetch(`${baseUrl}/admin/users${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch users: ${res.status}`);
+  return body as PaginatedResponse<AdminUser>;
+}
+
+/** Delete a user by ID (admin only). */
+export async function deleteAdminUser(id: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to delete user: ${res.status}`);
+  }
+}
+
+/** Fetch paginated venues with owner info and counts. */
+export async function fetchAdminVenues(
+  token: string,
+  page?: number
+): Promise<PaginatedResponse<AdminVenue>> {
+  const qs = page ? `?page=${page}` : '';
+  const res = await fetch(`${baseUrl}/admin/venues${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch venues: ${res.status}`);
+  return body as PaginatedResponse<AdminVenue>;
+}
+
+/** Delete a venue by ID (admin only). */
+export async function deleteAdminVenue(id: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/admin/venues/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to delete venue: ${res.status}`);
+  }
+}
+
+/** Fetch paginated clips with venue and uploader info. */
+export async function fetchAdminClips(
+  token: string,
+  page?: number
+): Promise<PaginatedResponse<AdminClip>> {
+  const qs = page ? `?page=${page}` : '';
+  const res = await fetch(`${baseUrl}/admin/clips${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch clips: ${res.status}`);
+  return body as PaginatedResponse<AdminClip>;
+}
+
+/** Delete a clip by ID (admin only). */
+export async function deleteAdminClip(id: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/admin/clips/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to delete clip: ${res.status}`);
+  }
 }

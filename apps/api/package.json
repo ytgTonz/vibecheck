@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "migrate": "prisma migrate deploy",
     "seed": "ts-node-dev --transpile-only prisma/seed.ts",
+    "seed:admin": "ts-node-dev --transpile-only prisma/seed-admin.ts",
     "db:reset": "ts-node-dev --transpile-only prisma/reset.ts"
   },
   "prisma": {

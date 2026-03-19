@@ -25,18 +25,29 @@ export default function NavBar() {
           <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
             {user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-zinc-400 transition-colors hover:text-zinc-200"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/upload"
-                  className="rounded-lg bg-white px-3 py-1.5 font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
-                >
-                  Upload
-                </Link>
+                {user.role === "ADMIN" ? (
+                  <Link
+                    href="/admin"
+                    className="text-zinc-400 transition-colors hover:text-zinc-200"
+                  >
+                    Admin
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="text-zinc-400 transition-colors hover:text-zinc-200"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/upload"
+                      className="rounded-lg bg-white px-3 py-1.5 font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+                    >
+                      Upload
+                    </Link>
+                  </>
+                )}
                 <FeedbackButton />
                 <span className="hidden text-zinc-400 sm:inline">{user.name}</span>
                 <button
