@@ -71,6 +71,14 @@ export default function VenueCard({ venue }: { venue: Venue }) {
   const storyBarCount = venue.clipCount > 0 ? Math.min(venue.clipCount, 5) : 1;
   const accent = venueTypeAccent[venue.type] ?? venueTypeAccent.OTHER;
   const hasThumbnail = !!venue.latestClipThumbnail;
+  const compactMeta = [
+    venue.location,
+    venue.clipCount > 0
+      ? `${venue.clipCount} ${venue.clipCount === 1 ? 'clip' : 'clips'}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <Pressable
@@ -80,13 +88,13 @@ export default function VenueCard({ venue }: { venue: Venue }) {
           params: { id: venue.id },
         })
       }
-      className="mb-4 overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-950 p-4 active:opacity-90"
+      className="mb-3 overflow-hidden rounded-[22px] border border-zinc-800 bg-zinc-950 px-4 py-3 active:opacity-90"
       style={{
         shadowColor: '#000',
-        shadowOpacity: 0.18,
-        shadowOffset: { width: 0, height: 14 },
-        shadowRadius: 30,
-        elevation: 6,
+        shadowOpacity: 0.14,
+        shadowOffset: { width: 0, height: 10 },
+        shadowRadius: 22,
+        elevation: 4,
       }}
     >
       {hasThumbnail ? (
@@ -103,7 +111,7 @@ export default function VenueCard({ venue }: { venue: Venue }) {
         }`}
       />
 
-      <View className="relative mb-4 flex-row gap-1.5">
+      <View className="relative mb-3 flex-row gap-1.5">
         {Array.from({ length: storyBarCount }).map((_, index) => (
           <View
             key={index}
@@ -118,72 +126,31 @@ export default function VenueCard({ venue }: { venue: Venue }) {
         ))}
       </View>
 
-      <View className="relative mb-4 flex-row items-start justify-between">
-        <View className="flex-1 pr-3">
-          <View className="flex-row items-center gap-2">
-            <View className={`h-2.5 w-2.5 rounded-full ${accent}`} />
-            <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-400">
-              {status.label}
-            </Text>
-          </View>
-
-          <Text className="mt-3 text-xl font-semibold text-zinc-100">
-            {venue.name}
+      <View className="relative">
+        <View className="flex-row items-center gap-2">
+          <View className={`h-2.5 w-2.5 rounded-full ${accent}`} />
+          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
+            {status.label}
           </Text>
-        </View>
-
-        <View className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1">
-          <Text className="text-xs font-medium text-zinc-300">
+          <Text className="text-[11px] uppercase tracking-[1.5px] text-zinc-500">
             {venueTypeLabel[venue.type] ?? venue.type}
           </Text>
         </View>
+
+        <Text className="mt-2 text-lg font-semibold text-zinc-100">
+          {venue.name}
+        </Text>
       </View>
 
-      <Text className="relative mb-4 text-sm leading-5 text-zinc-300">
-        {venue.location}
+      <Text className="relative mt-2 text-sm text-zinc-300">
+        {compactMeta || venue.location}
       </Text>
 
-      <View className="relative mb-4 flex-row flex-wrap gap-2">
+      <View className="relative mt-3 flex-row flex-wrap gap-2">
         <View className="rounded-full bg-zinc-900 px-3 py-1">
           <Text className="text-xs font-medium text-zinc-200">
             {status.detail}
           </Text>
-        </View>
-
-        {venue.hours && (
-          <View className="rounded-full bg-zinc-900 px-3 py-1">
-            <Text className="text-xs font-medium text-zinc-200">
-              {venue.hours}
-            </Text>
-          </View>
-        )}
-
-        <View className="rounded-full bg-zinc-900 px-3 py-1">
-          <Text className="text-xs font-medium text-zinc-200">
-            {venue.clipCount} {venue.clipCount === 1 ? 'clip' : 'clips'}
-          </Text>
-        </View>
-      </View>
-
-      {venue.musicGenre.length > 0 && (
-        <View className="relative flex-row flex-wrap gap-2">
-          {venue.musicGenre.slice(0, 3).map((genre) => (
-            <View
-              key={genre}
-              className="rounded-full border border-zinc-800 px-3 py-1"
-            >
-              <Text className="text-[11px] uppercase tracking-[1.5px] text-zinc-300">
-                {genre}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View className="relative mt-5 flex-row items-center justify-between">
-        <Text className="text-sm text-zinc-200">Open venue story</Text>
-        <View className="h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900">
-          <Text className="ml-0.5 text-lg text-zinc-100">▶</Text>
         </View>
       </View>
     </Pressable>
