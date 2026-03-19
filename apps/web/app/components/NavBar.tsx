@@ -23,6 +23,12 @@ export default function NavBar() {
 
         {hydrated && (
           <div className="flex flex-wrap items-center gap-2 text-sm sm:gap-4">
+            <Link
+              href="/browse"
+              className="text-zinc-400 transition-colors hover:text-zinc-200"
+            >
+              Browse
+            </Link>
             {user ? (
               <>
                 {user.role === "ADMIN" ? (

@@ -118,7 +118,7 @@ export default function VenueDetailPage() {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/30">
           <p className="text-sm font-medium text-red-600 dark:text-red-400">{error || "Venue not found"}</p>
-          <Link href="/" className="mt-3 inline-block text-xs text-red-500 hover:text-red-400 dark:text-red-400 dark:hover:text-red-300">
+          <Link href="/browse" className="mt-3 inline-block text-xs text-red-500 hover:text-red-400 dark:text-red-400 dark:hover:text-red-300">
             &larr; Back to venues
           </Link>
         </div>
@@ -135,7 +135,7 @@ export default function VenueDetailPage() {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       {/* Back link */}
       <Link
-        href="/"
+        href="/browse"
         className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       >
         &larr; All venues

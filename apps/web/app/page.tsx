@@ -1,186 +1,164 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useMemo } from "react";
-import { setBaseUrl, useVenueStore, Venue } from "@vibecheck/shared";
-import VenueCard from "./components/VenueCard";
-import FeaturedVenueCard from "./components/FeaturedVenueCard";
-import FilterBar from "./components/FilterBar";
+const pillars = [
+  {
+    eyebrow: "Live Discovery",
+    title: "See the room before you spend the Uber.",
+    body: "Open recent venue stories, check if the floor is moving, and decide where to go with actual live context instead of stale posts.",
+  },
+  {
+    eyebrow: "Venue Teams",
+    title: "Owners and promoters publish the signal.",
+    body: "The people linked to the venue control what gets posted, which keeps the feed tied to real venues instead of random user uploads.",
+  },
+  {
+    eyebrow: "Short Clips",
+    title: "Fast, watchable, and made for tonight.",
+    body: "VibeCheck is built around short uploadable clips that tell you whether the place is warm, packed, or worth skipping.",
+  },
+];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
+const useCases = [
+  "Check what is live right now",
+  "Compare multiple venues in minutes",
+  "See recent clips, not polished promos",
+  "Upload straight from linked venue teams",
+];
 
-function VenueSection({
-  title,
-  venues,
-}: {
-  title: string;
-  venues: Venue[];
-}) {
-  if (venues.length === 0) return null;
+export default function LandingPage() {
   return (
-    <div className="mb-8">
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">
-        {title}
-      </h3>
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {venues.map((venue) => (
-          <VenueCard key={venue.id} venue={venue} />
-        ))}
-      </div>
-    </div>
-  );
-}
+    <main className="bg-zinc-950 text-zinc-100">
+      <section className="border-b border-zinc-800">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,440px)] lg:items-end">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/80">
+              East London Nightlife, In Real Time
+            </p>
+            <h1 className="mt-4 max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+              Know the vibe before you arrive.
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
+              VibeCheck helps people answer one question quickly: where should I go tonight?
+              Browse live venue stories, open short clips, and make the call with current signal instead of guesswork.
+            </p>
 
-export default function BrowsePage() {
-  const loading = useVenueStore((s) => s.loading);
-  const error = useVenueStore((s) => s.error);
-  const loadVenues = useVenueStore((s) => s.loadVenues);
-  const venues = useVenueStore((s) => s.venues);
-  const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
-  const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/browse"
+                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+              >
+                Browse live venues
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500 hover:bg-zinc-900"
+              >
+                Sign in
+              </Link>
+            </div>
 
-  useEffect(() => {
-    loadVenues();
-  }, [loadVenues]);
+            <div className="mt-10 flex flex-wrap gap-6 text-sm text-zinc-500">
+              <span>Short-form venue clips</span>
+              <span>Owner and promoter publishing</span>
+              <span>Built for tonight, not reviews from last month</span>
+            </div>
+          </div>
 
-  const filtered = useMemo(() => {
-    return venues.filter((venue) => {
-      if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
-      if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
-      return true;
-    });
-  }, [venues, venueTypeFilter, musicGenreFilter]);
+          <div className="overflow-hidden rounded-[2rem] border border-zinc-800 bg-[linear-gradient(160deg,#0f0f10_10%,#1f140f_45%,#09090b_100%)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+            <div className="mb-5 flex gap-1.5">
+              <span className="h-1 flex-1 rounded-full bg-white/90" />
+              <span className="h-1 flex-1 rounded-full bg-white/25" />
+              <span className="h-1 flex-1 rounded-full bg-white/15" />
+            </div>
 
-  const groups = useMemo(() => {
-    const now = Date.now();
-    const TWO_HOURS = 2 * 60 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-    const live: Venue[] = [];
-    const fresh: Venue[] = [];
-    const quiet: Venue[] = [];
-    for (const venue of filtered) {
-      if (!venue.lastClipAt) { quiet.push(venue); continue; }
-      const age = now - new Date(venue.lastClipAt).getTime();
-      if (age < TWO_HOURS) live.push(venue);
-      else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
-      else quiet.push(venue);
-    }
-    return { live, fresh, quiet };
-  }, [filtered]);
-  const liveCount = groups.live.length;
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-200/80">
+                What Browse Gives You
+              </p>
+              <h2 className="mt-4 text-2xl font-semibold">
+                Live now. Fresh tonight. Quiet if it is dead.
+              </h2>
+              <p className="mt-4 text-sm leading-6 text-zinc-300">
+                The product is ranked around activity, not alphabetic directories. The busiest,
+                freshest venues surface first, and every card opens directly into that venue’s story flow.
+              </p>
 
-  // Featured venue: first live, or first fresh, or first quiet
-  const featuredVenue =
-    groups.live[0] ?? groups.fresh[0] ?? groups.quiet[0] ?? null;
-
-  // Remove featured venue from its section to avoid duplication
-  const excludeFeatured = (venues: Venue[]) =>
-    featuredVenue ? venues.filter((v) => v.id !== featuredVenue.id) : venues;
-
-  const liveSectionVenues = excludeFeatured(groups.live);
-  const freshSectionVenues = excludeFeatured(groups.fresh);
-  const quietSectionVenues = excludeFeatured(groups.quiet);
-
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <section className="mb-8 overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950 px-5 py-6 text-white shadow-[0_18px_48px_rgba(0,0,0,0.18)] sm:px-7 sm:py-8">
-        <div className="max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/75">
-            Tonight In East London
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Open the venue stories before you decide where to pull up.
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-            The browse page now works like a live directory: each venue card previews the
-            energy, recency, and feel of its latest story rather than looking like a plain listing.
-          </p>
+              <div className="mt-6 space-y-3">
+                {useCases.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-zinc-200"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-100">
-            Browse Stories
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className="mb-8 max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+            Why It Exists
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Social discovery patterns, but anchored around venues.
           </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Scan the latest venue energy first, then open the full feed that feels right.
+          <p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
+            VibeCheck borrows the speed of story and short-form interfaces, but keeps the information
+            architecture venue-first so the product still helps people choose a place, not just consume random clips.
           </p>
         </div>
-      </div>
 
-      <div className="mb-4">
-        <FilterBar />
-      </div>
-
-      {!loading && !error && filtered.length > 0 && (
-        <p className="mb-6 text-xs text-zinc-500">
-          {filtered.length} venue{filtered.length !== 1 ? "s" : ""}
-          {liveCount > 0 && ` · ${liveCount} live now`}
-        </p>
-      )}
-
-      {loading && (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid gap-5 lg:grid-cols-3">
+          {pillars.map((pillar) => (
             <div
-              key={i}
-              className="animate-pulse overflow-hidden rounded-[1.75rem] border border-zinc-800 bg-zinc-950 p-5"
+              key={pillar.title}
+              className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/70 p-6"
             >
-              <div className="mb-5 flex gap-1.5">
-                <div className="h-1 flex-1 rounded-full bg-zinc-800" />
-                <div className="h-1 flex-1 rounded-full bg-zinc-900" />
-                <div className="h-1 flex-1 rounded-full bg-zinc-900" />
-              </div>
-              <div className="mb-4 h-4 w-20 rounded bg-zinc-800" />
-              <div className="mb-3 h-8 w-48 rounded bg-zinc-800" />
-              <div className="mb-5 h-4 w-40 rounded bg-zinc-800" />
-              <div className="mb-5 flex gap-2">
-                <div className="h-7 w-28 rounded-full bg-zinc-800" />
-                <div className="h-7 w-24 rounded-full bg-zinc-800" />
-              </div>
-              <div className="flex gap-2">
-                <div className="h-6 w-16 rounded-full bg-zinc-800" />
-                <div className="h-6 w-14 rounded-full bg-zinc-800" />
-                <div className="h-6 w-18 rounded-full bg-zinc-800" />
-              </div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-200/70">
+                {pillar.eyebrow}
+              </p>
+              <h3 className="mt-4 text-2xl font-semibold tracking-tight">
+                {pillar.title}
+              </h3>
+              <p className="mt-4 text-sm leading-7 text-zinc-400">
+                {pillar.body}
+              </p>
             </div>
           ))}
         </div>
-      )}
+      </section>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/30">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
-          <button
-            onClick={() => loadVenues()}
-            className="mt-3 text-xs text-red-500 hover:text-red-400 dark:text-red-400 dark:hover:text-red-300"
-          >
-            Try again
-          </button>
+      <section className="border-t border-zinc-800">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-16 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+              Ready To Explore
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Open the browse surface and see what is actually moving tonight.
+            </h2>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/browse"
+              className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
+            >
+              Open browse
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:border-zinc-500 hover:bg-zinc-900"
+            >
+              Owner / promoter login
+            </Link>
+          </div>
         </div>
-      )}
-
-      {!loading && !error && filtered.length === 0 && (
-        <div className="py-12 text-center">
-          <p className="text-lg font-medium text-zinc-500 dark:text-zinc-400">No venues match your filters</p>
-          <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Try adjusting your filters or check back later.</p>
-        </div>
-      )}
-
-      {!loading && !error && filtered.length > 0 && (
-        <>
-          {featuredVenue && (
-            <div className="mb-8">
-              <FeaturedVenueCard venue={featuredVenue} />
-            </div>
-          )}
-
-          <VenueSection title="Live now" venues={liveSectionVenues} />
-          <VenueSection title="Fresh tonight" venues={freshSectionVenues} />
-          <VenueSection title="More venues" venues={quietSectionVenues} />
-        </>
-      )}
-    </div>
+      </section>
+    </main>
   );
 }

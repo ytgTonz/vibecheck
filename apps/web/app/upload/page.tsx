@@ -213,7 +213,7 @@ export default function UploadPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
       <Link
-        href="/"
+        href="/browse"
         className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
       >
         &larr; Back

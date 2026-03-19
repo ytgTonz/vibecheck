@@ -93,7 +93,7 @@ export default function LoginPage() {
         }
       } else {
         await login(email, password);
-        router.push("/");
+        router.push("/browse");
       }
     } catch {
       // error is already set in the store
