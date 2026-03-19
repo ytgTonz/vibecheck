@@ -87,8 +87,23 @@ export interface AdminStats {
   counts: { users: number; venues: number; clips: number; feedback: number };
   usersByRole: { role: string; count: number }[];
   recentUsers: User[];
-  recentVenues: Venue[];
+  recentVenues: AdminVenueSummary[];
   recentClips: Clip[];
+}
+
+export interface AdminVenueSummary {
+  id: string;
+  name: string;
+  type: VenueType;
+  location: string;
+  city: string;
+  hours: string | null;
+  musicGenre: string[];
+  coverCharge: string | null;
+  drinkPrices: string | null;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AdminFeedback extends Feedback {
@@ -99,7 +114,7 @@ export interface AdminUser extends User {
   _count: { ownedVenues: number; venueLinks: number; feedback: number };
 }
 
-export interface AdminVenue extends Venue {
+export interface AdminVenue extends AdminVenueSummary {
   owner: { id: string; name: string; email: string };
   _count: { clips: number; promoters: number };
 }
