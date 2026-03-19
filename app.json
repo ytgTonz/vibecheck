@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "9b2a2d09-fcec-4d5f-a46b-5e9ffac04065"
+      }
+    },
+    "android": {
+      "package": "com.ytgtonz.vibecheck"
+    }
+  }
+}
