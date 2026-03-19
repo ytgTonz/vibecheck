@@ -2,6 +2,53 @@ import { create } from 'zustand';
 import { User } from '../types';
 import { login as apiLogin, register as apiRegister, RegisterPayload } from '../api';
 
+const TOKEN_KEY = 'vibecheck_token';
+const USER_KEY = 'vibecheck_user';
+
+let memoryToken: string | null = null;
+let memoryUserJson: string | null = null;
+
+function canUseLocalStorage() {
+  return typeof localStorage !== 'undefined';
+}
+
+function saveAuth(token: string, user: User) {
+  const userJson = JSON.stringify(user);
+
+  if (canUseLocalStorage()) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, userJson);
+    return;
+  }
+
+  memoryToken = token;
+  memoryUserJson = userJson;
+}
+
+function clearAuth() {
+  if (canUseLocalStorage()) {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  memoryToken = null;
+  memoryUserJson = null;
+}
+
+function loadAuth() {
+  if (canUseLocalStorage()) {
+    return {
+      token: localStorage.getItem(TOKEN_KEY),
+      userJson: localStorage.getItem(USER_KEY),
+    };
+  }
+
+  return {
+    token: memoryToken,
+    userJson: memoryUserJson,
+  };
+}
+
 interface AuthState {
   /** The authenticated user, or null if logged out. */
   user: User | null;
@@ -38,8 +85,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { token, user } = await apiRegister(payload);
-      localStorage.setItem('vibecheck_token', token);
-      localStorage.setItem('vibecheck_user', JSON.stringify(user));
+      saveAuth(token, user);
       set({ token, user, loading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
@@ -52,8 +98,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { token, user } = await apiLogin(email, password);
-      localStorage.setItem('vibecheck_token', token);
-      localStorage.setItem('vibecheck_user', JSON.stringify(user));
+      saveAuth(token, user);
       set({ token, user, loading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
@@ -63,21 +108,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('vibecheck_token');
-    localStorage.removeItem('vibecheck_user');
+    clearAuth();
     set({ token: null, user: null, error: null });
   },
 
   hydrate: () => {
-    const token = localStorage.getItem('vibecheck_token');
-    const userJson = localStorage.getItem('vibecheck_user');
+    const { token, userJson } = loadAuth();
     if (token && userJson) {
       try {
         const user = JSON.parse(userJson) as User;
         set({ token, user });
       } catch {
-        localStorage.removeItem('vibecheck_token');
-        localStorage.removeItem('vibecheck_user');
+        clearAuth();
       }
     }
   },

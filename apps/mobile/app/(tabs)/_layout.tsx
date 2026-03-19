@@ -31,6 +31,38 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="upload"
+        options={{
+          title: 'Upload',
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: 'arrow.up.circle', android: 'upload', web: 'upload' }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="venues/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

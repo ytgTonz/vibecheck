@@ -556,7 +556,7 @@ export default function VenueDetailScreen() {
               Venue details
             </Text>
             <Text className="mt-1 text-sm text-zinc-400">
-              The practical stuff after the vibe passes the test.
+              More information about the Venue!
             </Text>
 
             <View className="mt-5 gap-4">
