@@ -122,6 +122,48 @@ export default function AdminClipsPage() {
     return (
       <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
         <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => loadClips(page)}
+          className="mt-4 rounded-lg border border-red-800/60 px-3 py-2 text-sm text-red-300 transition-colors hover:border-red-700 hover:text-red-200"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (clips.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search caption, venue, uploader, or email"
+            className="min-w-[240px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
+          {hasFilters && (
+            <button
+              onClick={() => {
+                setQuery("");
+                setPage(1);
+              }}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+          <p className="text-base font-medium text-zinc-100">No clips found</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            {hasFilters ? "Try changing the search query." : "There are no clips to moderate yet."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -170,7 +212,7 @@ export default function AdminClipsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {clips.map((clip) => (
-          <div key={clip.id} className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+          <div key={clip.id} className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.7)]">
             <div className="relative h-36 w-full bg-zinc-800">
               {clip.thumbnail ? (
                 <Image
@@ -185,24 +227,37 @@ export default function AdminClipsPage() {
                   No thumbnail
                 </div>
               )}
+              <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 via-black/25 to-transparent px-3 py-3">
+                <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-zinc-200 backdrop-blur">
+                  {clip.views} views
+                </span>
+                <span className="rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-zinc-200 backdrop-blur">
+                  {timeAgo(clip.createdAt)}
+                </span>
+              </div>
             </div>
 
-            <div className="space-y-2 p-4">
+            <div className="space-y-3 p-4">
               <div>
-                <p className="truncate text-sm font-medium">{clip.caption || "Untitled clip"}</p>
-                <Link href={`/venues/${clip.venue.id}`} className="mt-1 block text-xs text-zinc-400 hover:text-zinc-200 hover:underline">
+                <p className="line-clamp-2 text-sm font-medium text-zinc-100">{clip.caption || "Untitled clip"}</p>
+                <Link href={`/venues/${clip.venue.id}`} className="mt-1 inline-block text-xs text-zinc-400 hover:text-zinc-200 hover:underline">
                   {clip.venue.name}
                 </Link>
               </div>
-              <p className="text-xs text-zinc-500">
-                {clip.uploader ? `${clip.uploader.name} (${clip.uploader.email})` : "Unknown uploader"}
-              </p>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-zinc-500">{clip.views} views &middot; {timeAgo(clip.createdAt)}</span>
+
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-3">
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Uploader</p>
+                <p className="mt-1 text-xs text-zinc-300">
+                  {clip.uploader ? `${clip.uploader.name} (${clip.uploader.email})` : "Unknown uploader"}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+                <span className="text-xs text-zinc-500">Clip moderation</span>
                 <button
                   onClick={() => handleDelete(clip.id)}
                   disabled={deletingClipId === clip.id}
-                  className="text-xs text-red-400 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-red-900/60 px-3 py-1.5 text-xs text-red-300 transition-colors hover:border-red-700 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {deletingClipId === clip.id ? "Deleting..." : "Delete"}
                 </button>

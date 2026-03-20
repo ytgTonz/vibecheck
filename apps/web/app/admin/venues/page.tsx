@@ -111,6 +111,63 @@ export default function AdminVenuesPage() {
     return (
       <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
         <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => loadVenues(page)}
+          className="mt-4 rounded-lg border border-red-800/60 px-3 py-2 text-sm text-red-300 transition-colors hover:border-red-700 hover:text-red-200"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (venues.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search venue, location, owner name, or email"
+            className="min-w-[240px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
+          <select
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+          >
+            {venueTypeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "ALL" ? "All venue types" : option.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+          {hasFilters && (
+            <button
+              onClick={() => {
+                setQuery("");
+                setType("ALL");
+                setPage(1);
+              }}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+          <p className="text-base font-medium text-zinc-100">No venues found</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            {hasFilters ? "Try changing the search or venue type filter." : "There are no venues to moderate yet."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -172,7 +229,53 @@ export default function AdminVenuesPage() {
         {hasFilters ? " matching current filters" : ""}
       </p>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 md:hidden">
+        {venues.map((v) => (
+          <div key={v.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Link href={`/venues/${v.id}`} className="text-sm font-medium text-zinc-100 hover:text-zinc-300 hover:underline">
+                  {v.name}
+                </Link>
+                <p className="mt-1 text-xs text-zinc-500">{v.location}</p>
+              </div>
+              <span className="rounded bg-zinc-800 px-2 py-0.5 text-[11px] uppercase tracking-wide text-zinc-300">
+                {v.type.replace(/_/g, " ")}
+              </span>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-zinc-800/70 px-3 py-3">
+              <p className="text-xs uppercase tracking-wide text-zinc-500">Owner</p>
+              <p className="mt-1 text-sm text-zinc-100">{v.owner.name}</p>
+              <p className="text-xs text-zinc-500">{v.owner.email}</p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-2 text-center">
+                <p className="text-lg font-semibold text-white">{v._count.clips}</p>
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Clips</p>
+              </div>
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-2 text-center">
+                <p className="text-lg font-semibold text-white">{v._count.promoters}</p>
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Promoters</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+              <p className="text-xs text-zinc-500">Created {new Date(v.createdAt).toLocaleDateString()}</p>
+              <button
+                onClick={() => handleDelete(v.id, v.name)}
+                disabled={deletingVenueId === v.id}
+                className="rounded-lg border border-red-900/60 px-3 py-1.5 text-xs text-red-300 transition-colors hover:border-red-700 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingVenueId === v.id ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-xs text-zinc-500">

@@ -116,6 +116,63 @@ export default function AdminUsersPage() {
     return (
       <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
         <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => loadUsers(page)}
+          className="mt-4 rounded-lg border border-red-800/60 px-3 py-2 text-sm text-red-300 transition-colors hover:border-red-700 hover:text-red-200"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search name or email"
+            className="min-w-[220px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
+          <select
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+          >
+            {roleOptions.map((option) => (
+              <option key={option} value={option}>
+                {option === "ALL" ? "All roles" : option.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+          {hasFilters && (
+            <button
+              onClick={() => {
+                setQuery("");
+                setRole("ALL");
+                setPage(1);
+              }}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+          <p className="text-base font-medium text-zinc-100">No users found</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            {hasFilters ? "Try changing the search or role filter." : "There are no users to moderate yet."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -177,7 +234,51 @@ export default function AdminUsersPage() {
         {hasFilters ? " matching current filters" : ""}
       </p>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 md:hidden">
+        {users.map((u) => (
+          <div key={u.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-zinc-100">{u.name}</p>
+                <p className="text-xs text-zinc-500">{u.email}</p>
+              </div>
+              <span className={`rounded px-2 py-0.5 text-xs font-medium ${roleBadgeColors[u.role] || "bg-zinc-700 text-zinc-300"}`}>
+                {u.role.replace(/_/g, " ")}
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-2">
+                <p className="text-lg font-semibold text-white">{u._count.ownedVenues}</p>
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Owned</p>
+              </div>
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-2">
+                <p className="text-lg font-semibold text-white">{u._count.venueLinks}</p>
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Linked</p>
+              </div>
+              <div className="rounded-lg bg-zinc-800/70 px-3 py-2">
+                <p className="text-lg font-semibold text-white">{u._count.feedback}</p>
+                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Feedback</p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+              <p className="text-xs text-zinc-500">Joined {new Date(u.createdAt).toLocaleDateString()}</p>
+              {u.role !== "ADMIN" && (
+                <button
+                  onClick={() => handleDelete(u.id, u.name)}
+                  disabled={deletingUserId === u.id}
+                  className="rounded-lg border border-red-900/60 px-3 py-1.5 text-xs text-red-300 transition-colors hover:border-red-700 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deletingUserId === u.id ? "Deleting..." : "Delete"}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-xs text-zinc-500">
