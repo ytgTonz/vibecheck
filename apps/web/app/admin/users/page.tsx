@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
 import {
   setBaseUrl,
   fetchAdminUsers,
@@ -19,23 +20,11 @@ const roleBadgeColors: Record<string, string> = {
 };
 
 const roleOptions = ["ALL", "ADMIN", "VENUE_OWNER", "VENUE_PROMOTER"] as const;
-const PAGE_SIZE = 50;
 
 type Notice = {
   type: "success" | "error";
   message: string;
 };
-
-function getTargetPageAfterDelete(currentPage: number, itemCount: number, totalCount: number) {
-  const nextTotal = Math.max(0, totalCount - 1);
-  const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
-
-  if (itemCount <= 1 && currentPage > 1) {
-    return Math.min(currentPage - 1, nextTotalPages);
-  }
-
-  return Math.min(currentPage, nextTotalPages);
-}
 
 export default function AdminUsersPage() {
   const { token } = useAuthStore();
@@ -97,7 +86,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
   const hasFilters = query.trim().length > 0 || role !== "ALL";
 
   if (loading) {

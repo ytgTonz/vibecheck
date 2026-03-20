@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
 import {
   setBaseUrl,
   fetchAdminVenues,
@@ -14,23 +15,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
 
 const venueTypeOptions = ["ALL", "NIGHTCLUB", "BAR", "RESTAURANT_BAR", "LOUNGE", "SHISA_NYAMA", "ROOFTOP", "OTHER"] as const;
-const PAGE_SIZE = 50;
 
 type Notice = {
   type: "success" | "error";
   message: string;
 };
-
-function getTargetPageAfterDelete(currentPage: number, itemCount: number, totalCount: number) {
-  const nextTotal = Math.max(0, totalCount - 1);
-  const nextTotalPages = Math.max(1, Math.ceil(nextTotal / PAGE_SIZE));
-
-  if (itemCount <= 1 && currentPage > 1) {
-    return Math.min(currentPage - 1, nextTotalPages);
-  }
-
-  return Math.min(currentPage, nextTotalPages);
-}
 
 export default function AdminVenuesPage() {
   const { token } = useAuthStore();
@@ -92,7 +81,7 @@ export default function AdminVenuesPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
   const hasFilters = query.trim().length > 0 || type !== "ALL";
 
   if (loading) {
