@@ -75,17 +75,23 @@ function storyStatus(lastClipAt: string | null) {
 }
 
 export default function VenueCard({ venue }: { venue: Venue }) {
-  const status = storyStatus(venue.lastClipAt);
-  const theme =
-    venueTypeTheme[venue.type] ?? venueTypeTheme.OTHER;
+  const status = venue.isLive
+    ? { label: "Streaming live", detail: "Watch now" }
+    : storyStatus(venue.lastClipAt);
+  const theme = venue.isLive
+    ? "animate-pulse bg-red-500"
+    : (venueTypeTheme[venue.type] ?? venueTypeTheme.OTHER);
   const storyBarCount =
     venue.clipCount > 0 ? Math.min(venue.clipCount, 5) : 1;
   const hasThumbnail = !!venue.latestClipThumbnail;
+  const href = venue.isLive
+    ? `/venues/${venue.id}/live`
+    : `/venues/${venue.id}`;
 
   return (
     <Link
-      href={`/venues/${venue.id}`}
-      className="group relative block overflow-hidden rounded-[1.75rem] border border-zinc-800 bg-zinc-950 p-5 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)]"
+      href={href}
+      className={`group relative block overflow-hidden rounded-[1.75rem] border bg-zinc-950 p-5 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)] ${venue.isLive ? "border-red-500/40 hover:border-red-500/60" : "border-zinc-800 hover:border-zinc-700"}`}
     >
       {hasThumbnail && (
         <Image
@@ -168,7 +174,7 @@ export default function VenueCard({ venue }: { venue: Venue }) {
 
         <div className="mt-6 flex items-center justify-between">
           <span className="text-sm text-zinc-200/85">
-            Open venue story
+            {venue.isLive ? "Watch live" : "Open venue story"}
           </span>
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white transition-transform duration-300 group-hover:scale-105">
             <svg className="ml-0.5 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

@@ -25,3 +25,9 @@ export enum FeedbackRating {
   NEUTRAL = 'NEUTRAL',
   GOOD = 'GOOD',
 }
+
+export enum StreamStatus {
+  IDLE = 'IDLE',
+  LIVE = 'LIVE',
+  ENDED = 'ENDED',
+}

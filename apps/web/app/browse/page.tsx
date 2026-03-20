@@ -55,26 +55,30 @@ export default function BrowsePage() {
     const now = Date.now();
     const TWO_HOURS = 2 * 60 * 60 * 1000;
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    const streaming: Venue[] = [];
     const live: Venue[] = [];
     const fresh: Venue[] = [];
     const quiet: Venue[] = [];
     for (const venue of filtered) {
+      if (venue.isLive) { streaming.push(venue); continue; }
       if (!venue.lastClipAt) { quiet.push(venue); continue; }
       const age = now - new Date(venue.lastClipAt).getTime();
       if (age < TWO_HOURS) live.push(venue);
       else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
       else quiet.push(venue);
     }
-    return { live, fresh, quiet };
+    return { streaming, live, fresh, quiet };
   }, [filtered]);
   const liveCount = groups.live.length;
+  const streamingCount = groups.streaming.length;
 
   const featuredVenue =
-    groups.live[0] ?? groups.fresh[0] ?? groups.quiet[0] ?? null;
+    groups.streaming[0] ?? groups.live[0] ?? groups.fresh[0] ?? groups.quiet[0] ?? null;
 
   const excludeFeatured = (groupVenues: Venue[]) =>
     featuredVenue ? groupVenues.filter((v) => v.id !== featuredVenue.id) : groupVenues;
 
+  const streamingSectionVenues = excludeFeatured(groups.streaming);
   const liveSectionVenues = excludeFeatured(groups.live);
   const freshSectionVenues = excludeFeatured(groups.fresh);
   const quietSectionVenues = excludeFeatured(groups.quiet);
@@ -114,6 +118,7 @@ export default function BrowsePage() {
       {!loading && !error && filtered.length > 0 && (
         <p className="mb-6 text-xs text-zinc-500">
           {filtered.length} venue{filtered.length !== 1 ? "s" : ""}
+          {streamingCount > 0 && ` · ${streamingCount} streaming live`}
           {liveCount > 0 && ` · ${liveCount} live now`}
         </p>
       )}
@@ -174,6 +179,7 @@ export default function BrowsePage() {
             </div>
           )}
 
+          <VenueSection title="Streaming live" venues={streamingSectionVenues} />
           <VenueSection title="Live now" venues={liveSectionVenues} />
           <VenueSection title="Fresh tonight" venues={freshSectionVenues} />
           <VenueSection title="More venues" venues={quietSectionVenues} />

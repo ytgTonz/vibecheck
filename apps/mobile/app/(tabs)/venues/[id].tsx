@@ -447,6 +447,21 @@ export default function VenueDetailScreen() {
             <Text className="text-sm text-zinc-400">← All venues</Text>
           </Pressable>
 
+          {venue.isLive && venue.activeStreamId && (
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/venues/[id]/live', params: { id: venue.id } })
+              }
+              className="mb-4 flex-row items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3"
+            >
+              <View className="h-3 w-3 rounded-full bg-red-500" />
+              <Text className="flex-1 text-sm font-semibold text-red-400">
+                This venue is streaming live
+              </Text>
+              <Text className="text-sm text-red-300">Watch &rarr;</Text>
+            </Pressable>
+          )}
+
           <View className="mb-6 overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-950 px-4 py-5">
             <View className="mb-4 flex-row flex-wrap items-center gap-2">
               <View className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1">

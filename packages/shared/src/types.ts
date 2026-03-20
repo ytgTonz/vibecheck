@@ -18,6 +18,8 @@ export interface Venue {
   latestClipThumbnail: string | null;
   latestClipCaption: string | null;
   latestClipViews: number | null;
+  isLive?: boolean;
+  activeStreamId?: string;
 }
 
 export interface Clip {
@@ -72,6 +74,22 @@ export interface Feedback {
   message: string | null;
   userId: string;
   createdAt: string;
+}
+
+// ─── Live streaming types ───────────────────────────────────────────────────
+
+export interface LiveStream {
+  id: string;
+  venueId: string;
+  livekitRoom: string;
+  status: 'IDLE' | 'LIVE' | 'ENDED';
+  startedAt: string | null;
+  endedAt: string | null;
+  currentViewerCount: number;
+  viewerPeak: number;
+  createdBy: string;
+  createdAt: string;
+  venue?: { id: string; name: string; type: string; location: string };
 }
 
 // ─── Admin types ────────────────────────────────────────────────────────────

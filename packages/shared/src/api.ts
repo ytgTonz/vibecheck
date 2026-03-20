@@ -1,5 +1,5 @@
 import {
-  Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback,
+  Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
   PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue, AdminClip,
 } from './types';
 import { FeedbackCategory, FeedbackRating } from './enums';
@@ -270,6 +270,88 @@ export async function deleteClip(id: string, token: string): Promise<void> {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error || `Failed to delete clip: ${res.status}`);
   }
+}
+
+// ─── Live streaming ─────────────────────────────────────────────────────────
+
+/** Create a new stream for a venue. */
+export async function createStream(
+  venueId: string,
+  token: string,
+): Promise<LiveStream> {
+  const res = await fetch(`${baseUrl}/streams`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ venueId }),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to create stream: ${res.status}`);
+  }
+
+  return body as LiveStream;
+}
+
+/** Fetch all currently LIVE streams. */
+export function fetchActiveStreams(): Promise<LiveStream[]> {
+  return apiFetch<LiveStream[]>('/streams/active');
+}
+
+/** Fetch a single stream by ID. */
+export function fetchStream(streamId: string): Promise<LiveStream> {
+  return apiFetch<LiveStream>(`/streams/${streamId}`);
+}
+
+/** Fetch broadcaster token for a stream. */
+export async function fetchStreamToken(
+  streamId: string,
+  token: string,
+): Promise<{ token: string }> {
+  const res = await fetch(`${baseUrl}/streams/${streamId}/token`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to fetch stream token: ${res.status}`);
+  }
+
+  return body as { token: string };
+}
+
+/** Fetch anonymous viewer token for a stream. */
+export function fetchViewerToken(
+  streamId: string,
+): Promise<{ token: string }> {
+  return apiFetch<{ token: string }>(`/streams/${streamId}/viewer-token`);
+}
+
+/** End a stream. */
+export async function endStream(
+  streamId: string,
+  token: string,
+): Promise<void> {
+  const res = await fetch(`${baseUrl}/streams/${streamId}/end`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to end stream: ${res.status}`);
+  }
+}
+
+/** Fetch recent ended streams for a venue. */
+export function fetchVenueRecentStreams(venueId: string): Promise<LiveStream[]> {
+  return apiFetch<LiveStream[]>(`/streams/venue/${venueId}/recent`);
 }
 
 // ─── Feedback ───────────────────────────────────────────────────────────────

@@ -1,4 +1,12 @@
 import "../global.css";
+
+try {
+  const { registerGlobals } = require('@livekit/react-native');
+  registerGlobals();
+} catch {
+  // Expo Go / missing native module: let feature screens handle the fallback UI.
+}
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';

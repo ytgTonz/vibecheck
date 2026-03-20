@@ -141,6 +141,21 @@ export default function VenueDetailPage() {
         &larr; All venues
       </Link>
 
+      {venue.isLive && venue.activeStreamId && (
+        <Link
+          href={`/venues/${venue.id}/live`}
+          className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 transition-colors hover:bg-red-500/15"
+        >
+          <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+          <span className="text-sm font-semibold text-red-400">
+            This venue is streaming live right now
+          </span>
+          <span className="ml-auto text-sm text-red-300">
+            Watch live &rarr;
+          </span>
+        </Link>
+      )}
+
       <section className="mb-8 overflow-hidden rounded-[2rem] border border-zinc-200/70 bg-[linear-gradient(135deg,#120a07_0%,#2c170d_36%,#0b0c10_100%)] text-white shadow-[0_28px_80px_rgba(17,12,10,0.18)] dark:border-zinc-800">
         <div className="grid gap-8 px-5 py-6 sm:px-7 sm:py-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-center">
           <div>

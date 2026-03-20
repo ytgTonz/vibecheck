@@ -9,6 +9,9 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@livekit/react-native": "^2.9.6",
+    "@livekit/react-native-expo-plugin": "^1.0.2",
+    "@livekit/react-native-webrtc": "^137.0.2",
     "@react-navigation/native": "^7.1.28",
     "@vibecheck/shared": "*",
     "expo": "~55.0.6",
@@ -23,6 +26,7 @@
     "expo-symbols": "~55.0.5",
     "expo-video": "^55.0.11",
     "expo-web-browser": "~55.0.9",
+    "livekit-client": "^2.17.3",
     "nativewind": "^4.2.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",

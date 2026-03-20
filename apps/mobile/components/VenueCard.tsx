@@ -67,9 +67,11 @@ function storyStatus(lastClipAt: string | null) {
 
 export default function VenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
-  const status = storyStatus(venue.lastClipAt);
+  const status = venue.isLive
+    ? { label: 'Streaming live', detail: 'Watch now' }
+    : storyStatus(venue.lastClipAt);
   const storyBarCount = venue.clipCount > 0 ? Math.min(venue.clipCount, 5) : 1;
-  const accent = venueTypeAccent[venue.type] ?? venueTypeAccent.OTHER;
+  const accent = venue.isLive ? 'bg-red-500' : (venueTypeAccent[venue.type] ?? venueTypeAccent.OTHER);
   const hasThumbnail = !!venue.latestClipThumbnail;
   const compactMeta = [
     venue.location,
@@ -83,12 +85,13 @@ export default function VenueCard({ venue }: { venue: Venue }) {
   return (
     <Pressable
       onPress={() =>
-        router.push({
-          pathname: '/venues/[id]',
-          params: { id: venue.id },
-        })
+        router.push(
+          venue.isLive
+            ? { pathname: '/venues/[id]/live', params: { id: venue.id } }
+            : { pathname: '/venues/[id]', params: { id: venue.id } }
+        )
       }
-      className="mb-3 overflow-hidden rounded-[22px] border border-zinc-800 bg-zinc-950 px-4 py-3 active:opacity-90"
+      className={`mb-3 overflow-hidden rounded-[22px] border bg-zinc-950 px-4 py-3 active:opacity-90 ${venue.isLive ? 'border-red-500/40' : 'border-zinc-800'}`}
       style={{
         shadowColor: '#000',
         shadowOpacity: 0.14,

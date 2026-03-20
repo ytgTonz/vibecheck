@@ -54,26 +54,43 @@ function mapVenueWithLatestClip(
 
 // GET /venues — return all venues ranked by activity
 router.get('/', async (_req: Request, res: Response) => {
-  const venues = await prisma.venue.findMany({
-    include: {
-      _count: {
-        select: { clips: true },
+  const [venues, activeStreams] = await Promise.all([
+    prisma.venue.findMany({
+      include: {
+        _count: {
+          select: { clips: true },
+        },
+        clips: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true, thumbnail: true, caption: true, views: true },
+        },
       },
-      clips: {
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-        select: { createdAt: true, thumbnail: true, caption: true, views: true },
-      },
-    },
-  });
+    }),
+    prisma.liveStream.findMany({
+      where: { status: 'LIVE' },
+      select: { id: true, venueId: true },
+    }),
+  ]);
+
+  // Build a map of venueId → active stream id
+  const liveMap = new Map(activeStreams.map((s) => [s.venueId, s.id]));
 
   const now = Date.now();
-  const enriched = venues.map(mapVenueWithLatestClip);
+  const enriched = venues.map((venue) => {
+    const base = mapVenueWithLatestClip(venue);
+    const activeStreamId = liveMap.get(venue.id);
+    return {
+      ...base,
+      isLive: !!activeStreamId,
+      activeStreamId: activeStreamId ?? undefined,
+    };
+  });
 
-  // Activity-based ranking: live (2h) > fresh (24h) > quiet
+  // Activity-based ranking: streaming (tier -1) > live (2h) > fresh (24h) > quiet
   enriched.sort((a, b) => {
-    const tierA = getVenueActivityTier(a.lastClipAt, now);
-    const tierB = getVenueActivityTier(b.lastClipAt, now);
+    const tierA = a.isLive ? -1 : getVenueActivityTier(a.lastClipAt, now);
+    const tierB = b.isLive ? -1 : getVenueActivityTier(b.lastClipAt, now);
     if (tierA !== tierB) return tierA - tierB;
 
     // Within live/fresh tiers: most recent first, tie-break by clip count
@@ -116,7 +133,16 @@ router.get('/:id', async (req: Request, res: Response) => {
     return;
   }
 
-  res.json(mapVenueWithLatestClip(venue));
+  const activeStream = await prisma.liveStream.findFirst({
+    where: { venueId: venue.id, status: 'LIVE' },
+    select: { id: true },
+  });
+
+  res.json({
+    ...mapVenueWithLatestClip(venue),
+    isLive: !!activeStream,
+    activeStreamId: activeStream?.id ?? undefined,
+  });
 });
 
 // GET /venues/:id/clips — return all clips for a venue

@@ -52,6 +52,12 @@ export default function NavBar() {
                     >
                       Upload
                     </Link>
+                    <Link
+                      href="/dashboard"
+                      className="rounded-lg bg-red-500 px-3 py-1.5 font-medium text-white transition-colors hover:bg-red-600"
+                    >
+                      Go Live
+                    </Link>
                   </>
                 )}
                 <FeedbackButton />

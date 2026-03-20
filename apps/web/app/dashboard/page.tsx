@@ -7,6 +7,7 @@ import Image from "next/image";
 import {
   setBaseUrl,
   fetchMyVenues,
+  fetchActiveStreams,
   generateInvite,
   fetchVenuePromoters,
   removePromoter,
@@ -15,6 +16,7 @@ import {
   VenueWithStats,
   VenuePromoter,
   Invite,
+  LiveStream,
 } from "@vibecheck/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -54,6 +56,7 @@ export default function DashboardPage() {
   const [loadingPromoters, setLoadingPromoters] = useState<Record<string, boolean>>({});
   const [deletingClipIds, setDeletingClipIds] = useState<Record<string, boolean>>({});
   const [openClipMenuId, setOpenClipMenuId] = useState<string | null>(null);
+  const [activeStreams, setActiveStreams] = useState<Record<string, LiveStream>>({});
 
   const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
 
@@ -61,8 +64,14 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const nextVenues = await fetchMyVenues(authToken);
+      const [nextVenues, streams] = await Promise.all([
+        fetchMyVenues(authToken),
+        fetchActiveStreams(),
+      ]);
       setVenues(nextVenues);
+      const streamMap: Record<string, LiveStream> = {};
+      for (const s of streams) streamMap[s.venueId] = s;
+      setActiveStreams(streamMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
@@ -244,11 +253,34 @@ export default function DashboardPage() {
         >
           {/* Venue header */}
           <div className="mb-4 flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-bold">{venue.name}</h2>
-              <p className="text-sm text-zinc-400">{venue.location}</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h2 className="text-xl font-bold">{venue.name}</h2>
+                <p className="text-sm text-zinc-400">{venue.location}</p>
+              </div>
+              {activeStreams[venue.id] && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                  LIVE · {activeStreams[venue.id].currentViewerCount} viewers
+                </span>
+              )}
             </div>
             <div className="flex shrink-0 gap-3">
+              {activeStreams[venue.id] ? (
+                <Link
+                  href={`/dashboard/live/${venue.id}`}
+                  className="rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30"
+                >
+                  View Stream
+                </Link>
+              ) : (
+                <Link
+                  href={`/dashboard/live/${venue.id}`}
+                  className="rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600"
+                >
+                  Go Live
+                </Link>
+              )}
               {venue.ownerId === user?.id && (
                 <Link
                   href={`/dashboard/edit/${venue.id}`}

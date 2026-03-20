@@ -17,6 +17,11 @@
     },
     "android": {
       "package": "com.ytgtonz.vibecheck",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,7 +36,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "@livekit/react-native-expo-plugin"
     ],
     "experiments": {
       "typedRoutes": true

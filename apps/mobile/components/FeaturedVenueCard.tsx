@@ -22,18 +22,19 @@ function storyStatusLabel(lastClipAt: string | null): string {
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
-  const status = storyStatusLabel(venue.lastClipAt);
+  const status = venue.isLive ? 'Streaming live' : storyStatusLabel(venue.lastClipAt);
   const hasThumbnail = !!venue.latestClipThumbnail;
 
   return (
     <Pressable
       onPress={() =>
-        router.push({
-          pathname: '/venues/[id]',
-          params: { id: venue.id },
-        })
+        router.push(
+          venue.isLive
+            ? { pathname: '/venues/[id]/live', params: { id: venue.id } }
+            : { pathname: '/venues/[id]', params: { id: venue.id } }
+        )
       }
-      className="overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-950 active:opacity-90"
+      className={`overflow-hidden rounded-[28px] border bg-zinc-950 active:opacity-90 ${venue.isLive ? 'border-red-500/40' : 'border-zinc-800'}`}
       style={{
         shadowColor: '#000',
         shadowOpacity: 0.2,
@@ -60,11 +61,13 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         <View className="mb-4 flex-row flex-wrap items-center gap-2">
           <View
             className={`h-2.5 w-2.5 rounded-full ${
-              status === 'Live now'
-                ? 'bg-emerald-400'
-                : status === 'Fresh clip'
-                  ? 'bg-amber-400'
-                  : 'bg-zinc-500'
+              venue.isLive
+                ? 'bg-red-500'
+                : status === 'Live now'
+                  ? 'bg-emerald-400'
+                  : status === 'Fresh clip'
+                    ? 'bg-amber-400'
+                    : 'bg-zinc-500'
             }`}
           />
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
@@ -89,8 +92,10 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         )}
 
         <View className="mt-5 flex-row items-center justify-between">
-          <View className="rounded-full bg-zinc-100 px-5 py-3">
-            <Text className="text-sm font-semibold text-zinc-950">Watch now</Text>
+          <View className={`rounded-full px-5 py-3 ${venue.isLive ? 'bg-red-500' : 'bg-zinc-100'}`}>
+            <Text className={`text-sm font-semibold ${venue.isLive ? 'text-white' : 'text-zinc-950'}`}>
+              {venue.isLive ? 'Watch live' : 'Watch now'}
+            </Text>
           </View>
           {venue.latestClipViews != null && venue.latestClipViews > 0 ? (
             <Text className="text-xs text-zinc-400">
