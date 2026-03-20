@@ -68,25 +68,26 @@ function EmojiReactions() {
   };
 
   return (
-    <div className="relative">
-      {/* Floating emojis */}
-      <div className="pointer-events-none absolute -top-20 right-0 flex flex-col items-end gap-1">
+    <div className="flex flex-col items-center gap-3">
+      {/* Floating emojis rise above buttons */}
+      <div className="pointer-events-none flex flex-col items-center gap-1">
         {floatingEmojis.map(({ id, emoji }) => (
           <span
             key={id}
-            className="animate-bounce text-2xl"
+            className="animate-bounce text-2xl drop-shadow-lg"
             style={{ animationDuration: "1s" }}
           >
             {emoji}
           </span>
         ))}
       </div>
-      <div className="flex gap-2">
+      {/* Vertical emoji buttons */}
+      <div className="flex flex-col gap-2">
         {emojis.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="rounded-full bg-white/10 px-3 py-1.5 text-lg transition-transform hover:scale-110 hover:bg-white/20"
+            className="h-10 w-10 rounded-full bg-black/30 text-lg transition-transform hover:scale-110 hover:bg-black/50"
           >
             {emoji}
           </button>
@@ -115,44 +116,39 @@ function ChatOverlay() {
   };
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col">
-      {/* Gradient fade */}
-      <div className="pointer-events-none h-32 bg-gradient-to-t from-black/80 to-transparent" />
+    <div className="absolute bottom-0 left-0 z-10 w-1/2 max-w-md pb-4 pl-4 pr-4">
+      {/* Messages — no background, text shadows for readability */}
+      <div
+        ref={scrollRef}
+        className="mb-3 max-h-48 space-y-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {chatMessages.slice(-20).map((msg, i) => (
+          <p key={i} className="text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            <span className="font-semibold text-white">
+              {msg.from?.name || msg.from?.identity || "Viewer"}
+            </span>
+            <span className="ml-1.5 text-white/70">{msg.message}</span>
+          </p>
+        ))}
+      </div>
 
-      <div className="bg-black/60 px-4 pb-4 backdrop-blur-sm">
-        {/* Messages */}
-        <div
-          ref={scrollRef}
-          className="mb-3 max-h-48 space-y-1.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      {/* Input */}
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          placeholder="Say something..."
+          className="flex-1 rounded-full bg-black/30 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:ring-1 focus:ring-white/20"
+        />
+        <button
+          onClick={handleSend}
+          disabled={!message.trim()}
+          className="rounded-full bg-black/30 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/50 disabled:opacity-40"
         >
-          {chatMessages.slice(-30).map((msg, i) => (
-            <div key={i} className="text-sm">
-              <span className="font-semibold text-white/80">
-                {msg.from?.name || msg.from?.identity || "Viewer"}
-              </span>
-              <span className="ml-2 text-white/60">{msg.message}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Input + reactions row */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Say something..."
-            className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:ring-1 focus:ring-white/30"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!message.trim()}
-            className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-40"
-          >
-            Send
-          </button>
-        </div>
+          Send
+        </button>
       </div>
     </div>
   );
@@ -336,8 +332,8 @@ export default function LiveWatchPage() {
           <ViewerCount />
         </div>
 
-        {/* Right side — emoji reactions */}
-        <div className="absolute bottom-48 right-4 z-10">
+        {/* Right side — vertical emoji reactions */}
+        <div className="absolute bottom-4 right-4 z-10">
           <EmojiReactions />
         </div>
 
