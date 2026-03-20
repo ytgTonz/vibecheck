@@ -27,6 +27,7 @@ model Venue {
   clips     Clip[]
   promoters VenuePromoter[]
   invites   Invite[]
+  streams   LiveStream[]
 }
 
 model Clip {
@@ -56,6 +57,7 @@ model User {
   venueLinks     VenuePromoter[]
   createdInvites Invite[]
   feedback       Feedback[]
+  createdStreams  LiveStream[]    @relation("CreatedStreams")
 }
 
 model VenuePromoter {
@@ -124,4 +126,31 @@ enum FeedbackRating {
   BAD
   NEUTRAL
   GOOD
+}
+
+enum StreamStatus {
+  IDLE
+  LIVE
+  ENDED
+}
+
+// ─── Live Streaming ─────────────────────────────────────────────────────────
+
+model LiveStream {
+  id                 String       @id @default(cuid())
+  venueId            String
+  livekitRoom        String       @unique
+  status             StreamStatus @default(IDLE)
+  startedAt          DateTime?
+  endedAt            DateTime?
+  currentViewerCount Int          @default(0)
+  viewerPeak         Int          @default(0)
+  createdBy          String
+  createdAt          DateTime     @default(now())
+
+  venue   Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  creator User  @relation("CreatedStreams", fields: [createdBy], references: [id])
+
+  @@index([venueId, status])
+  @@index([status])
 }
