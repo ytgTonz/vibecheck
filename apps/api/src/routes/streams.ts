@@ -55,7 +55,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       data: {
         venueId,
         livekitRoom: roomName,
-        status: 'IDLE',
+        status: 'LIVE',
+        startedAt: new Date(),
         createdBy: userId,
       },
       include: {
