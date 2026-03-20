@@ -225,7 +225,7 @@ function LiveContent({ venue }: { venue: Venue }) {
   // Use LiveKit hooks inside LiveKitRoom context
   const participants = useRemoteParticipants?.() || [];
   const tracks = useTracks?.(
-    [TrackSource?.Camera, TrackSource?.ScreenShare].filter(Boolean),
+    [TrackSource?.Camera, TrackSource?.ScreenShare, TrackSource?.Microphone].filter(Boolean),
     { onlySubscribed: true }
   ) || [];
   const chat = useChat?.() || { chatMessages: [], send: () => {} };

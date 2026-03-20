@@ -95,7 +95,7 @@ function EmojiReactions() {
   );
 }
 
-function ChatPanel() {
+function ChatOverlay() {
   const { chatMessages, send } = useChat();
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -114,39 +114,40 @@ function ChatPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-3 space-y-2 [scrollbar-width:thin]"
-      >
-        {chatMessages.length === 0 && (
-          <p className="text-center text-xs text-zinc-500">
-            Chat messages appear here
-          </p>
-        )}
-        {chatMessages.map((msg, i) => (
-          <div key={i} className="text-sm">
-            <span className="font-medium text-zinc-300">
-              {msg.from?.name || msg.from?.identity || "Viewer"}
-            </span>
-            <span className="ml-2 text-zinc-400">{msg.message}</span>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-zinc-800 p-3">
-        <div className="flex gap-2">
+    <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col">
+      {/* Gradient fade */}
+      <div className="pointer-events-none h-32 bg-gradient-to-t from-black/80 to-transparent" />
+
+      <div className="bg-black/60 px-4 pb-4 backdrop-blur-sm">
+        {/* Messages */}
+        <div
+          ref={scrollRef}
+          className="mb-3 max-h-48 space-y-1.5 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {chatMessages.slice(-30).map((msg, i) => (
+            <div key={i} className="text-sm">
+              <span className="font-semibold text-white/80">
+                {msg.from?.name || msg.from?.identity || "Viewer"}
+              </span>
+              <span className="ml-2 text-white/60">{msg.message}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Input + reactions row */}
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Say something..."
-            className="flex-1 rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:ring-1 focus:ring-zinc-600"
+            className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-white placeholder-white/40 outline-none focus:ring-1 focus:ring-white/30"
           />
           <button
             onClick={handleSend}
             disabled={!message.trim()}
-            className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:opacity-40"
+            className="rounded-full bg-white/20 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-40"
           >
             Send
           </button>
@@ -157,9 +158,10 @@ function ChatPanel() {
 }
 
 function BroadcasterVideo() {
-  const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], {
-    onlySubscribed: true,
-  });
+  const tracks = useTracks(
+    [Track.Source.Camera, Track.Source.ScreenShare, Track.Source.Microphone],
+    { onlySubscribed: true }
+  );
 
   const videoTrack = tracks.find(
     (t) => t.source === Track.Source.Camera || t.source === Track.Source.ScreenShare
@@ -167,7 +169,7 @@ function BroadcasterVideo() {
 
   if (!videoTrack) {
     return (
-      <div className="flex aspect-video items-center justify-center bg-zinc-900">
+      <div className="flex h-full w-full items-center justify-center bg-zinc-900">
         <div className="text-center">
           <div className="mb-2 h-8 w-8 mx-auto animate-spin rounded-full border-2 border-zinc-600 border-t-white" />
           <p className="text-sm text-zinc-400">Waiting for broadcaster...</p>
@@ -179,7 +181,7 @@ function BroadcasterVideo() {
   return (
     <VideoTrack
       trackRef={videoTrack}
-      className="h-full w-full object-contain"
+      className="h-full w-full object-cover"
     />
   );
 }
@@ -298,85 +300,48 @@ export default function LiveWatchPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/browse"
-            className="text-sm text-zinc-400 hover:text-zinc-200"
-          >
-            &larr; Browse
-          </Link>
-          <span className="text-zinc-600">|</span>
-          <h1 className="text-lg font-semibold">{venue.name}</h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-            LIVE
-          </span>
-        </div>
-      </div>
-
-      {/* Main content */}
+    <div className="fixed inset-0 z-50 bg-black">
       <LiveKitRoom
         serverUrl={LIVEKIT_URL}
         token={token}
         connect={true}
-        className="flex flex-col gap-4 lg:flex-row"
+        className="relative h-full w-full"
       >
-        {/* Video */}
-        <div className="relative flex-1 overflow-hidden rounded-xl bg-black">
-          <div className="aspect-video">
-            <BroadcasterVideo />
-          </div>
-          <StreamEndedOverlay venueName={venue.name} />
-
-          {/* Overlay controls */}
-          <div className="absolute left-4 top-4">
-            <ViewerCount />
-          </div>
+        {/* Fullscreen video */}
+        <div className="absolute inset-0">
+          <BroadcasterVideo />
         </div>
 
-        {/* Sidebar — chat + reactions */}
-        <div className="flex h-[500px] w-full flex-col rounded-xl border border-zinc-800 bg-zinc-900 lg:h-auto lg:w-80">
-          <div className="border-b border-zinc-800 px-4 py-3">
-            <h3 className="text-sm font-semibold">Live Chat</h3>
+        <StreamEndedOverlay venueName={venue.name} />
+
+        {/* Top overlay — header */}
+        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/browse"
+              className="rounded-full bg-black/50 px-3 py-1.5 text-sm text-white/80 backdrop-blur-sm hover:bg-black/70"
+            >
+              &larr; Back
+            </Link>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+              LIVE
+            </span>
+            <h1 className="text-sm font-semibold text-white drop-shadow-lg">
+              {venue.name}
+            </h1>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <ChatPanel />
-          </div>
-          <div className="border-t border-zinc-800 p-3">
-            <EmojiReactions />
-          </div>
+          <ViewerCount />
         </div>
+
+        {/* Right side — emoji reactions */}
+        <div className="absolute bottom-48 right-4 z-10">
+          <EmojiReactions />
+        </div>
+
+        {/* Bottom overlay — chat */}
+        <ChatOverlay />
       </LiveKitRoom>
-
-      {/* Venue info */}
-      <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-zinc-400">{venue.location}</p>
-            {venue.musicGenre.length > 0 && (
-              <div className="mt-2 flex gap-2">
-                {venue.musicGenre.map((genre) => (
-                  <span
-                    key={genre}
-                    className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300"
-                  >
-                    {genre}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-          <Link
-            href={`/venues/${venue.id}`}
-            className="text-sm text-zinc-400 hover:text-white"
-          >
-            View venue &rarr;
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }
