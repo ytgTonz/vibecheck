@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   setBaseUrl,
@@ -64,28 +65,47 @@ export default function AdminOverviewPage() {
   if (!stats) return null;
 
   const statCards = [
-    { label: "Users", value: stats.counts.users },
-    { label: "Venues", value: stats.counts.venues },
-    { label: "Clips", value: stats.counts.clips },
-    { label: "Feedback", value: stats.counts.feedback },
+    { label: "Users", value: stats.counts.users, href: "/admin/users", description: "Review accounts and roles" },
+    { label: "Venues", value: stats.counts.venues, href: "/admin/venues", description: "Inspect venue ownership" },
+    { label: "Clips", value: stats.counts.clips, href: "/admin/clips", description: "Moderate recent uploads" },
+    { label: "Feedback", value: stats.counts.feedback, href: "/admin/feedback", description: "Triage platform issues" },
+  ];
+
+  const quickActions = [
+    { title: "Review Feedback", href: "/admin/feedback", description: "Search bug reports, suggestions, and recent ratings." },
+    { title: "Manage Users", href: "/admin/users", description: "Find owners, promoters, and account activity quickly." },
+    { title: "Moderate Clips", href: "/admin/clips", description: "Inspect recent uploads, thumbnails, and delete risky content." },
   ];
 
   return (
     <div className="space-y-8">
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center"
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {quickActions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-zinc-700 hover:bg-zinc-900/80"
           >
-            <p className="text-3xl font-bold">{card.value}</p>
-            <p className="mt-1 text-sm text-zinc-400">{card.label}</p>
-          </div>
+            <p className="text-sm font-semibold text-white">{action.title}</p>
+            <p className="mt-2 text-sm text-zinc-400">{action.description}</p>
+          </Link>
         ))}
       </div>
 
-      {/* Users by role */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {statCards.map((card) => (
+          <Link
+            key={card.label}
+            href={card.href}
+            className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 text-center transition-colors hover:border-zinc-700 hover:bg-zinc-900/80"
+          >
+            <p className="text-3xl font-bold">{card.value}</p>
+            <p className="mt-1 text-sm text-zinc-300">{card.label}</p>
+            <p className="mt-2 text-xs text-zinc-500">{card.description}</p>
+          </Link>
+        ))}
+      </div>
+
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
         <h2 className="mb-4 text-lg font-semibold">Users by Role</h2>
         <div className="flex flex-wrap gap-4">
@@ -98,54 +118,74 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* Recent users */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Recent Users</h2>
-        <div className="space-y-2">
-          {stats.recentUsers.map((u) => (
-            <div key={u.id} className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-2">
-              <div>
-                <p className="text-sm font-medium">{u.name}</p>
-                <p className="text-xs text-zinc-500">{u.email}</p>
-              </div>
-              <div className="text-right">
-                <span className="rounded bg-zinc-700 px-2 py-0.5 text-xs">{u.role.replace(/_/g, " ")}</span>
-                <p className="mt-1 text-xs text-zinc-500">{timeAgo(u.createdAt)}</p>
-              </div>
-            </div>
-          ))}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Users</h2>
+            <Link href="/admin/users" className="text-xs text-zinc-400 hover:text-white">View all</Link>
+          </div>
+          <div className="space-y-2">
+            {stats.recentUsers.map((u) => (
+              <Link key={u.id} href="/admin/users" className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-2 transition-colors hover:bg-zinc-800">
+                <div>
+                  <p className="text-sm font-medium">{u.name}</p>
+                  <p className="text-xs text-zinc-500">{u.email}</p>
+                </div>
+                <div className="text-right">
+                  <span className="rounded bg-zinc-700 px-2 py-0.5 text-xs">{u.role.replace(/_/g, " ")}</span>
+                  <p className="mt-1 text-xs text-zinc-500">{timeAgo(u.createdAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Recent venues */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Recent Venues</h2>
-        <div className="space-y-2">
-          {stats.recentVenues.map((v) => (
-            <div key={v.id} className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-2">
-              <div>
-                <p className="text-sm font-medium">{v.name}</p>
-                <p className="text-xs text-zinc-500">{v.location}</p>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Venues</h2>
+            <Link href="/admin/venues" className="text-xs text-zinc-400 hover:text-white">View all</Link>
+          </div>
+          <div className="space-y-2">
+            {stats.recentVenues.map((v) => (
+              <div key={v.id} className="rounded-lg bg-zinc-800/50 px-4 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <Link href={`/venues/${v.id}`} className="text-sm font-medium hover:text-zinc-300 hover:underline">
+                      {v.name}
+                    </Link>
+                    <p className="text-xs text-zinc-500">{v.location}</p>
+                  </div>
+                  <p className="text-xs text-zinc-500">{timeAgo(v.createdAt)}</p>
+                </div>
               </div>
-              <p className="text-xs text-zinc-500">{timeAgo(v.createdAt)}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Recent clips */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-        <h2 className="mb-4 text-lg font-semibold">Recent Clips</h2>
-        <div className="space-y-2">
-          {stats.recentClips.map((c) => (
-            <div key={c.id} className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-2">
-              <div>
-                <p className="text-sm font-medium">{c.caption || "Untitled clip"}</p>
-                <p className="text-xs text-zinc-500">{c.views} views</p>
-              </div>
-              <p className="text-xs text-zinc-500">{timeAgo(c.createdAt)}</p>
-            </div>
-          ))}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Recent Clips</h2>
+            <Link href="/admin/clips" className="text-xs text-zinc-400 hover:text-white">View all</Link>
+          </div>
+          <div className="space-y-2">
+            {stats.recentClips.map((clip) => (
+              <Link key={clip.id} href="/admin/clips" className="block rounded-lg bg-zinc-800/50 px-4 py-2 transition-colors hover:bg-zinc-800">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium">{clip.caption || "Untitled clip"}</p>
+                    <p className="text-xs text-zinc-500">
+                      <span>{clip.views} views</span>
+                      {clip.venue ? <span> &middot; {clip.venue.name}</span> : null}
+                    </p>
+                    {clip.uploader ? (
+                      <p className="text-xs text-zinc-600">{clip.uploader.name} &middot; {clip.uploader.email}</p>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-zinc-500">{timeAgo(clip.createdAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>

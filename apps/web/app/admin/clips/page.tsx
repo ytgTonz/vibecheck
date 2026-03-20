@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import {
   setBaseUrl,
@@ -51,13 +52,17 @@ export default function AdminClipsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [query, setQuery] = useState("");
   const [deletingClipId, setDeletingClipId] = useState<string | null>(null);
 
-  const loadClips = (p: number) => {
+  const loadClips = (targetPage: number) => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchAdminClips(token, p)
+    fetchAdminClips(token, {
+      page: targetPage,
+      query: query.trim() || undefined,
+    })
       .then((res) => {
         setClips(res.data);
         setTotal(res.total);
@@ -68,7 +73,7 @@ export default function AdminClipsPage() {
 
   useEffect(() => {
     loadClips(page);
-  }, [token, page]);
+  }, [token, page, query]);
 
   const handleDelete = async (clipId: string) => {
     if (!token) return;
@@ -98,6 +103,7 @@ export default function AdminClipsPage() {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = query.trim().length > 0;
 
   if (loading) {
     return (
@@ -134,15 +140,37 @@ export default function AdminClipsPage() {
         </div>
       )}
 
-      <p className="text-sm text-zinc-500">{total} clip{total !== 1 ? "s" : ""}</p>
+      <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search caption, venue, uploader, or email"
+          className="min-w-[240px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+        />
+        {hasFilters && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setPage(1);
+            }}
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <p className="text-sm text-zinc-500">
+        {total} clip{total !== 1 ? "s" : ""}
+        {hasFilters ? " matching current filters" : ""}
+      </p>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {clips.map((clip) => (
-          <div
-            key={clip.id}
-            className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900"
-          >
-            {/* Thumbnail */}
+          <div key={clip.id} className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
             <div className="relative h-36 w-full bg-zinc-800">
               {clip.thumbnail ? (
                 <Image
@@ -159,20 +187,18 @@ export default function AdminClipsPage() {
               )}
             </div>
 
-            <div className="p-4">
-              <p className="truncate text-sm font-medium">
-                {clip.caption || "Untitled clip"}
-              </p>
-              <p className="mt-1 text-xs text-zinc-400">
-                {clip.venue.name}
-              </p>
+            <div className="space-y-2 p-4">
+              <div>
+                <p className="truncate text-sm font-medium">{clip.caption || "Untitled clip"}</p>
+                <Link href={`/venues/${clip.venue.id}`} className="mt-1 block text-xs text-zinc-400 hover:text-zinc-200 hover:underline">
+                  {clip.venue.name}
+                </Link>
+              </div>
               <p className="text-xs text-zinc-500">
                 {clip.uploader ? `${clip.uploader.name} (${clip.uploader.email})` : "Unknown uploader"}
               </p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-xs text-zinc-500">
-                  {clip.views} views &middot; {timeAgo(clip.createdAt)}
-                </span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-zinc-500">{clip.views} views &middot; {timeAgo(clip.createdAt)}</span>
                 <button
                   onClick={() => handleDelete(clip.id)}
                   disabled={deletingClipId === clip.id}
@@ -195,9 +221,7 @@ export default function AdminClipsPage() {
           >
             Previous
           </button>
-          <span className="text-sm text-zinc-500">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-sm text-zinc-500">Page {page} of {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}

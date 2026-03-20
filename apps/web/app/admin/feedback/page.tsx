@@ -13,6 +13,7 @@ setBaseUrl(API_URL);
 
 const categories = ["ALL", "BUG", "SUGGESTION", "GENERAL"] as const;
 const ratings = ["ALL", "BAD", "NEUTRAL", "GOOD"] as const;
+const PAGE_SIZE = 50;
 
 const ratingColors: Record<string, string> = {
   BAD: "bg-red-900/50 text-red-400",
@@ -34,6 +35,7 @@ export default function AdminFeedbackPage() {
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<string>("ALL");
   const [rating, setRating] = useState<string>("ALL");
+  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function AdminFeedbackPage() {
     fetchAdminFeedback(token, {
       category: category !== "ALL" ? category : undefined,
       rating: rating !== "ALL" ? rating : undefined,
+      query: query.trim() || undefined,
       page,
     })
       .then((res) => {
@@ -51,53 +54,91 @@ export default function AdminFeedbackPage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [token, category, rating, page]);
+  }, [token, category, rating, query, page]);
 
-  const totalPages = Math.ceil(total / 50);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = category !== "ALL" || rating !== "ALL" || query.trim().length > 0;
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
+      <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <div>
-          <p className="mb-1 text-xs text-zinc-500">Category</p>
-          <div className="flex gap-1">
-            {categories.map((c) => (
-              <button
-                key={c}
-                onClick={() => { setCategory(c); setPage(1); }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  category === c
-                    ? "bg-white text-zinc-900"
-                    : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {c === "ALL" ? "All" : c.charAt(0) + c.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
+          <label htmlFor="feedback-search" className="mb-1 block text-xs text-zinc-500">
+            Search feedback
+          </label>
+          <input
+            id="feedback-search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search message, user name, or email"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
         </div>
-        <div>
-          <p className="mb-1 text-xs text-zinc-500">Rating</p>
-          <div className="flex gap-1">
-            {ratings.map((r) => (
-              <button
-                key={r}
-                onClick={() => { setRating(r); setPage(1); }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  rating === r
-                    ? "bg-white text-zinc-900"
-                    : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {r === "ALL" ? "All" : r.charAt(0) + r.slice(1).toLowerCase()}
-              </button>
-            ))}
+
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <p className="mb-1 text-xs text-zinc-500">Category</p>
+            <div className="flex gap-1">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => {
+                    setCategory(c);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    category === c
+                      ? "bg-white text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {c === "ALL" ? "All" : c.charAt(0) + c.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
           </div>
+          <div>
+            <p className="mb-1 text-xs text-zinc-500">Rating</p>
+            <div className="flex gap-1">
+              {ratings.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => {
+                    setRating(r);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    rating === r
+                      ? "bg-white text-zinc-900"
+                      : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {r === "ALL" ? "All" : r.charAt(0) + r.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          {hasFilters && (
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setCategory("ALL");
+                  setRating("ALL");
+                  setQuery("");
+                  setPage(1);
+                }}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+              >
+                Clear filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Results */}
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -117,13 +158,13 @@ export default function AdminFeedbackPage() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-zinc-500">{total} result{total !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-zinc-500">
+            {total} result{total !== 1 ? "s" : ""}
+            {hasFilters ? " matching current filters" : ""}
+          </p>
           <div className="space-y-3">
             {feedback.map((fb) => (
-              <div
-                key={fb.id}
-                className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"
-              >
+              <div key={fb.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className={`rounded px-2 py-0.5 text-xs font-medium ${categoryColors[fb.category] || ""}`}>
                     {fb.category}
@@ -135,9 +176,7 @@ export default function AdminFeedbackPage() {
                     {new Date(fb.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                {fb.message && (
-                  <p className="mb-2 text-sm text-zinc-300">{fb.message}</p>
-                )}
+                {fb.message && <p className="mb-2 text-sm text-zinc-300">{fb.message}</p>}
                 <p className="text-xs text-zinc-500">
                   {fb.user.name} &middot; {fb.user.email}
                 </p>
@@ -145,7 +184,6 @@ export default function AdminFeedbackPage() {
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <button

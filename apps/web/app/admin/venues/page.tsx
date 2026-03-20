@@ -13,6 +13,7 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 setBaseUrl(API_URL);
 
+const venueTypeOptions = ["ALL", "NIGHTCLUB", "BAR", "RESTAURANT_BAR", "LOUNGE", "SHISA_NYAMA", "ROOFTOP", "OTHER"] as const;
 const PAGE_SIZE = 50;
 
 type Notice = {
@@ -39,13 +40,19 @@ export default function AdminVenuesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState<string>("ALL");
   const [deletingVenueId, setDeletingVenueId] = useState<string | null>(null);
 
-  const loadVenues = (p: number) => {
+  const loadVenues = (targetPage: number) => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchAdminVenues(token, p)
+    fetchAdminVenues(token, {
+      page: targetPage,
+      query: query.trim() || undefined,
+      type: type !== "ALL" ? type : undefined,
+    })
       .then((res) => {
         setVenues(res.data);
         setTotal(res.total);
@@ -56,7 +63,7 @@ export default function AdminVenuesPage() {
 
   useEffect(() => {
     loadVenues(page);
-  }, [token, page]);
+  }, [token, page, query, type]);
 
   const handleDelete = async (venueId: string, venueName: string) => {
     if (!token) return;
@@ -86,6 +93,7 @@ export default function AdminVenuesPage() {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = query.trim().length > 0 || type !== "ALL";
 
   if (loading) {
     return (
@@ -121,7 +129,48 @@ export default function AdminVenuesPage() {
         </div>
       )}
 
-      <p className="text-sm text-zinc-500">{total} venue{total !== 1 ? "s" : ""}</p>
+      <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search venue, location, owner name, or email"
+          className="min-w-[240px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+        />
+        <select
+          value={type}
+          onChange={(e) => {
+            setType(e.target.value);
+            setPage(1);
+          }}
+          className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+        >
+          {venueTypeOptions.map((option) => (
+            <option key={option} value={option}>
+              {option === "ALL" ? "All venue types" : option.replace(/_/g, " ")}
+            </option>
+          ))}
+        </select>
+        {hasFilters && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setType("ALL");
+              setPage(1);
+            }}
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <p className="text-sm text-zinc-500">
+        {total} venue{total !== 1 ? "s" : ""}
+        {hasFilters ? " matching current filters" : ""}
+      </p>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -153,9 +202,7 @@ export default function AdminVenuesPage() {
                 </td>
                 <td className="py-3 pr-4 text-center text-zinc-400">{v._count.clips}</td>
                 <td className="py-3 pr-4 text-center text-zinc-400">{v._count.promoters}</td>
-                <td className="py-3 pr-4 text-xs text-zinc-500">
-                  {new Date(v.createdAt).toLocaleDateString()}
-                </td>
+                <td className="py-3 pr-4 text-xs text-zinc-500">{new Date(v.createdAt).toLocaleDateString()}</td>
                 <td className="py-3">
                   <button
                     onClick={() => handleDelete(v.id, v.name)}
@@ -180,9 +227,7 @@ export default function AdminVenuesPage() {
           >
             Previous
           </button>
-          <span className="text-sm text-zinc-500">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-sm text-zinc-500">Page {page} of {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}

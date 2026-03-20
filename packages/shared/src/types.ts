@@ -88,7 +88,7 @@ export interface AdminStats {
   usersByRole: { role: string; count: number }[];
   recentUsers: User[];
   recentVenues: AdminVenueSummary[];
-  recentClips: Clip[];
+  recentClips: AdminClip[];
 }
 
 export interface AdminVenueSummary {

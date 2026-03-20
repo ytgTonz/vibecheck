@@ -18,6 +18,7 @@ const roleBadgeColors: Record<string, string> = {
   VENUE_PROMOTER: "bg-green-900/50 text-green-400",
 };
 
+const roleOptions = ["ALL", "ADMIN", "VENUE_OWNER", "VENUE_PROMOTER"] as const;
 const PAGE_SIZE = 50;
 
 type Notice = {
@@ -44,13 +45,19 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [query, setQuery] = useState("");
+  const [role, setRole] = useState<string>("ALL");
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
-  const loadUsers = (p: number) => {
+  const loadUsers = (targetPage: number) => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    fetchAdminUsers(token, p)
+    fetchAdminUsers(token, {
+      page: targetPage,
+      query: query.trim() || undefined,
+      role: role !== "ALL" ? role : undefined,
+    })
       .then((res) => {
         setUsers(res.data);
         setTotal(res.total);
@@ -61,7 +68,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     loadUsers(page);
-  }, [token, page]);
+  }, [token, page, query, role]);
 
   const handleDelete = async (userId: string, userName: string) => {
     if (!token) return;
@@ -73,7 +80,7 @@ export default function AdminUsersPage() {
     try {
       await deleteAdminUser(userId, token);
       const targetPage = getTargetPageAfterDelete(page, users.length, total);
-      setNotice({ type: "success", message: `Deleted user \"${userName}\".` });
+      setNotice({ type: "success", message: `Deleted user "${userName}".` });
 
       if (targetPage !== page) {
         setPage(targetPage);
@@ -91,6 +98,7 @@ export default function AdminUsersPage() {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = query.trim().length > 0 || role !== "ALL";
 
   if (loading) {
     return (
@@ -126,7 +134,48 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <p className="text-sm text-zinc-500">{total} user{total !== 1 ? "s" : ""}</p>
+      <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search name or email"
+          className="min-w-[220px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+        />
+        <select
+          value={role}
+          onChange={(e) => {
+            setRole(e.target.value);
+            setPage(1);
+          }}
+          className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none"
+        >
+          {roleOptions.map((option) => (
+            <option key={option} value={option}>
+              {option === "ALL" ? "All roles" : option.replace(/_/g, " ")}
+            </option>
+          ))}
+        </select>
+        {hasFilters && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setRole("ALL");
+              setPage(1);
+            }}
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <p className="text-sm text-zinc-500">
+        {total} user{total !== 1 ? "s" : ""}
+        {hasFilters ? " matching current filters" : ""}
+      </p>
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
@@ -155,9 +204,7 @@ export default function AdminUsersPage() {
                 <td className="py-3 pr-4 text-center text-zinc-400">{u._count.ownedVenues}</td>
                 <td className="py-3 pr-4 text-center text-zinc-400">{u._count.venueLinks}</td>
                 <td className="py-3 pr-4 text-center text-zinc-400">{u._count.feedback}</td>
-                <td className="py-3 pr-4 text-xs text-zinc-500">
-                  {new Date(u.createdAt).toLocaleDateString()}
-                </td>
+                <td className="py-3 pr-4 text-xs text-zinc-500">{new Date(u.createdAt).toLocaleDateString()}</td>
                 <td className="py-3 text-right">
                   {u.role !== "ADMIN" && (
                     <button
@@ -184,9 +231,7 @@ export default function AdminUsersPage() {
           >
             Previous
           </button>
-          <span className="text-sm text-zinc-500">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-sm text-zinc-500">Page {page} of {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}

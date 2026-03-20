@@ -10,6 +10,11 @@ import {
 
 const router = Router();
 
+const validCategories = ['BUG', 'SUGGESTION', 'GENERAL'] as const;
+const validRatings = ['BAD', 'NEUTRAL', 'GOOD'] as const;
+const validRoles = ['ADMIN', 'VENUE_OWNER', 'VENUE_PROMOTER'] as const;
+const validVenueTypes = ['NIGHTCLUB', 'BAR', 'RESTAURANT_BAR', 'LOUNGE', 'SHISA_NYAMA', 'ROOFTOP', 'OTHER'] as const;
+
 // All admin routes require ADMIN role
 router.use(requireAuth, requireRole('ADMIN'));
 
@@ -28,6 +33,26 @@ function parsePagination(query: Request['query']) {
   const limit = Math.min(100, Math.max(1, parseInt(query.limit as string) || 50));
   const skip = (page - 1) * limit;
   return { page, limit, skip };
+}
+
+function getQueryString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+async function enrichClipsWithUploaders<T extends { uploadedBy: string }>(clips: T[]) {
+  const uploaderIds = [...new Set(clips.map((clip) => clip.uploadedBy))];
+  const uploaders = await prisma.user.findMany({
+    where: { id: { in: uploaderIds } },
+    select: { id: true, name: true, email: true },
+  });
+  const uploaderMap = new Map(uploaders.map((u) => [u.id, u]));
+
+  return clips.map((clip) => ({
+    ...clip,
+    uploader: uploaderMap.get(clip.uploadedBy) || null,
+  }));
 }
 
 // GET /admin/stats — platform overview
@@ -54,8 +79,13 @@ router.get('/stats', async (_req: Request, res: Response) => {
       prisma.clip.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
+        include: {
+          venue: { select: { id: true, name: true } },
+        },
       }),
     ]);
+
+  const recentClipsWithUploaders = await enrichClipsWithUploaders(recentClips);
 
   res.json({
     counts: {
@@ -70,7 +100,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
     })),
     recentUsers,
     recentVenues,
-    recentClips,
+    recentClips: recentClipsWithUploaders,
   });
 });
 
@@ -78,24 +108,38 @@ router.get('/stats', async (_req: Request, res: Response) => {
 router.get('/feedback', async (req: Request, res: Response) => {
   const { page, limit, skip } = parsePagination(req.query);
 
-  const validCategories = ['BUG', 'SUGGESTION', 'GENERAL'];
-  const validRatings = ['BAD', 'NEUTRAL', 'GOOD'];
+  const category = getQueryString(req.query.category);
+  const rating = getQueryString(req.query.rating);
+  const search = getQueryString(req.query.query);
 
-  const where: Record<string, string> = {};
-  if (req.query.category && typeof req.query.category === 'string') {
-    if (!validCategories.includes(req.query.category)) {
-      res.status(400).json({ error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
-      return;
-    }
-    where.category = req.query.category;
+  if (category && !validCategories.includes(category as typeof validCategories[number])) {
+    res.status(400).json({ error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
+    return;
   }
-  if (req.query.rating && typeof req.query.rating === 'string') {
-    if (!validRatings.includes(req.query.rating)) {
-      res.status(400).json({ error: `Invalid rating. Must be one of: ${validRatings.join(', ')}` });
-      return;
-    }
-    where.rating = req.query.rating;
+
+  if (rating && !validRatings.includes(rating as typeof validRatings[number])) {
+    res.status(400).json({ error: `Invalid rating. Must be one of: ${validRatings.join(', ')}` });
+    return;
   }
+
+  const conditions: Record<string, unknown>[] = [];
+  if (category) {
+    conditions.push({ category });
+  }
+  if (rating) {
+    conditions.push({ rating });
+  }
+  if (search) {
+    conditions.push({
+      OR: [
+        { message: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   const [data, total] = await Promise.all([
     prisma.feedback.findMany({
@@ -116,9 +160,32 @@ router.get('/feedback', async (req: Request, res: Response) => {
 // GET /admin/users — paginated users with counts
 router.get('/users', async (req: Request, res: Response) => {
   const { page, limit, skip } = parsePagination(req.query);
+  const search = getQueryString(req.query.query);
+  const role = getQueryString(req.query.role);
+
+  if (role && !validRoles.includes(role as typeof validRoles[number])) {
+    res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+    return;
+  }
+
+  const conditions: Record<string, unknown>[] = [];
+  if (role) {
+    conditions.push({ role });
+  }
+  if (search) {
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ],
+    });
+  }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   const [data, total] = await Promise.all([
     prisma.user.findMany({
+      where,
       select: {
         ...userSelectNoPassword,
         _count: {
@@ -133,7 +200,7 @@ router.get('/users', async (req: Request, res: Response) => {
       skip,
       take: limit,
     }),
-    prisma.user.count(),
+    prisma.user.count({ where }),
   ]);
 
   res.json({ data, total, page, limit });
@@ -156,9 +223,34 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
 // GET /admin/venues — paginated venues with owner info and counts
 router.get('/venues', async (req: Request, res: Response) => {
   const { page, limit, skip } = parsePagination(req.query);
+  const search = getQueryString(req.query.query);
+  const type = getQueryString(req.query.type);
+
+  if (type && !validVenueTypes.includes(type as typeof validVenueTypes[number])) {
+    res.status(400).json({ error: `Invalid venue type. Must be one of: ${validVenueTypes.join(', ')}` });
+    return;
+  }
+
+  const conditions: Record<string, unknown>[] = [];
+  if (type) {
+    conditions.push({ type });
+  }
+  if (search) {
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+        { owner: { name: { contains: search, mode: 'insensitive' } } },
+        { owner: { email: { contains: search, mode: 'insensitive' } } },
+      ],
+    });
+  }
+
+  const where = conditions.length > 0 ? { AND: conditions } : {};
 
   const [data, total] = await Promise.all([
     prisma.venue.findMany({
+      where,
       include: {
         owner: { select: { id: true, name: true, email: true } },
         _count: {
@@ -172,7 +264,7 @@ router.get('/venues', async (req: Request, res: Response) => {
       skip,
       take: limit,
     }),
-    prisma.venue.count(),
+    prisma.venue.count({ where }),
   ]);
 
   res.json({ data, total, page, limit });
@@ -193,9 +285,38 @@ router.delete('/venues/:id', async (req: Request, res: Response) => {
 // GET /admin/clips — paginated clips with venue info and uploader lookup
 router.get('/clips', async (req: Request, res: Response) => {
   const { page, limit, skip } = parsePagination(req.query);
+  const search = getQueryString(req.query.query);
+
+  let uploaderIds: string[] = [];
+  if (search) {
+    const matchedUploaders = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true },
+    });
+    uploaderIds = matchedUploaders.map((user) => user.id);
+  }
+
+  const clipSearchConditions: Record<string, unknown>[] = [];
+  if (search) {
+    clipSearchConditions.push(
+      { caption: { contains: search, mode: 'insensitive' as const } },
+      { venue: { name: { contains: search, mode: 'insensitive' as const } } },
+    );
+    if (uploaderIds.length > 0) {
+      clipSearchConditions.push({ uploadedBy: { in: uploaderIds } });
+    }
+  }
+
+  const where = clipSearchConditions.length > 0 ? { OR: clipSearchConditions } : {};
 
   const [data, total] = await Promise.all([
     prisma.clip.findMany({
+      where,
       include: {
         venue: { select: { id: true, name: true } },
       },
@@ -203,21 +324,10 @@ router.get('/clips', async (req: Request, res: Response) => {
       skip,
       take: limit,
     }),
-    prisma.clip.count(),
+    prisma.clip.count({ where }),
   ]);
 
-  // Batch-lookup uploaders (uploadedBy may be a seed placeholder)
-  const uploaderIds = [...new Set(data.map((c) => c.uploadedBy))];
-  const uploaders = await prisma.user.findMany({
-    where: { id: { in: uploaderIds } },
-    select: { id: true, name: true, email: true },
-  });
-  const uploaderMap = new Map(uploaders.map((u) => [u.id, u]));
-
-  const enrichedData = data.map((clip) => ({
-    ...clip,
-    uploader: uploaderMap.get(clip.uploadedBy) || null,
-  }));
+  const enrichedData = await enrichClipsWithUploaders(data);
 
   res.json({ data: enrichedData, total, page, limit });
 });

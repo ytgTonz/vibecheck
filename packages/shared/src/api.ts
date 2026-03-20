@@ -312,11 +312,12 @@ export async function fetchAdminStats(token: string): Promise<AdminStats> {
 /** Fetch paginated feedback with optional filters. */
 export async function fetchAdminFeedback(
   token: string,
-  filters?: { category?: string; rating?: string; page?: number; limit?: number }
+  filters?: { category?: string; rating?: string; query?: string; page?: number; limit?: number }
 ): Promise<PaginatedResponse<AdminFeedback>> {
   const params = new URLSearchParams();
   if (filters?.category) params.set('category', filters.category);
   if (filters?.rating) params.set('rating', filters.rating);
+  if (filters?.query) params.set('query', filters.query);
   if (filters?.page) params.set('page', String(filters.page));
   if (filters?.limit) params.set('limit', String(filters.limit));
   const qs = params.toString();
@@ -332,10 +333,14 @@ export async function fetchAdminFeedback(
 /** Fetch paginated users with counts. */
 export async function fetchAdminUsers(
   token: string,
-  page?: number
+  filters?: { page?: number; query?: string; role?: string }
 ): Promise<PaginatedResponse<AdminUser>> {
-  const qs = page ? `?page=${page}` : '';
-  const res = await fetch(`${baseUrl}/admin/users${qs}`, {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.query) params.set('query', filters.query);
+  if (filters?.role) params.set('role', filters.role);
+  const qs = params.toString();
+  const res = await fetch(`${baseUrl}/admin/users${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -358,10 +363,14 @@ export async function deleteAdminUser(id: string, token: string): Promise<void> 
 /** Fetch paginated venues with owner info and counts. */
 export async function fetchAdminVenues(
   token: string,
-  page?: number
+  filters?: { page?: number; query?: string; type?: string }
 ): Promise<PaginatedResponse<AdminVenue>> {
-  const qs = page ? `?page=${page}` : '';
-  const res = await fetch(`${baseUrl}/admin/venues${qs}`, {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.query) params.set('query', filters.query);
+  if (filters?.type) params.set('type', filters.type);
+  const qs = params.toString();
+  const res = await fetch(`${baseUrl}/admin/venues${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -384,10 +393,13 @@ export async function deleteAdminVenue(id: string, token: string): Promise<void>
 /** Fetch paginated clips with venue and uploader info. */
 export async function fetchAdminClips(
   token: string,
-  page?: number
+  filters?: { page?: number; query?: string }
 ): Promise<PaginatedResponse<AdminClip>> {
-  const qs = page ? `?page=${page}` : '';
-  const res = await fetch(`${baseUrl}/admin/clips${qs}`, {
+  const params = new URLSearchParams();
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.query) params.set('query', filters.query);
+  const qs = params.toString();
+  const res = await fetch(`${baseUrl}/admin/clips${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
