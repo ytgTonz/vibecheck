@@ -14,6 +14,7 @@ import {
 import {
   LiveKitRoom,
   VideoTrack,
+  RoomAudioRenderer,
   useRemoteParticipants,
   useRoomContext,
   useTracks,
@@ -307,10 +308,11 @@ export default function LiveWatchPage() {
         connect={true}
         className="relative h-full w-full"
       >
-        {/* Fullscreen video */}
+        {/* Fullscreen video + audio */}
         <div className="absolute inset-0">
           <BroadcasterVideo />
         </div>
+        <RoomAudioRenderer />
 
         <StreamEndedOverlay venueName={venue.name} />
 
