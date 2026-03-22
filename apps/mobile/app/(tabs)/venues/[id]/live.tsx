@@ -45,6 +45,8 @@ let useRemoteParticipants: any;
 let useTracks: any;
 let useChat: any;
 let TrackSource: any;
+let AudioSession: any;
+let AndroidAudioTypePresets: any;
 
 try {
   const lkComponents = require('@livekit/react-native');
@@ -53,6 +55,8 @@ try {
   useRemoteParticipants = lkComponents.useRemoteParticipants;
   useTracks = lkComponents.useTracks;
   useChat = lkComponents.useChat;
+  AudioSession = lkComponents.AudioSession;
+  AndroidAudioTypePresets = lkComponents.AndroidAudioTypePresets;
   const lkClient = require('livekit-client');
   TrackSource = lkClient.Track?.Source;
 } catch {
@@ -468,6 +472,30 @@ export default function MobileLiveWatchScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Configure audio session for playback through speaker
+  useEffect(() => {
+    if (!AudioSession) return;
+
+    const setupAudio = async () => {
+      await AudioSession.configureAudio({
+        android: {
+          preferredOutputList: ['speaker', 'bluetooth', 'headset', 'earpiece'],
+          audioTypeOptions: AndroidAudioTypePresets.media,
+        },
+        ios: {
+          defaultOutput: 'speaker',
+        },
+      });
+      await AudioSession.startAudioSession();
+    };
+
+    setupAudio();
+
+    return () => {
+      AudioSession.stopAudioSession();
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
