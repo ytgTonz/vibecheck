@@ -9,6 +9,7 @@ import {
   createStream,
   fetchStreamToken,
   endStream,
+  goLiveStream,
   useAuthStore,
   LiveStream,
   Venue,
@@ -49,6 +50,37 @@ function BroadcasterPreview() {
       className="h-full w-full rounded-xl object-cover"
     />
   );
+}
+
+/**
+ * Invisible component that watches for the local camera track to appear
+ * and calls /go-live to transition the stream from IDLE → LIVE.
+ * This ensures viewers can only join once media is actually published.
+ */
+function GoLiveOnPublish({
+  streamId,
+  authToken,
+}: {
+  streamId: string;
+  authToken: string;
+}) {
+  const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
+  const firedRef = useRef(false);
+
+  const localTrack = tracks.find(
+    (t) => t.participant.isLocal && t.source === Track.Source.Camera
+  );
+
+  useEffect(() => {
+    if (localTrack && !firedRef.current) {
+      firedRef.current = true;
+      goLiveStream(streamId, authToken).catch((err) =>
+        console.error("go-live failed:", err)
+      );
+    }
+  }, [localTrack, streamId, authToken]);
+
+  return null;
 }
 
 function ViewerCount() {
@@ -339,6 +371,9 @@ export default function BroadcastPage() {
         audio={true}
         className="flex flex-col gap-4 lg:flex-row"
       >
+        {/* Transition IDLE → LIVE once camera track is published */}
+        <GoLiveOnPublish streamId={stream!.id} authToken={authToken!} />
+
         {/* Video preview */}
         <div className="relative flex-1">
           <div className="aspect-video overflow-hidden rounded-xl bg-black">

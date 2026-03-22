@@ -55,8 +55,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       data: {
         venueId,
         livekitRoom: roomName,
-        status: 'LIVE',
-        startedAt: new Date(),
+        status: 'IDLE',
         createdBy: userId,
       },
       include: {
@@ -134,6 +133,48 @@ router.post('/:id/token', requireAuth, async (req: Request, res: Response) => {
   });
 
   res.json({ token });
+});
+
+// POST /streams/:id/go-live — broadcaster confirms media is published
+// Called by the broadcaster client once its local track is active.
+// Also triggered by the track_published webhook as a backup.
+router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => {
+  const userId = req.user!.userId;
+
+  const stream = await prisma.liveStream.findUnique({
+    where: { id: req.params.id },
+  });
+
+  if (!stream) {
+    res.status(404).json({ error: 'Stream not found' });
+    return;
+  }
+
+  if (stream.createdBy !== userId) {
+    res.status(403).json({ error: 'Only the stream creator can go live' });
+    return;
+  }
+
+  // Already live or ended — no-op / error
+  if (stream.status === 'LIVE') {
+    res.json(stream);
+    return;
+  }
+
+  if (stream.status === 'ENDED') {
+    res.status(400).json({ error: 'Stream has already ended' });
+    return;
+  }
+
+  const updated = await prisma.liveStream.update({
+    where: { id: stream.id },
+    data: { status: 'LIVE', startedAt: new Date() },
+    include: {
+      venue: { select: { id: true, name: true, type: true, location: true } },
+    },
+  });
+
+  res.json(updated);
 });
 
 // GET /streams/:id/viewer-token — anonymous viewer token

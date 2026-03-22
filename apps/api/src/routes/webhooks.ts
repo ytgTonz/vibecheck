@@ -28,10 +28,21 @@ router.post('/livekit', async (req: Request, res: Response) => {
   try {
     switch (event.event) {
       case 'room_started': {
-        await prisma.liveStream.updateMany({
-          where: { livekitRoom: roomName, status: { not: 'ENDED' } },
-          data: { status: 'LIVE', startedAt: new Date() },
-        });
+        // Room created — stream stays IDLE until media is actually published.
+        // The go-live endpoint or track_published webhook handles the transition.
+        break;
+      }
+
+      case 'track_published': {
+        // Backup: if the broadcaster's client-side go-live call was missed,
+        // transition IDLE → LIVE when a publisher sends a track.
+        const pub = event.participant;
+        if (pub?.permission?.canPublish) {
+          await prisma.liveStream.updateMany({
+            where: { livekitRoom: roomName, status: 'IDLE' },
+            data: { status: 'LIVE', startedAt: new Date() },
+          });
+        }
         break;
       }
 

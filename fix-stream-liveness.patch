@@ -1,0 +1,183 @@
+diff --git a/apps/api/src/routes/streams.ts b/apps/api/src/routes/streams.ts
+index 618c283..294f6af 100644
+--- a/apps/api/src/routes/streams.ts
++++ b/apps/api/src/routes/streams.ts
+@@ -55,8 +55,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
+       data: {
+         venueId,
+         livekitRoom: roomName,
+-        status: 'LIVE',
+-        startedAt: new Date(),
++        status: 'IDLE',
+         createdBy: userId,
+       },
+       include: {
+@@ -136,6 +135,48 @@ router.post('/:id/token', requireAuth, async (req: Request, res: Response) => {
+   res.json({ token });
+ });
+ 
++// POST /streams/:id/go-live — broadcaster confirms media is published
++// Called by the broadcaster client once its local track is active.
++// Also triggered by the track_published webhook as a backup.
++router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => {
++  const userId = req.user!.userId;
++
++  const stream = await prisma.liveStream.findUnique({
++    where: { id: req.params.id },
++  });
++
++  if (!stream) {
++    res.status(404).json({ error: 'Stream not found' });
++    return;
++  }
++
++  if (stream.createdBy !== userId) {
++    res.status(403).json({ error: 'Only the stream creator can go live' });
++    return;
++  }
++
++  // Already live or ended — no-op / error
++  if (stream.status === 'LIVE') {
++    res.json(stream);
++    return;
++  }
++
++  if (stream.status === 'ENDED') {
++    res.status(400).json({ error: 'Stream has already ended' });
++    return;
++  }
++
++  const updated = await prisma.liveStream.update({
++    where: { id: stream.id },
++    data: { status: 'LIVE', startedAt: new Date() },
++    include: {
++      venue: { select: { id: true, name: true, type: true, location: true } },
++    },
++  });
++
++  res.json(updated);
++});
++
+ // GET /streams/:id/viewer-token — anonymous viewer token
+ router.get('/:id/viewer-token', async (req: Request, res: Response) => {
+   const stream = await prisma.liveStream.findUnique({
+diff --git a/apps/api/src/routes/webhooks.ts b/apps/api/src/routes/webhooks.ts
+index f644eed..129f336 100644
+--- a/apps/api/src/routes/webhooks.ts
++++ b/apps/api/src/routes/webhooks.ts
+@@ -28,10 +28,21 @@ router.post('/livekit', async (req: Request, res: Response) => {
+   try {
+     switch (event.event) {
+       case 'room_started': {
+-        await prisma.liveStream.updateMany({
+-          where: { livekitRoom: roomName, status: { not: 'ENDED' } },
+-          data: { status: 'LIVE', startedAt: new Date() },
+-        });
++        // Room created — stream stays IDLE until media is actually published.
++        // The go-live endpoint or track_published webhook handles the transition.
++        break;
++      }
++
++      case 'track_published': {
++        // Backup: if the broadcaster's client-side go-live call was missed,
++        // transition IDLE → LIVE when a publisher sends a track.
++        const pub = event.participant;
++        if (pub?.permission?.canPublish) {
++          await prisma.liveStream.updateMany({
++            where: { livekitRoom: roomName, status: 'IDLE' },
++            data: { status: 'LIVE', startedAt: new Date() },
++          });
++        }
+         break;
+       }
+ 
+diff --git a/apps/web/app/dashboard/live/[venueId]/page.tsx b/apps/web/app/dashboard/live/[venueId]/page.tsx
+index 35679fe..d0bcd00 100644
+--- a/apps/web/app/dashboard/live/[venueId]/page.tsx
++++ b/apps/web/app/dashboard/live/[venueId]/page.tsx
+@@ -9,6 +9,7 @@ import {
+   createStream,
+   fetchStreamToken,
+   endStream,
++  goLiveStream,
+   useAuthStore,
+   LiveStream,
+   Venue,
+@@ -51,6 +52,37 @@ function BroadcasterPreview() {
+   );
+ }
+ 
++/**
++ * Invisible component that watches for the local camera track to appear
++ * and calls /go-live to transition the stream from IDLE → LIVE.
++ * This ensures viewers can only join once media is actually published.
++ */
++function GoLiveOnPublish({
++  streamId,
++  authToken,
++}: {
++  streamId: string;
++  authToken: string;
++}) {
++  const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
++  const firedRef = useRef(false);
++
++  const localTrack = tracks.find(
++    (t) => t.participant.isLocal && t.source === Track.Source.Camera
++  );
++
++  useEffect(() => {
++    if (localTrack && !firedRef.current) {
++      firedRef.current = true;
++      goLiveStream(streamId, authToken).catch((err) =>
++        console.error("go-live failed:", err)
++      );
++    }
++  }, [localTrack, streamId, authToken]);
++
++  return null;
++}
++
+ function ViewerCount() {
+   const participants = useRemoteParticipants();
+   return (
+@@ -339,6 +371,9 @@ export default function BroadcastPage() {
+         audio={true}
+         className="flex flex-col gap-4 lg:flex-row"
+       >
++        {/* Transition IDLE → LIVE once camera track is published */}
++        <GoLiveOnPublish streamId={stream!.id} authToken={authToken!} />
++
+         {/* Video preview */}
+         <div className="relative flex-1">
+           <div className="aspect-video overflow-hidden rounded-xl bg-black">
+diff --git a/packages/shared/src/api.ts b/packages/shared/src/api.ts
+index 22fcf85..c7a0b64 100644
+--- a/packages/shared/src/api.ts
++++ b/packages/shared/src/api.ts
+@@ -349,6 +349,25 @@ export async function endStream(
+   }
+ }
+ 
++/** Signal that the broadcaster's media track is published — transitions IDLE → LIVE. */
++export async function goLiveStream(
++  streamId: string,
++  token: string,
++): Promise<LiveStream> {
++  const res = await fetch(`${baseUrl}/streams/${streamId}/go-live`, {
++    method: 'POST',
++    headers: { Authorization: `Bearer ${token}` },
++  });
++
++  const body = await res.json();
++
++  if (!res.ok) {
++    throw new Error(body.error || `Failed to go live: ${res.status}`);
++  }
++
++  return body as LiveStream;
++}
++
+ /** Fetch recent ended streams for a venue. */
+ export function fetchVenueRecentStreams(venueId: string): Promise<LiveStream[]> {
+   return apiFetch<LiveStream[]>(`/streams/venue/${venueId}/recent`);

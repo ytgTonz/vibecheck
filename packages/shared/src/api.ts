@@ -349,6 +349,25 @@ export async function endStream(
   }
 }
 
+/** Signal that the broadcaster's media track is published — transitions IDLE → LIVE. */
+export async function goLiveStream(
+  streamId: string,
+  token: string,
+): Promise<LiveStream> {
+  const res = await fetch(`${baseUrl}/streams/${streamId}/go-live`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to go live: ${res.status}`);
+  }
+
+  return body as LiveStream;
+}
+
 /** Fetch recent ended streams for a venue. */
 export function fetchVenueRecentStreams(venueId: string): Promise<LiveStream[]> {
   return apiFetch<LiveStream[]>(`/streams/venue/${venueId}/recent`);
