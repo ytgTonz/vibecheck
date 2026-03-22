@@ -61,12 +61,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="venues/[id]/live"
-        options={{
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

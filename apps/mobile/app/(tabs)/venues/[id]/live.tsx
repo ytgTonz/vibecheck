@@ -44,7 +44,10 @@ let VideoTrack: any;
 let useRemoteParticipants: any;
 let useTracks: any;
 let useChat: any;
+let useRoomContext: any;
+let isTrackReference: any;
 let TrackSource: any;
+let RoomEvent: any;
 let AudioSession: any;
 let AndroidAudioTypePresets: any;
 
@@ -55,10 +58,13 @@ try {
   useRemoteParticipants = lkComponents.useRemoteParticipants;
   useTracks = lkComponents.useTracks;
   useChat = lkComponents.useChat;
+  useRoomContext = lkComponents.useRoomContext;
+  isTrackReference = lkComponents.isTrackReference;
   AudioSession = lkComponents.AudioSession;
   AndroidAudioTypePresets = lkComponents.AndroidAudioTypePresets;
   const lkClient = require('livekit-client');
   TrackSource = lkClient.Track?.Source;
+  RoomEvent = lkClient.RoomEvent;
 } catch {
   // LiveKit native modules may not be available in Expo Go.
 }
@@ -70,40 +76,26 @@ function compactNumber(value: number) {
   }).format(Math.max(0, value));
 }
 
-function liveSinceLabel(iso: string | null) {
-  if (!iso) return 'Started moments ago';
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const minutes = Math.max(1, Math.floor(diffMs / 60_000));
-  if (minutes < 60) return `Started ${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Started ${hours}h ago`;
-  return `Started ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
-}
-
-function InfoChip({ label }: { label: string }) {
-  return (
-    <View className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5">
-      <Text className="text-xs font-medium text-zinc-100">{label}</Text>
-    </View>
-  );
-}
-
 function isReactionMessage(message: string) {
   return QUICK_REACTIONS.includes(message.trim() as (typeof QUICK_REACTIONS)[number]);
 }
 
 function QuickReactionRow({
   onReact,
+  vertical = false,
 }: {
   onReact: (reaction: string) => void;
+  vertical?: boolean;
 }) {
   return (
-    <View className="flex-row flex-wrap gap-2">
+    <View className={vertical ? 'items-center gap-2' : 'flex-row flex-wrap gap-2'}>
       {QUICK_REACTIONS.map((reaction) => (
         <Pressable
           key={reaction}
           onPress={() => onReact(reaction)}
-          className="rounded-full border border-white/10 bg-white/10 px-3 py-2"
+          className={`rounded-full border border-white/10 bg-black/55 ${
+            vertical ? 'h-11 w-11 items-center justify-center' : 'px-3 py-2'
+          }`}
         >
           <Text className="text-lg">{reaction}</Text>
         </Pressable>
@@ -249,16 +241,62 @@ function ViewerCountBadge({
   );
 }
 
+function StreamEndedOverlay({ venueId, venueName }: { venueId: string; venueName: string }) {
+  const router = useRouter();
+  const room = useRoomContext?.();
+  const [ended, setEnded] = useState(false);
+
+  useEffect(() => {
+    if (!room || !RoomEvent) return;
+
+    const handleDisconnected = () => {
+      setEnded(true);
+    };
+
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+
+    return () => {
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+    };
+  }, [room]);
+
+  if (!ended) {
+    return null;
+  }
+
+  return (
+    <View className="absolute inset-0 z-30 items-center justify-center bg-black/85 px-6">
+      <View className="w-full max-w-[320px] rounded-[28px] border border-white/10 bg-zinc-950 px-6 py-7">
+        <Text className="text-center text-3xl font-semibold text-white">
+          Stream ended
+        </Text>
+        <Text className="mt-3 text-center text-sm leading-6 text-zinc-400">
+          {venueName} has ended their live stream.
+        </Text>
+
+        <Pressable
+          onPress={() =>
+            router.replace({ pathname: '/venues/[id]', params: { id: venueId } })
+          }
+          className="mt-6 rounded-full bg-zinc-100 px-5 py-3"
+        >
+          <Text className="text-center text-sm font-semibold text-zinc-950">
+            Back to venue
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 function ChatOverlay({
   messages,
   onSend,
-  onReact,
   visible,
   onToggle,
 }: {
   messages: { from?: { name?: string; identity?: string }; message: string }[];
   onSend: (msg: string) => void;
-  onReact: (reaction: string) => void;
   visible: boolean;
   onToggle: () => void;
 }) {
@@ -277,26 +315,26 @@ function ChatOverlay({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
-      className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-4"
+      className="absolute bottom-0 left-0 right-0 z-20 px-3 pb-3"
     >
       {!visible ? (
-        <View className="items-end">
+        <View className="items-start">
           <Pressable
             onPress={onToggle}
-            className="rounded-full border border-white/10 bg-black/70 px-4 py-3"
+            className="rounded-full border border-white/10 bg-black/70 px-4 py-2.5"
           >
             <Text className="text-sm font-semibold text-white">
-              Open chat
+              Chat
               {messageCount > 0 ? ` · ${messageCount}` : ''}
             </Text>
           </Pressable>
         </View>
       ) : (
-        <View className="overflow-hidden rounded-[28px] border border-white/10 bg-zinc-950/95">
-          <View className="flex-row items-center justify-between border-b border-white/10 px-4 py-3">
+        <View className="overflow-hidden rounded-[24px] border border-white/10 bg-black/72">
+          <View className="flex-row items-center justify-between border-b border-white/10 px-4 py-2.5">
             <View>
               <Text className="text-sm font-semibold text-white">Live chat</Text>
-              <Text className="mt-1 text-xs text-zinc-400">
+              <Text className="mt-0.5 text-xs text-zinc-400">
                 {messageCount === 0
                   ? 'Be the first to drop a message'
                   : `${messageCount} message${messageCount === 1 ? '' : 's'} in the room`}
@@ -319,11 +357,11 @@ function ChatOverlay({
                 scrollRef.current?.scrollToEnd({ animated: true })
               }
               showsVerticalScrollIndicator={false}
-              className="max-h-[180px]"
+              className="max-h-[110px]"
             >
               {messageCount === 0 ? (
-                <View className="rounded-2xl border border-dashed border-white/10 bg-white/5 px-4 py-6">
-                  <Text className="text-center text-sm text-zinc-400">
+                <View className="pb-2">
+                  <Text className="text-sm text-zinc-400">
                     Reactions, shout-outs, and questions from viewers will land here.
                   </Text>
                 </View>
@@ -332,7 +370,7 @@ function ChatOverlay({
                   isReactionMessage(msg.message) ? (
                     <View
                       key={`${msg.from?.identity || 'viewer'}-${index}`}
-                      className="mb-2 flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
+                      className="mb-2 flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2"
                     >
                       <View className="flex-row items-center gap-3">
                         <Text className="text-2xl">{msg.message.trim()}</Text>
@@ -347,7 +385,7 @@ function ChatOverlay({
                   ) : (
                     <View
                       key={`${msg.from?.identity || 'viewer'}-${index}`}
-                      className="mb-2 rounded-2xl bg-white/5 px-3 py-2.5"
+                      className="mb-2 rounded-2xl bg-white/5 px-3 py-2"
                     >
                       <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-zinc-300">
                         {msg.from?.name || msg.from?.identity || 'Viewer'}
@@ -361,26 +399,19 @@ function ChatOverlay({
               )}
             </ScrollView>
 
-            <View className="mt-3">
-              <Text className="mb-2 text-[11px] font-semibold uppercase tracking-[1.5px] text-zinc-500">
-                Quick reactions
-              </Text>
-              <QuickReactionRow onReact={onReact} />
-            </View>
-
-            <View className="mb-4 mt-3 flex-row items-center gap-2">
+            <View className="mb-3 mt-2 flex-row items-center gap-2">
               <TextInput
                 value={text}
                 onChangeText={setText}
                 onSubmitEditing={handleSend}
                 placeholder="Say something to the room..."
                 placeholderTextColor="#71717a"
-                className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+                className="flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white"
               />
               <Pressable
                 onPress={handleSend}
                 disabled={!text.trim()}
-                className={`rounded-full px-4 py-3 ${
+                className={`rounded-full px-4 py-2.5 ${
                   text.trim() ? 'bg-red-500' : 'bg-white/10'
                 }`}
               >
@@ -579,26 +610,29 @@ function LiveContent({
 }) {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
-  const [chatVisible, setChatVisible] = useState(true);
+  const [chatVisible, setChatVisible] = useState(false);
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
   const nextReactionIdRef = useRef(0);
   const processedMessageCountRef = useRef(0);
   const pendingLocalReactionsRef = useRef<Array<{ emoji: string; at: number }>>([]);
 
   const participants = useRemoteParticipants?.() || [];
-  const tracks =
+  const videoTracks =
     useTracks?.(
-      [TrackSource?.Camera, TrackSource?.ScreenShare, TrackSource?.Microphone].filter(Boolean),
+      [TrackSource?.Camera, TrackSource?.ScreenShare].filter(Boolean),
       { onlySubscribed: true },
     ) || [];
   const chat = useChat?.() || { chatMessages: [], send: () => {} };
 
-  const videoTrack = tracks.find(
-    (track: any) =>
-      track.source === TrackSource?.Camera || track.source === TrackSource?.ScreenShare,
-  );
-  const viewerCount = Math.max(stream.currentViewerCount, 0);
-  const infoBottomOffset = chatVisible ? 286 : 104;
+  const videoTrack =
+    videoTracks.find(
+      (track: any) =>
+        isTrackReference?.(track) &&
+        !track.participant?.isLocal &&
+        (track.source === TrackSource?.Camera || track.source === TrackSource?.ScreenShare),
+    ) ||
+    videoTracks.find((track: any) => isTrackReference?.(track));
+  const viewerCount = Math.max(stream.currentViewerCount, participants.length + 1);
 
   const removeFloatingReaction = useCallback((id: number) => {
     setFloatingReactions((current) => current.filter((reaction) => reaction.id !== id));
@@ -610,7 +644,7 @@ function LiveContent({
       const safeWidth = Math.max(140, width - size - 24);
       const left =
         source === 'local'
-          ? Math.max(20, Math.min(width - size - 20, width * 0.72 + (Math.random() * 36 - 18)))
+          ? Math.max(20, Math.min(width - size - 20, width - size - 28))
           : Math.max(20, Math.min(safeWidth, 20 + Math.random() * (safeWidth - 20)));
 
       setFloatingReactions((current) => [
@@ -619,7 +653,7 @@ function LiveContent({
           id: nextReactionIdRef.current++,
           emoji,
           left,
-          bottom: chatVisible ? 338 : 176,
+          bottom: chatVisible ? 144 : 104,
           size,
           drift: Math.random() * 56 - 28,
           duration: 1500 + Math.round(Math.random() * 500),
@@ -671,20 +705,17 @@ function LiveContent({
         <VideoTrack
           trackRef={videoTrack}
           style={{ width, height }}
+          objectFit="cover"
         />
       ) : (
-        <View className="flex-1 items-center justify-center bg-zinc-950 px-6">
-          <View className="w-full max-w-[320px] rounded-[30px] border border-white/10 bg-black/60 px-6 py-8">
-            <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-400">
-              Waiting for host
-            </Text>
-            <Text className="mt-4 text-3xl font-semibold text-white">
-              The room is live. Video is catching up.
-            </Text>
-            <Text className="mt-3 text-sm leading-6 text-zinc-300">
-              Stay here for a moment while the broadcaster camera reconnects.
-            </Text>
-          </View>
+        <View className="flex-1 items-center justify-center bg-zinc-950/95 px-6">
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text className="mt-4 text-base font-semibold text-white">
+            Waiting for broadcaster...
+          </Text>
+          <Text className="mt-2 text-center text-sm text-zinc-400">
+            The room is connected, but the host video track has not arrived yet.
+          </Text>
         </View>
       )}
 
@@ -693,6 +724,7 @@ function LiveContent({
         reactions={floatingReactions}
         onDone={removeFloatingReaction}
       />
+      <StreamEndedOverlay venueId={venue.id} venueName={venue.name} />
 
       <SafeAreaView edges={['top']} className="absolute left-0 right-0 top-0 z-10">
         <View className="px-4 pt-2">
@@ -726,61 +758,13 @@ function LiveContent({
         </View>
       </SafeAreaView>
 
-      <View
-        className="absolute bottom-0 left-0 right-0 z-10 px-4"
-        style={{ paddingBottom: infoBottomOffset }}
-      >
-        <View className="rounded-[30px] border border-white/10 bg-black/65 p-5">
-          <View className="flex-row items-center justify-between gap-3">
-            <View className="flex-row items-center gap-2">
-              <View className="rounded-full bg-red-500 px-3 py-1.5">
-                <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
-                  Live room
-                </Text>
-              </View>
-              <Text className="text-xs font-medium text-zinc-300">
-                {participants.length > 0 ? `${participants.length} participant${participants.length === 1 ? '' : 's'} connected` : 'Joining room'}
-              </Text>
-            </View>
-
-            <Pressable
-              onPress={() => setChatVisible((current) => !current)}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5"
-            >
-              <Text className="text-xs font-semibold uppercase tracking-[1.5px] text-zinc-100">
-                {chatVisible ? 'Hide chat' : 'Show chat'}
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text className="mt-4 text-3xl font-semibold text-white">
-            Inside {venue.name}
-          </Text>
-          <Text className="mt-2 text-sm leading-6 text-zinc-200">
-            Watch the room live, scan the crowd energy, and decide whether this is the move tonight.
-          </Text>
-
-          <View className="mt-5 flex-row flex-wrap gap-2">
-            <InfoChip label={liveSinceLabel(stream.startedAt)} />
-            {stream.viewerPeak > 0 ? (
-              <InfoChip label={`${compactNumber(stream.viewerPeak)} peak tonight`} />
-            ) : null}
-            <InfoChip label={videoTrack ? 'Host camera active' : 'Host reconnecting'} />
-          </View>
-
-          <View className="mt-5">
-            <Text className="mb-2 text-[11px] font-semibold uppercase tracking-[1.5px] text-zinc-400">
-              React to the stream
-            </Text>
-            <QuickReactionRow onReact={handleReact} />
-          </View>
-        </View>
+      <View className="absolute bottom-24 right-3 z-10">
+        <QuickReactionRow onReact={handleReact} vertical />
       </View>
 
       <ChatOverlay
         messages={chat.chatMessages}
         onSend={(message: string) => chat.send(message)}
-        onReact={handleReact}
         visible={chatVisible}
         onToggle={() => setChatVisible((current) => !current)}
       />
