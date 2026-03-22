@@ -4,15 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
 import {
-  setBaseUrl,
   fetchAdminVenues,
   deleteAdminVenue,
   useAuthStore,
   AdminVenue,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 const venueTypeOptions = ["ALL", "NIGHTCLUB", "BAR", "RESTAURANT_BAR", "LOUNGE", "SHISA_NYAMA", "ROOFTOP", "OTHER"] as const;
 

@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  setBaseUrl,
   fetchVenue,
   createStream,
   fetchStreamToken,
@@ -26,9 +25,7 @@ import {
 import "@livekit/components-styles";
 import { Track } from "livekit-client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
-setBaseUrl(API_URL);
 
 function BroadcasterPreview() {
   const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });

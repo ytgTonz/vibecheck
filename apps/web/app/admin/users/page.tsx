@@ -3,15 +3,11 @@
 import { useEffect, useState } from "react";
 import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
 import {
-  setBaseUrl,
   fetchAdminUsers,
   deleteAdminUser,
   useAuthStore,
   AdminUser,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 const roleBadgeColors: Record<string, string> = {
   ADMIN: "bg-purple-900/50 text-purple-400",

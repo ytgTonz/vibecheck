@@ -12,11 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { VideoView, createVideoPlayer } from 'expo-video';
-import { fetchMyVenues, setBaseUrl, useAuthStore, VenueWithStats } from '@vibecheck/shared';
+import { fetchMyVenues, getBaseUrl, useAuthStore, VenueWithStats } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-setBaseUrl(API_URL);
 
 const MUSIC_GENRES = [
   'Afrobeats',
@@ -177,7 +174,7 @@ export default function UploadScreen() {
 
         xhr.addEventListener('error', () => reject(new Error('Network error')));
 
-        xhr.open('POST', `${API_URL}/clips`);
+        xhr.open('POST', `${getBaseUrl()}/clips`);
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.send(formData);
       });

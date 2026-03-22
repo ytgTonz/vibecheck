@@ -3,14 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  setBaseUrl,
   fetchAdminStats,
   useAuthStore,
   AdminStats,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();

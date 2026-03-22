@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, Venue, Clip, useAuthStore } from "@vibecheck/shared";
+import { fetchVenue, fetchVenueClips, recordClipView, Venue, Clip, useAuthStore } from "@vibecheck/shared";
 import ClipCard from "../../components/ClipCard";
 
 const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
@@ -15,9 +15,6 @@ const VideoPlayer = dynamic(() => import("../../components/VideoPlayer"), {
     </div>
   ),
 });
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 /** Human-readable labels for venue types. */
 const venueTypeLabel: Record<string, string> = {

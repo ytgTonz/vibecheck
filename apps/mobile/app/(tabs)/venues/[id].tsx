@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { VideoView, createVideoPlayer } from 'expo-video';
 import {
-  setBaseUrl,
   fetchVenue,
   fetchVenueClips,
   fetchStream,
@@ -25,9 +24,6 @@ import {
   LiveStream,
   useAuthStore,
 } from '@vibecheck/shared';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-setBaseUrl(API_URL);
 
 const SWIPE_X_THRESHOLD = 56;
 const SWIPE_Y_THRESHOLD = 84;

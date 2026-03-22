@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  setBaseUrl,
   fetchMyVenues,
   fetchActiveStreams,
   generateInvite,
@@ -18,9 +17,6 @@ import {
   Invite,
   LiveStream,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 /** Format seconds as m:ss. */
 function formatDuration(seconds: number): string {

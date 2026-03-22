@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { setBaseUrl, useVenueStore, Venue } from '@vibecheck/shared';
+import {
+  useVenueStore,
+  Venue,
+  filterVenues,
+  groupBrowseVenues,
+  pickFeaturedVenue,
+  excludeFeaturedVenue,
+} from '@vibecheck/shared';
 import VenueCard from '@/components/VenueCard';
 import FeaturedVenueCard from '@/components/FeaturedVenueCard';
 import FilterBar from '@/components/FilterBar';
-
-// Point at the API server.
-// For Expo Go on a physical device, use your machine's local IP.
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-setBaseUrl(API_URL);
 
 export default function BrowseScreen() {
   const loading = useVenueStore((s) => s.loading);
@@ -30,45 +32,31 @@ export default function BrowseScreen() {
     setRefreshing(false);
   }, [loadVenues]);
 
-  const filtered = useMemo(() => {
-    return venues.filter((venue) => {
-      if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
-      if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
-      return true;
-    });
-  }, [venues, venueTypeFilter, musicGenreFilter]);
-
-  const groups = useMemo(() => {
-    const now = Date.now();
-    const TWO_HOURS = 2 * 60 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-    const streaming: Venue[] = [];
-    const live: Venue[] = [];
-    const fresh: Venue[] = [];
-    const quiet: Venue[] = [];
-    for (const venue of filtered) {
-      if (venue.isLive) { streaming.push(venue); continue; }
-      if (!venue.lastClipAt) { quiet.push(venue); continue; }
-      const age = now - new Date(venue.lastClipAt).getTime();
-      if (age < TWO_HOURS) live.push(venue);
-      else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
-      else quiet.push(venue);
-    }
-    return { streaming, live, fresh, quiet };
-  }, [filtered]);
+  const filtered = useMemo(
+    () => filterVenues(venues, venueTypeFilter, musicGenreFilter),
+    [venues, venueTypeFilter, musicGenreFilter]
+  );
+  const groups = useMemo(() => groupBrowseVenues(filtered), [filtered]);
   const liveCount = groups.live.length;
   const streamingCount = groups.streaming.length;
 
-  const featuredVenue =
-    groups.streaming[0] ?? groups.live[0] ?? groups.fresh[0] ?? groups.quiet[0] ?? null;
-
-  const excludeFeatured = (venues: Venue[]) =>
-    featuredVenue ? venues.filter((venue) => venue.id !== featuredVenue.id) : venues;
-
-  const streamingSectionVenues = excludeFeatured(groups.streaming);
-  const liveSectionVenues = excludeFeatured(groups.live);
-  const freshSectionVenues = excludeFeatured(groups.fresh);
-  const quietSectionVenues = excludeFeatured(groups.quiet);
+  const featuredVenue = useMemo(() => pickFeaturedVenue(groups), [groups]);
+  const streamingSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.streaming, featuredVenue),
+    [groups.streaming, featuredVenue]
+  );
+  const liveSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.live, featuredVenue),
+    [groups.live, featuredVenue]
+  );
+  const freshSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.fresh, featuredVenue),
+    [groups.fresh, featuredVenue]
+  );
+  const quietSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.quiet, featuredVenue),
+    [groups.quiet, featuredVenue]
+  );
 
   const renderSection = (title: string, venues: Venue[]) => {
     if (venues.length === 0) return null;

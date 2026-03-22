@@ -5,15 +5,29 @@ import {
 import { FeedbackCategory, FeedbackRating } from './enums';
 
 /**
- * API base URL — set once at app startup via setBaseUrl().
- * Defaults to localhost:3001 for local development.
+ * API base URL — resolved from the active app environment by default.
+ * Falls back to localhost:3001 for local development.
  */
-let baseUrl = 'http://localhost:3001';
+const DEFAULT_BASE_URL = 'http://localhost:3001';
 
-/** Call this once when your app loads to point at the right API server. */
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/+$/, '');
+}
+
+function resolveBaseUrl() {
+  const envBaseUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.EXPO_PUBLIC_API_URL ||
+    DEFAULT_BASE_URL;
+
+  return normalizeBaseUrl(envBaseUrl);
+}
+
+let baseUrl = resolveBaseUrl();
+
+/** Optional override for tests or environments that need to swap the API server at runtime. */
 export function setBaseUrl(url: string) {
-  // Strip trailing slash so we can always append /path
-  baseUrl = url.replace(/\/+$/, '');
+  baseUrl = normalizeBaseUrl(url);
 }
 
 export function getBaseUrl(): string {

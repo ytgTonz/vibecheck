@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Venue } from '../types';
 import { VenueType } from '../enums';
 import { fetchVenues } from '../api';
+import { filterVenues, groupBrowseVenues } from '../venues';
 
 export interface VenueSection {
   live: Venue[];
@@ -70,35 +71,11 @@ export const useVenueStore = create<VenueState>((set, get) => ({
 
   filteredVenues: () => {
     const { venues, venueTypeFilter, musicGenreFilter } = get();
-
-    return venues.filter((venue) => {
-      if (venueTypeFilter && venue.type !== venueTypeFilter) return false;
-      if (musicGenreFilter && !venue.musicGenre.includes(musicGenreFilter)) return false;
-      return true;
-    });
+    return filterVenues(venues, venueTypeFilter, musicGenreFilter);
   },
 
   groupedVenues: () => {
-    const filtered = get().filteredVenues();
-    const now = Date.now();
-    const TWO_HOURS = 2 * 60 * 60 * 1000;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-    const live: Venue[] = [];
-    const fresh: Venue[] = [];
-    const quiet: Venue[] = [];
-
-    for (const venue of filtered) {
-      if (!venue.lastClipAt) {
-        quiet.push(venue);
-        continue;
-      }
-      const age = now - new Date(venue.lastClipAt).getTime();
-      if (age < TWO_HOURS) live.push(venue);
-      else if (age < TWENTY_FOUR_HOURS) fresh.push(venue);
-      else quiet.push(venue);
-    }
-
+    const { live, fresh, quiet } = groupBrowseVenues(get().filteredVenues());
     return { live, fresh, quiet };
   },
 }));

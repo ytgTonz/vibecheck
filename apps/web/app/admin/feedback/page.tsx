@@ -2,14 +2,10 @@
 
 import { useEffect, useState } from "react";
 import {
-  setBaseUrl,
   fetchAdminFeedback,
   useAuthStore,
   AdminFeedback,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 const categories = ["ALL", "BUG", "SUGGESTION", "GENERAL"] as const;
 const ratings = ["ALL", "BAD", "NEUTRAL", "GOOD"] as const;

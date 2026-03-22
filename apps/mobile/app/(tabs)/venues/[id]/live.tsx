@@ -15,7 +15,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  setBaseUrl,
   fetchVenue,
   fetchStream,
   fetchViewerToken,
@@ -23,9 +22,7 @@ import {
   LiveStream,
 } from '@vibecheck/shared';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 const LIVEKIT_URL = process.env.EXPO_PUBLIC_LIVEKIT_URL || '';
-setBaseUrl(API_URL);
 
 const venueTypeLabel: Record<string, string> = {
   NIGHTCLUB: 'Nightclub',

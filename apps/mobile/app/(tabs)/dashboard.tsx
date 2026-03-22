@@ -5,14 +5,10 @@ import { useRouter } from 'expo-router';
 import {
   deleteClip,
   fetchMyVenues,
-  setBaseUrl,
   useAuthStore,
   VenueWithStats,
 } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
-setBaseUrl(API_URL);
 
 function formatDuration(seconds: number) {
   const totalSeconds = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;

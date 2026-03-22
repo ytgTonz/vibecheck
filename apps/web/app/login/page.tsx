@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { setBaseUrl, useAuthStore, VenueType } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
+import { useAuthStore, VenueType } from "@vibecheck/shared";
 
 const VENUE_TYPES: { value: VenueType; label: string }[] = [
   { value: VenueType.NIGHTCLUB, label: "Nightclub" },

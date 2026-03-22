@@ -3,15 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { setBaseUrl, useAuthStore, fetchMyVenues, VenueWithStats } from "@vibecheck/shared";
+import { getBaseUrl, useAuthStore, fetchMyVenues, VenueWithStats } from "@vibecheck/shared";
 import {
   compressVideo,
   shouldCompress,
   formatFileSize,
 } from "../lib/compressVideo";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 const MUSIC_GENRES = [
   "Afrobeats",
@@ -170,7 +167,7 @@ export default function UploadPage() {
 
         xhr.addEventListener("error", () => reject(new Error("Network error")));
 
-        xhr.open("POST", `${API_URL}/clips`);
+        xhr.open("POST", `${getBaseUrl()}/clips`);
         xhr.setRequestHeader("Authorization", `Bearer ${token}`);
         xhr.send(formData);
       });

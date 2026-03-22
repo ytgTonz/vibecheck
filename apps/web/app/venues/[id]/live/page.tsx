@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  setBaseUrl,
   fetchStream,
   fetchViewerToken,
   fetchVenue,
@@ -24,9 +23,7 @@ import {
 import "@livekit/components-styles";
 import { Track, RoomEvent } from "livekit-client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
-setBaseUrl(API_URL);
 
 function ViewerCount() {
   const participants = useRemoteParticipants();

@@ -2,15 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  setBaseUrl,
   submitFeedback,
   useAuthStore,
   FeedbackCategory,
   FeedbackRating,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 const CATEGORIES: { value: FeedbackCategory; label: string }[] = [
   { value: FeedbackCategory.BUG, label: "Bug" },

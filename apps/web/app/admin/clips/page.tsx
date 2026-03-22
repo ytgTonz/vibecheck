@@ -5,15 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
 import {
-  setBaseUrl,
   fetchAdminClips,
   deleteAdminClip,
   useAuthStore,
   AdminClip,
 } from "@vibecheck/shared";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-setBaseUrl(API_URL);
 
 type Notice = {
   type: "success" | "error";
