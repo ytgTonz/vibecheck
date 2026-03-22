@@ -6,12 +6,19 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#fff',
+        tabBarActiveTintColor: '#f5f5f5',
         tabBarInactiveTintColor: '#71717a',
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
+          height: 74,
+          paddingTop: 10,
+          paddingBottom: 12,
+          backgroundColor: '#0c0c0f',
+          borderTopColor: '#1f1f23',
+        },
+        sceneStyle: {
           backgroundColor: '#09090b',
-          borderTopColor: '#27272a',
         },
       }}
     >
@@ -55,7 +62,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="venues/[id]"
+        name="venues/[id]/live"
         options={{
           href: null,
         }}

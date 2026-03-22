@@ -14,7 +14,17 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { VideoView, createVideoPlayer } from 'expo-video';
-import { setBaseUrl, fetchVenue, fetchVenueClips, recordClipView, Clip, Venue, useAuthStore } from '@vibecheck/shared';
+import {
+  setBaseUrl,
+  fetchVenue,
+  fetchVenueClips,
+  fetchStream,
+  recordClipView,
+  Clip,
+  Venue,
+  LiveStream,
+  useAuthStore,
+} from '@vibecheck/shared';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
 setBaseUrl(API_URL);
@@ -49,6 +59,23 @@ function timeAgo(iso: string) {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(iso).toLocaleDateString();
+}
+
+function compactNumber(value: number) {
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: value >= 1000 ? 1 : 0,
+  }).format(Math.max(0, value));
+}
+
+function liveSinceLabel(iso: string | null) {
+  if (!iso) return 'Started moments ago';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const minutes = Math.max(1, Math.floor(diffMs / 60_000));
+  if (minutes < 60) return `Started ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Started ${hours}h ago`;
+  return `Started ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 }
 
 function ClipPreviewCard({
@@ -359,6 +386,7 @@ export default function VenueDetailScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [venue, setVenue] = useState<Venue | null>(null);
+  const [activeStream, setActiveStream] = useState<LiveStream | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -370,7 +398,19 @@ export default function VenueDetailScreen() {
     setError(null);
     try {
       const [venueData, clipsData] = await Promise.all([fetchVenue(id), fetchVenueClips(id)]);
+      let liveStream: LiveStream | null = null;
+
+      if (venueData.activeStreamId) {
+        try {
+          const stream = await fetchStream(venueData.activeStreamId);
+          liveStream = stream.status === 'LIVE' ? stream : null;
+        } catch {
+          liveStream = null;
+        }
+      }
+
       setVenue(venueData);
+      setActiveStream(liveStream);
       setClips(clipsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load venue');
@@ -452,13 +492,58 @@ export default function VenueDetailScreen() {
               onPress={() =>
                 router.push({ pathname: '/venues/[id]/live', params: { id: venue.id } })
               }
-              className="mb-4 flex-row items-center gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3"
+              className="mb-5 overflow-hidden rounded-[28px] border border-red-500/30 bg-zinc-950"
             >
-              <View className="h-3 w-3 rounded-full bg-red-500" />
-              <Text className="flex-1 text-sm font-semibold text-red-400">
-                This venue is streaming live
-              </Text>
-              <Text className="text-sm text-red-300">Watch &rarr;</Text>
+              <View className="absolute inset-0 bg-red-500/10" />
+              <View className="px-5 py-5">
+                <View className="flex-row items-center justify-between gap-3">
+                  <View className="flex-row items-center gap-2 rounded-full bg-red-500 px-3 py-1.5">
+                    <View className="h-2.5 w-2.5 rounded-full bg-white" />
+                    <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
+                      Streaming live
+                    </Text>
+                  </View>
+                  <Text className="text-sm font-medium text-red-200">
+                    {activeStream
+                      ? `${compactNumber(activeStream.currentViewerCount)} watching`
+                      : 'Join now'}
+                  </Text>
+                </View>
+
+                <Text className="mt-5 text-3xl font-semibold text-zinc-100">
+                  Join the room before you head out.
+                </Text>
+                <Text className="mt-3 text-sm leading-6 text-zinc-300">
+                  Watch the floor, crowd energy, and current vibe live instead of guessing from clips alone.
+                </Text>
+
+                <View className="mt-5 flex-row flex-wrap gap-2">
+                  <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                    <Text className="text-sm text-zinc-100">
+                      {activeStream ? liveSinceLabel(activeStream.startedAt) : 'Live right now'}
+                    </Text>
+                  </View>
+                  {activeStream ? (
+                    <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                      <Text className="text-sm text-zinc-100">
+                        Peak {compactNumber(activeStream.viewerPeak)}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <View className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+                    <Text className="text-sm text-zinc-100">{venue.location}</Text>
+                  </View>
+                </View>
+
+                <View className="mt-6 flex-row items-center justify-between gap-4">
+                  <Text className="flex-1 text-sm text-zinc-400">
+                    Open the full-screen live view with chat.
+                  </Text>
+                  <View className="rounded-full bg-red-500 px-5 py-3">
+                    <Text className="text-sm font-semibold text-white">Watch live</Text>
+                  </View>
+                </View>
+              </View>
             </Pressable>
           )}
 
