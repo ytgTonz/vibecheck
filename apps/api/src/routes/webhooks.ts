@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { webhookReceiver } from '../lib/livekit';
-import { authorizeHeader } from 'livekit-server-sdk';
+import { authorizeHeader, TrackSource } from 'livekit-server-sdk';
 
 const router = Router();
 
@@ -35,9 +35,13 @@ router.post('/livekit', async (req: Request, res: Response) => {
 
       case 'track_published': {
         // Backup: if the broadcaster's client-side go-live call was missed,
-        // transition IDLE → LIVE when a publisher sends a track.
+        // transition IDLE → LIVE when the broadcaster publishes camera video.
         const pub = event.participant;
-        if (pub?.permission?.canPublish) {
+        const track = event.track;
+        if (
+          pub?.permission?.canPublish &&
+          track?.source === TrackSource.CAMERA
+        ) {
           await prisma.liveStream.updateMany({
             where: { livekitRoom: roomName, status: 'IDLE' },
             data: { status: 'LIVE', startedAt: new Date() },

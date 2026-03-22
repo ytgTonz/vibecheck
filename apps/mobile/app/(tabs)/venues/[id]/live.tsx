@@ -547,6 +547,8 @@ export default function MobileLiveWatchScreen() {
         const streamData = await fetchStream(venueData.activeStreamId);
         setStream(streamData);
 
+        // TODO(live-viewers): IDLE now means "host is setting up", not "stream ended".
+        // Keep this temporary behavior for MVP, but split IDLE vs ENDED in the viewer UX.
         if (streamData.status !== 'LIVE') {
           setError('This stream has already ended.');
           return;
