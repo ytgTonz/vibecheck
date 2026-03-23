@@ -6,21 +6,16 @@ export function LoadingState({ venueName }: { venueName?: string }) {
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="absolute inset-0 bg-red-500/5" />
-      <View className="flex-1 items-center justify-center px-6">
-        <View className="w-full max-w-[320px] rounded-[32px] border border-white/10 bg-zinc-900 px-6 py-8">
-          <View className="mb-5 flex-row items-center gap-2">
-            <View className="h-2.5 w-2.5 rounded-full bg-red-500" />
-            <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-red-300">
-              Joining live room
-            </Text>
+      <View className="flex-1 items-center justify-center px-8">
+        <View className="w-full max-w-[280px] items-center">
+          <View className="mb-5 h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <ActivityIndicator size="small" color="#ef4444" />
           </View>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text className="text-center text-2xl font-semibold text-zinc-100">
-            {venueName ? `Connecting to ${venueName}` : 'Connecting to stream'}
+          <Text className="text-center text-xl font-semibold text-white">
+            {venueName ? `Joining ${venueName}` : 'Connecting'}
           </Text>
-          <Text className="mt-3 text-center text-sm leading-6 text-zinc-400">
-            Pulling in the live video feed and chat so you can drop straight into the room.
+          <Text className="mt-2 text-center text-sm leading-5 text-zinc-500">
+            Setting up the live video feed and chat room.
           </Text>
         </View>
       </View>
@@ -44,19 +39,18 @@ export function ErrorState({
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="absolute inset-0 bg-red-500/5" />
-      <View className="flex-1 items-center justify-center px-6">
-        <View className="w-full max-w-[340px] rounded-[32px] border border-white/10 bg-zinc-900 px-6 py-8">
-          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-400">
-            Live stream unavailable
-          </Text>
-          <Text className="mt-4 text-3xl font-semibold text-zinc-100">{title}</Text>
-          <Text className="mt-3 text-sm leading-6 text-zinc-400">{detail}</Text>
+      <View className="flex-1 items-center justify-center px-8">
+        <View className="w-full max-w-[280px] items-center">
+          <View className="mb-5 h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
+            <Text className="text-2xl">📡</Text>
+          </View>
+          <Text className="text-center text-xl font-semibold text-white">{title}</Text>
+          <Text className="mt-2 text-center text-sm leading-5 text-zinc-500">{detail}</Text>
 
           {onRetry && (
             <Pressable
               onPress={onRetry}
-              className="mt-6 rounded-full bg-red-500 px-5 py-3"
+              className="mt-6 w-full rounded-full bg-red-500 py-3"
             >
               <Text className="text-center text-sm font-semibold text-white">
                 Try again
@@ -70,15 +64,11 @@ export function ErrorState({
                 ? router.replace({ pathname: '/venues/[id]', params: { id } })
                 : router.back()
             }
-            className={`${onRetry ? 'mt-3' : 'mt-6'} rounded-full bg-zinc-100 px-5 py-3`}
+            className={`${onRetry ? 'mt-2' : 'mt-6'} w-full rounded-full bg-white/10 py-3`}
           >
-            <Text className="text-center text-sm font-semibold text-zinc-950">
+            <Text className="text-center text-sm font-medium text-white">
               Back to venue
             </Text>
-          </Pressable>
-
-          <Pressable onPress={() => router.back()} className="mt-3 rounded-full bg-white/5 px-5 py-3">
-            <Text className="text-center text-sm font-semibold text-white">Go back</Text>
           </Pressable>
         </View>
       </View>
