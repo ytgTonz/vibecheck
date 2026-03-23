@@ -64,6 +64,8 @@ function GoLiveOnPublish({
   const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
   const firedRef = useRef(false);
 
+  console.log('[GoLive] useTracks result:', tracks.length, tracks.map(t => ({ source: t.source, isLocal: t.participant.isLocal, sid: t.publication?.trackSid })));
+
   const localTrack = tracks.find(
     (t) => t.participant.isLocal && t.source === Track.Source.Camera
   );
@@ -71,9 +73,10 @@ function GoLiveOnPublish({
   useEffect(() => {
     if (localTrack && !firedRef.current) {
       firedRef.current = true;
-      goLiveStream(streamId, authToken).catch((err) =>
-        console.error("go-live failed:", err)
-      );
+      console.log('[GoLive] localTrack detected, firing go-live for stream:', streamId);
+      goLiveStream(streamId, authToken)
+        .then(() => console.log('[GoLive] go-live succeeded'))
+        .catch((err) => console.error("go-live failed:", err));
     }
   }, [localTrack, streamId, authToken]);
 
@@ -247,12 +250,14 @@ export default function BroadcastPage() {
 
     try {
       const newStream = await createStream(venueId, authToken);
+      console.log('[Broadcast] stream created:', newStream.id, 'status:', newStream.status);
       setStream(newStream);
 
       const { token: broadcasterToken } = await fetchStreamToken(
         newStream.id,
         authToken
       );
+      console.log('[Broadcast] broadcaster token received, joining room');
       setLivekitToken(broadcasterToken);
       setPhase("live");
     } catch (err) {

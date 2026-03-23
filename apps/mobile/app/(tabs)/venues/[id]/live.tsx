@@ -12,7 +12,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   fetchVenue,
@@ -238,11 +238,32 @@ function ViewerCountBadge({
   );
 }
 
-function StreamEndedOverlay({ venueId, venueName }: { venueId: string; venueName: string }) {
+function StreamEndedOverlay({
+  venueId,
+  venueName,
+  streamId,
+  hasVideoTrack,
+  remoteParticipantCount,
+}: {
+  venueId: string;
+  venueName: string;
+  streamId: string;
+  hasVideoTrack: boolean;
+  remoteParticipantCount: number;
+}) {
   const router = useRouter();
   const room = useRoomContext?.();
   const [ended, setEnded] = useState(false);
+  const hadParticipantsRef = useRef(false);
 
+  // Track if we ever had remote participants (the broadcaster)
+  useEffect(() => {
+    if (remoteParticipantCount > 0) {
+      hadParticipantsRef.current = true;
+    }
+  }, [remoteParticipantCount]);
+
+  // Detect stream end: room disconnected
   useEffect(() => {
     if (!room || !RoomEvent) return;
 
@@ -256,6 +277,32 @@ function StreamEndedOverlay({ venueId, venueName }: { venueId: string; venueName
       room.off(RoomEvent.Disconnected, handleDisconnected);
     };
   }, [room]);
+
+  // Detect stream end: broadcaster left (had participants, now 0, no video track)
+  useEffect(() => {
+    if (hadParticipantsRef.current && remoteParticipantCount === 0 && !hasVideoTrack) {
+      const timeout = setTimeout(() => setEnded(true), 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [remoteParticipantCount, hasVideoTrack]);
+
+  // Fallback: poll stream status in case room events don't fire
+  useEffect(() => {
+    if (ended) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const streamData = await fetchStream(streamId);
+        if (streamData.status !== 'LIVE') {
+          setEnded(true);
+        }
+      } catch {
+        // ignore fetch errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [ended, streamId]);
 
   if (!ended) {
     return null;
@@ -291,11 +338,13 @@ function ChatOverlay({
   onSend,
   visible,
   onToggle,
+  bottomInset = 0,
 }: {
   messages: { from?: { name?: string; identity?: string }; message: string }[];
   onSend: (msg: string) => void;
   visible: boolean;
   onToggle: () => void;
+  bottomInset?: number;
 }) {
   const [text, setText] = useState('');
   const scrollRef = useRef<ScrollView>(null);
@@ -312,7 +361,7 @@ function ChatOverlay({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
-      className="absolute bottom-0 left-0 right-0 z-20 px-3 pb-3"
+      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20, paddingHorizontal: 12, paddingBottom: 12 + bottomInset }}
     >
       {!visible ? (
         <View className="items-start">
@@ -542,16 +591,19 @@ export default function MobileLiveWatchScreen() {
         }
 
         const streamData = await fetchStream(venueData.activeStreamId);
+        console.log('[Mobile] stream fetched:', streamData.id, 'status:', streamData.status);
         setStream(streamData);
 
         // TODO(live-viewers): IDLE now means "host is setting up", not "stream ended".
         // Keep this temporary behavior for MVP, but split IDLE vs ENDED in the viewer UX.
+        console.log('[Mobile] stream status check:', streamData.status, streamData.status !== 'LIVE' ? '→ REJECTED' : '→ OK');
         if (streamData.status !== 'LIVE') {
           setError('This stream has already ended.');
           return;
         }
 
         const { token: viewerToken } = await fetchViewerToken(streamData.id);
+        console.log('[Mobile] viewer token received for stream:', streamData.id);
         setToken(viewerToken);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load stream.');
@@ -609,6 +661,7 @@ function LiveContent({
 }) {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [chatVisible, setChatVisible] = useState(false);
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
   const nextReactionIdRef = useRef(0);
@@ -616,11 +669,13 @@ function LiveContent({
   const pendingLocalReactionsRef = useRef<Array<{ emoji: string; at: number }>>([]);
 
   const participants = useRemoteParticipants?.() || [];
+  console.log('[Mobile] remote participants:', participants.length, participants.map((p: any) => ({ identity: p.identity, tracks: p.trackPublications?.size })));
   const videoTracks =
     useTracks?.(
       [TrackSource?.Camera, TrackSource?.ScreenShare].filter(Boolean),
       { onlySubscribed: true },
     ) || [];
+  console.log('[Mobile] useTracks result:', videoTracks.length, videoTracks.map((t: any) => ({ source: t.source, isLocal: t.participant?.isLocal, sid: t.publication?.trackSid, isRef: isTrackReference?.(t) })));
   const chat = useChat?.() || { chatMessages: [], send: () => {} };
 
   const videoTrack =
@@ -631,6 +686,7 @@ function LiveContent({
         (track.source === TrackSource?.Camera || track.source === TrackSource?.ScreenShare),
     ) ||
     videoTracks.find((track: any) => isTrackReference?.(track));
+  console.log('[Mobile] selected videoTrack:', videoTrack ? { source: videoTrack.source, sid: videoTrack.publication?.trackSid } : 'NONE');
   const viewerCount = Math.max(stream.currentViewerCount, participants.length + 1);
 
   const removeFloatingReaction = useCallback((id: number) => {
@@ -723,7 +779,13 @@ function LiveContent({
         reactions={floatingReactions}
         onDone={removeFloatingReaction}
       />
-      <StreamEndedOverlay venueId={venue.id} venueName={venue.name} />
+      <StreamEndedOverlay
+        venueId={venue.id}
+        venueName={venue.name}
+        streamId={stream.id}
+        hasVideoTrack={!!videoTrack}
+        remoteParticipantCount={participants.length}
+      />
 
       <SafeAreaView edges={['top']} className="absolute left-0 right-0 top-0 z-10">
         <View className="px-4 pt-2">
@@ -757,7 +819,7 @@ function LiveContent({
         </View>
       </SafeAreaView>
 
-      <View className="absolute bottom-24 right-3 z-10">
+      <View style={{ position: 'absolute', bottom: 96 + insets.bottom, right: 12, zIndex: 10 }}>
         <QuickReactionRow onReact={handleReact} vertical />
       </View>
 
@@ -766,6 +828,7 @@ function LiveContent({
         onSend={(message: string) => chat.send(message)}
         visible={chatVisible}
         onToggle={() => setChatVisible((current) => !current)}
+        bottomInset={insets.bottom}
       />
     </View>
   );

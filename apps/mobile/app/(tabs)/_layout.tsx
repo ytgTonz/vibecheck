@@ -1,8 +1,11 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -11,9 +14,9 @@ export default function TabLayout() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          height: 74,
+          height: 62 + insets.bottom,
           paddingTop: 10,
-          paddingBottom: 12,
+          paddingBottom: insets.bottom,
           backgroundColor: '#0c0c0f',
           borderTopColor: '#1f1f23',
         },

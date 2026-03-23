@@ -63,6 +63,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       },
     });
 
+    console.log('[Streams] created stream:', stream.id, 'status:', stream.status, 'room:', stream.livekitRoom);
     res.status(201).json(stream);
   } catch (err: unknown) {
     // Partial unique index violation — concurrent request created a stream
@@ -140,6 +141,7 @@ router.post('/:id/token', requireAuth, async (req: Request, res: Response) => {
 // Also triggered by the track_published webhook as a backup.
 router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => {
   const userId = req.user!.userId;
+  console.log('[Streams] go-live request for stream:', req.params.id, 'by user:', userId);
 
   const stream = await prisma.liveStream.findUnique({
     where: { id: req.params.id },
@@ -157,6 +159,7 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
 
   // Already live or ended — no-op / error
   if (stream.status === 'LIVE') {
+    console.log('[Streams] go-live no-op — already LIVE');
     res.json(stream);
     return;
   }
@@ -174,6 +177,7 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
     },
   });
 
+  console.log('[Streams] go-live success — IDLE→LIVE, stream:', updated.id);
   res.json(updated);
 });
 

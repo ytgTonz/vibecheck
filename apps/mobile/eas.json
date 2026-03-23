@@ -10,7 +10,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://vibecheck-api-xp8x.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://vibecheck-api-xp8x.onrender.com",
+        "EXPO_PUBLIC_LIVEKIT_URL": "wss://vibecheck-b5g9rh79.livekit.cloud"
       }
     },
     "production": {}
