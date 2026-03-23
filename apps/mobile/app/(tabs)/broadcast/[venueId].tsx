@@ -105,6 +105,7 @@ function BroadcastRoom({
   const { localParticipant } = useLocalParticipant?.() || { localParticipant: null };
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [ending, setEnding] = useState(false);
 
   const handleToggleCamera = async () => {
@@ -119,6 +120,21 @@ function BroadcastRoom({
     const nextValue = !micEnabled;
     await localParticipant.setMicrophoneEnabled(nextValue);
     setMicEnabled(nextValue);
+  };
+
+  const handleFlipCamera = async () => {
+    if (!localParticipant) return;
+    try {
+      const publication = localParticipant.getTrackPublication(TrackSource?.Camera);
+      const track = publication?.track;
+      if (track && typeof track.restartTrack === 'function') {
+        const nextMode = facingMode === 'user' ? 'environment' : 'user';
+        await track.restartTrack({ facingMode: nextMode });
+        setFacingMode(nextMode);
+      }
+    } catch (err) {
+      console.error('[MobileBroadcast] flip camera failed:', err);
+    }
   };
 
   const handleEnd = async () => {
@@ -158,12 +174,18 @@ function BroadcastRoom({
         <View className="relative mb-4 flex-1 overflow-hidden rounded-[28px]">
           <BroadcasterPreview />
           <View className="absolute bottom-0 left-0 right-0 top-0">
-            <View className="absolute left-3 top-3 flex-row gap-2">
+            <View className="absolute left-3 right-3 top-3 flex-row items-center justify-between">
               <View className="rounded-full bg-black/50 px-3 py-1.5">
                 <Text className="text-xs font-semibold text-zinc-100">
                   {participants.length} viewer{participants.length === 1 ? '' : 's'}
                 </Text>
               </View>
+              <Pressable
+                onPress={handleFlipCamera}
+                className="h-9 w-9 items-center justify-center rounded-full bg-black/50"
+              >
+                <Text className="text-base text-white">⟲</Text>
+              </Pressable>
             </View>
             <LiveChatOverlay
               messages={chat.chatMessages || []}
