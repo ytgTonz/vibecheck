@@ -24,6 +24,13 @@ export default function BrowseScreen() {
 
   useEffect(() => {
     loadVenues();
+
+    // Poll every 15s so live statuses stay current
+    const interval = setInterval(() => {
+      loadVenues();
+    }, 15_000);
+
+    return () => clearInterval(interval);
   }, [loadVenues]);
 
   const onRefresh = useCallback(async () => {

@@ -389,9 +389,9 @@ export default function VenueDetailScreen() {
   const [activeClipIndex, setActiveClipIndex] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (background = false) => {
     if (!id) return;
-    setError(null);
+    if (!background) setError(null);
     try {
       const [venueData, clipsData] = await Promise.all([fetchVenue(id), fetchVenueClips(id)]);
       let liveStream: LiveStream | null = null;
@@ -409,13 +409,22 @@ export default function VenueDetailScreen() {
       setActiveStream(liveStream);
       setClips(clipsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load venue');
+      if (!background) {
+        setError(err instanceof Error ? err.message : 'Failed to load venue');
+      }
     }
   }, [id]);
 
   useEffect(() => {
     setLoading(true);
     loadData().finally(() => setLoading(false));
+
+    // Poll every 10s so live stream status stays current
+    const interval = setInterval(() => {
+      loadData(true);
+    }, 10_000);
+
+    return () => clearInterval(interval);
   }, [loadData]);
 
   const onRefresh = useCallback(async () => {

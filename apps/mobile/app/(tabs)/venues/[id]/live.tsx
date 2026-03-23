@@ -242,67 +242,50 @@ function StreamEndedOverlay({
   venueId,
   venueName,
   streamId,
-  hasVideoTrack,
-  remoteParticipantCount,
+  onReconnect,
 }: {
   venueId: string;
   venueName: string;
   streamId: string;
-  hasVideoTrack: boolean;
-  remoteParticipantCount: number;
+  onReconnect: () => void;
 }) {
   const router = useRouter();
-  const room = useRoomContext?.();
   const [ended, setEnded] = useState(false);
-  const hadParticipantsRef = useRef(false);
+  const [newStreamAvailable, setNewStreamAvailable] = useState(false);
+  const notLiveCountRef = useRef(0);
+  const REQUIRED_CONFIRMATIONS = 2;
 
-  // Track if we ever had remote participants (the broadcaster)
   useEffect(() => {
-    if (remoteParticipantCount > 0) {
-      hadParticipantsRef.current = true;
-    }
-  }, [remoteParticipantCount]);
-
-  // Detect stream end: room disconnected
-  useEffect(() => {
-    if (!room || !RoomEvent) return;
-
-    const handleDisconnected = () => {
-      setEnded(true);
-    };
-
-    room.on(RoomEvent.Disconnected, handleDisconnected);
-
-    return () => {
-      room.off(RoomEvent.Disconnected, handleDisconnected);
-    };
-  }, [room]);
-
-  // Detect stream end: broadcaster left (had participants, now 0, no video track)
-  useEffect(() => {
-    if (hadParticipantsRef.current && remoteParticipantCount === 0 && !hasVideoTrack) {
-      const timeout = setTimeout(() => setEnded(true), 2000);
-      return () => clearTimeout(timeout);
-    }
-  }, [remoteParticipantCount, hasVideoTrack]);
-
-  // Fallback: poll stream status in case room events don't fire
-  useEffect(() => {
-    if (ended) return;
-
     const interval = setInterval(async () => {
       try {
         const streamData = await fetchStream(streamId);
-        if (streamData.status !== 'LIVE') {
-          setEnded(true);
+        if (streamData.status === 'LIVE') {
+          notLiveCountRef.current = 0;
+          setEnded(false);
+          setNewStreamAvailable(false);
+        } else {
+          notLiveCountRef.current += 1;
+          if (notLiveCountRef.current >= REQUIRED_CONFIRMATIONS) {
+            setEnded(true);
+
+            // Stream ended — check if the venue started a new one
+            try {
+              const venueData = await fetchVenue(venueId);
+              if (venueData.activeStreamId && venueData.activeStreamId !== streamId) {
+                setNewStreamAvailable(true);
+              }
+            } catch {
+              // ignore
+            }
+          }
         }
       } catch {
-        // ignore fetch errors
+        // Network error — don't count as ended
       }
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [ended, streamId]);
+  }, [streamId, venueId]);
 
   if (!ended) {
     return null;
@@ -312,17 +295,30 @@ function StreamEndedOverlay({
     <View className="absolute inset-0 z-30 items-center justify-center bg-black/85 px-6">
       <View className="w-full max-w-[320px] rounded-[28px] border border-white/10 bg-zinc-950 px-6 py-7">
         <Text className="text-center text-3xl font-semibold text-white">
-          Stream ended
+          {newStreamAvailable ? 'New stream started' : 'Stream ended'}
         </Text>
         <Text className="mt-3 text-center text-sm leading-6 text-zinc-400">
-          {venueName} has ended their live stream.
+          {newStreamAvailable
+            ? `${venueName} just started a new live stream.`
+            : `${venueName} has ended their live stream.`}
         </Text>
+
+        {newStreamAvailable ? (
+          <Pressable
+            onPress={onReconnect}
+            className="mt-6 rounded-full bg-red-500 px-5 py-3"
+          >
+            <Text className="text-center text-sm font-semibold text-white">
+              Join new stream
+            </Text>
+          </Pressable>
+        ) : null}
 
         <Pressable
           onPress={() =>
             router.replace({ pathname: '/venues/[id]', params: { id: venueId } })
           }
-          className="mt-6 rounded-full bg-zinc-100 px-5 py-3"
+          className={`${newStreamAvailable ? 'mt-3' : 'mt-6'} rounded-full bg-zinc-100 px-5 py-3`}
         >
           <Text className="text-center text-sm font-semibold text-zinc-950">
             Back to venue
@@ -501,10 +497,12 @@ function ErrorState({
   id,
   title,
   detail,
+  onRetry,
 }: {
   id?: string;
   title: string;
   detail: string;
+  onRetry?: () => void;
 }) {
   const router = useRouter();
 
@@ -520,13 +518,24 @@ function ErrorState({
           <Text className="mt-4 text-3xl font-semibold text-zinc-100">{title}</Text>
           <Text className="mt-3 text-sm leading-6 text-zinc-400">{detail}</Text>
 
+          {onRetry && (
+            <Pressable
+              onPress={onRetry}
+              className="mt-6 rounded-full bg-red-500 px-5 py-3"
+            >
+              <Text className="text-center text-sm font-semibold text-white">
+                Try again
+              </Text>
+            </Pressable>
+          )}
+
           <Pressable
             onPress={() =>
               id
                 ? router.replace({ pathname: '/venues/[id]', params: { id } })
                 : router.back()
             }
-            className="mt-6 rounded-full bg-zinc-100 px-5 py-3"
+            className={`${onRetry ? 'mt-3' : 'mt-6'} rounded-full bg-zinc-100 px-5 py-3`}
           >
             <Text className="text-center text-sm font-semibold text-zinc-950">
               Back to venue
@@ -549,6 +558,7 @@ export default function MobileLiveWatchScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Configure audio session for playback through speaker
   useEffect(() => {
@@ -576,13 +586,17 @@ export default function MobileLiveWatchScreen() {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
 
     (async () => {
       setLoading(true);
       setError(null);
+      setStream(null);
+      setToken(null);
 
       try {
         const venueData = await fetchVenue(id);
+        if (cancelled) return;
         setVenue(venueData);
 
         if (!venueData.activeStreamId) {
@@ -590,28 +604,80 @@ export default function MobileLiveWatchScreen() {
           return;
         }
 
-        const streamData = await fetchStream(venueData.activeStreamId);
-        console.log('[Mobile] stream fetched:', streamData.id, 'status:', streamData.status);
-        setStream(streamData);
+        // Retry logic: the stream may still be transitioning IDLE → LIVE,
+        // or the API may be waking from a cold start.
+        let streamData: LiveStream | null = null;
+        const MAX_RETRIES = 5;
+        const RETRY_DELAY = 2000;
 
-        // TODO(live-viewers): IDLE now means "host is setting up", not "stream ended".
-        // Keep this temporary behavior for MVP, but split IDLE vs ENDED in the viewer UX.
-        console.log('[Mobile] stream status check:', streamData.status, streamData.status !== 'LIVE' ? '→ REJECTED' : '→ OK');
-        if (streamData.status !== 'LIVE') {
-          setError('This stream has already ended.');
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          if (cancelled) return;
+          try {
+            streamData = await fetchStream(venueData.activeStreamId);
+            console.log(`[Mobile] stream fetched (attempt ${attempt + 1}):`, streamData.id, 'status:', streamData.status);
+            if (streamData.status === 'LIVE') break;
+            // Not LIVE yet — wait and retry
+            streamData = null;
+            if (attempt < MAX_RETRIES - 1) {
+              await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            }
+          } catch (fetchErr) {
+            console.log(`[Mobile] stream fetch attempt ${attempt + 1} failed:`, fetchErr);
+            streamData = null;
+            if (attempt < MAX_RETRIES - 1) {
+              await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            }
+          }
+        }
+
+        if (cancelled) return;
+
+        if (!streamData || streamData.status !== 'LIVE') {
+          setError('This stream is not available right now. It may still be starting up — try again in a moment.');
           return;
         }
 
-        const { token: viewerToken } = await fetchViewerToken(streamData.id);
+        setStream(streamData);
+
+        // Retry viewer token fetch — can fail transiently
+        let viewerToken: string | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (cancelled) return;
+          try {
+            const result = await fetchViewerToken(streamData.id);
+            viewerToken = result.token;
+            break;
+          } catch (tokenErr) {
+            console.log(`[Mobile] viewer token attempt ${attempt + 1} failed:`, tokenErr);
+            if (attempt < 2) {
+              await new Promise((r) => setTimeout(r, RETRY_DELAY));
+            }
+          }
+        }
+
+        if (cancelled) return;
+
+        if (!viewerToken) {
+          setError('Could not get a viewer token. The stream may have just ended — try again.');
+          return;
+        }
+
         console.log('[Mobile] viewer token received for stream:', streamData.id);
         setToken(viewerToken);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load stream.');
+        if (!cancelled) {
+          console.log('[Mobile] live screen error:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load stream.');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
-  }, [id]);
+
+    return () => { cancelled = true; };
+  }, [id, retryCount]);
 
   if (loading) {
     return <LoadingState venueName={venue?.name} />;
@@ -623,6 +689,7 @@ export default function MobileLiveWatchScreen() {
         id={id}
         title={error || 'Stream not available'}
         detail="The live room could not be opened right now. Jump back to the venue page and try again from there."
+        onRetry={() => setRetryCount((c) => c + 1)}
       />
     );
   }
@@ -646,7 +713,7 @@ export default function MobileLiveWatchScreen() {
         connect={true}
         style={{ flex: 1 }}
       >
-        <LiveContent venue={venue} stream={stream} />
+        <LiveContent venue={venue} stream={stream} onReconnect={() => setRetryCount((c) => c + 1)} />
       </LiveKitRoom>
     </View>
   );
@@ -655,9 +722,11 @@ export default function MobileLiveWatchScreen() {
 function LiveContent({
   venue,
   stream,
+  onReconnect,
 }: {
   venue: Venue;
   stream: LiveStream;
+  onReconnect: () => void;
 }) {
   const router = useRouter();
   const { width, height } = useWindowDimensions();
@@ -783,8 +852,7 @@ function LiveContent({
         venueId={venue.id}
         venueName={venue.name}
         streamId={stream.id}
-        hasVideoTrack={!!videoTrack}
-        remoteParticipantCount={participants.length}
+        onReconnect={onReconnect}
       />
 
       <SafeAreaView edges={['top']} className="absolute left-0 right-0 top-0 z-10">

@@ -53,13 +53,19 @@ export const useVenueStore = create<VenueState>((set, get) => ({
   musicGenreFilter: null,
 
   loadVenues: async () => {
-    set({ loading: true, error: null });
+    const isInitialLoad = get().venues.length === 0;
+    if (isInitialLoad) {
+      set({ loading: true, error: null });
+    }
     try {
       const venues = await fetchVenues();
-      set({ venues, loading: false });
+      set({ venues, loading: false, error: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load venues';
-      set({ error: message, loading: false });
+      // Only show error on initial load — don't flash errors during background polls
+      if (isInitialLoad) {
+        set({ error: message, loading: false });
+      }
     }
   },
 
