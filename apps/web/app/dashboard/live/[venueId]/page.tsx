@@ -10,6 +10,7 @@ import {
   endStream,
   goLiveStream,
   useAuthStore,
+  useBroadcastStore,
   LiveStream,
   Venue,
 } from "@vibecheck/shared";
@@ -214,6 +215,7 @@ export default function BroadcastPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
   const { user, token: authToken, hydrate } = useAuthStore();
+  const broadcastStore = useBroadcastStore();
   const [hydrated, setHydrated] = useState(false);
 
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -228,6 +230,17 @@ export default function BroadcastPage() {
     hydrate();
     setHydrated(true);
   }, [hydrate]);
+
+  // Restore broadcast state if returning to an active stream
+  useEffect(() => {
+    if (!hydrated || !venueId) return;
+    const bs = useBroadcastStore.getState();
+    if (bs.venueId === venueId && bs.livekitToken && bs.streamId) {
+      setLivekitToken(bs.livekitToken);
+      setStream({ id: bs.streamId } as LiveStream);
+      setPhase("live");
+    }
+  }, [hydrated, venueId]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -260,6 +273,9 @@ export default function BroadcastPage() {
       console.log('[Broadcast] broadcaster token received, joining room');
       setLivekitToken(broadcasterToken);
       setPhase("live");
+      if (venue) {
+        broadcastStore.setBroadcast(venueId!, newStream.id, venue.name, broadcasterToken);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to start stream"
@@ -273,6 +289,7 @@ export default function BroadcastPage() {
 
     try {
       await endStream(stream.id, authToken);
+      broadcastStore.clearBroadcast();
       setPhase("ended");
     } catch (err) {
       setError(

@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   fetchAdminStats,
+  fetchActiveStreams,
+  endAllStreams,
   useAuthStore,
   AdminStats,
+  LiveStream,
 } from "@vibecheck/shared";
 
 function timeAgo(iso: string): string {
@@ -25,15 +28,54 @@ export default function AdminOverviewPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeStreams, setActiveStreams] = useState<LiveStream[]>([]);
+  const [endingAll, setEndingAll] = useState(false);
+  const [endingId, setEndingId] = useState<string | null>(null);
+
+  const loadActiveStreams = () => {
+    fetchActiveStreams().then(setActiveStreams).catch(() => {});
+  };
 
   useEffect(() => {
     if (!token) return;
     setLoading(true);
-    fetchAdminStats(token)
-      .then(setStats)
+    Promise.all([
+      fetchAdminStats(token).then(setStats),
+      fetchActiveStreams().then(setActiveStreams),
+    ])
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  const handleEndAll = async () => {
+    if (!token || activeStreams.length === 0) return;
+    setEndingAll(true);
+    try {
+      await endAllStreams(token);
+      loadActiveStreams();
+      // Refresh stats too since active count changed
+      fetchAdminStats(token).then(setStats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to end streams");
+    } finally {
+      setEndingAll(false);
+    }
+  };
+
+  const handleEndOne = async (streamId: string) => {
+    if (!token) return;
+    setEndingId(streamId);
+    try {
+      const { endStream } = await import("@vibecheck/shared");
+      await endStream(streamId, token);
+      loadActiveStreams();
+      fetchAdminStats(token).then(setStats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to end stream");
+    } finally {
+      setEndingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -100,6 +142,62 @@ export default function AdminOverviewPage() {
             <p className="mt-2 text-xs text-zinc-500">{card.description}</p>
           </Link>
         ))}
+      </div>
+
+      {/* Active Streams */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">Active Streams</h2>
+            {activeStreams.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                {activeStreams.length} live
+              </span>
+            )}
+          </div>
+          {activeStreams.length > 0 && (
+            <button
+              onClick={handleEndAll}
+              disabled={endingAll}
+              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+            >
+              {endingAll ? "Ending..." : "End All Streams"}
+            </button>
+          )}
+        </div>
+
+        {activeStreams.length === 0 ? (
+          <p className="text-sm text-zinc-500">No active streams right now.</p>
+        ) : (
+          <div className="space-y-2">
+            {activeStreams.map((stream) => (
+              <div
+                key={stream.id}
+                className="flex items-center justify-between rounded-lg bg-zinc-800/50 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium">
+                    {stream.venue?.name || "Unknown Venue"}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    Room: {stream.livekitRoom} · Viewers: {stream.currentViewerCount}
+                    {stream.startedAt && (
+                      <> · Started {timeAgo(stream.startedAt)}</>
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleEndOne(stream.id)}
+                  disabled={endingId === stream.id}
+                  className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                >
+                  {endingId === stream.id ? "Ending..." : "End"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">

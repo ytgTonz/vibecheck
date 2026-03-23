@@ -340,6 +340,17 @@ export function fetchVenueRecentStreams(venueId: string): Promise<LiveStream[]> 
   return apiFetch<LiveStream[]>(`/streams/venue/${venueId}/recent`);
 }
 
+/** Admin: force-end all active (IDLE/LIVE) streams. */
+export async function endAllStreams(token: string): Promise<{ ended: number }> {
+  const res = await fetch(`${baseUrl}/streams/end-all`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to end streams: ${res.status}`);
+  return body as { ended: number };
+}
+
 // ─── Feedback ───────────────────────────────────────────────────────────────
 
 /** Submit user feedback. */

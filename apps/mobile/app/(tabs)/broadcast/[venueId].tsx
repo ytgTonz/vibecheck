@@ -207,13 +207,13 @@ function BroadcastRoom({
 
 export default function MobileBroadcastScreen() {
   const { venueId } = useLocalSearchParams<{ venueId: string }>();
+  const router = useRouter();
   const { user, token: authToken, hydrate } = useAuthStore();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [ended, setEnded] = useState(false);
   const [phase, setPhase] = useState<'setup' | 'connecting' | 'live'>('setup');
 
   useEffect(() => {
@@ -310,16 +310,6 @@ export default function MobileBroadcastScreen() {
     return <LoadingState venueName={venue?.name} />;
   }
 
-  if (ended) {
-    return (
-      <ErrorState
-        id={venueId}
-        title="Stream ended"
-        detail={`${venue?.name ?? 'Your venue'} is no longer live.`}
-      />
-    );
-  }
-
   if (error && !venue) {
     return (
       <ErrorState
@@ -366,7 +356,7 @@ export default function MobileBroadcastScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <View className="flex-1 px-5 py-4">
           <Pressable
-            onPress={() => setEnded(true)}
+            onPress={() => router.replace('/upload')}
             className="mb-6 self-start rounded-full border border-zinc-800 px-4 py-2"
           >
             <Text className="text-sm font-semibold text-zinc-300">Back</Text>
@@ -392,7 +382,7 @@ export default function MobileBroadcastScreen() {
                   Another team member may be running this stream right now.
                 </Text>
                 <Pressable
-                  onPress={() => setEnded(true)}
+                  onPress={() => router.replace('/upload')}
                   className="mt-4 rounded-2xl bg-zinc-100 px-4 py-3"
                 >
                   <Text className="text-center text-sm font-semibold text-zinc-950">
@@ -431,7 +421,13 @@ export default function MobileBroadcastScreen() {
           venue={venue}
           stream={stream}
           authToken={authToken}
-          onEnded={() => setEnded(true)}
+          onEnded={() => {
+            setStream(null);
+            setLivekitToken(null);
+            setError(null);
+            setPhase('setup');
+            router.replace('/upload');
+          }}
         />
       </LiveKitRoom>
     </View>

@@ -1,12 +1,35 @@
 import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
 import { isVenueMember, isVenueOwner } from '../lib/venueAuth';
 import { createToken, roomService } from '../lib/livekit';
 
 const router = Router();
 const STALE_IDLE_STREAM_MS = 60 * 60 * 1000;
+
+// POST /streams/end-all — admin force-end all IDLE/LIVE streams
+router.post('/end-all', requireAuth, requireRole('ADMIN'), async (_req: Request, res: Response) => {
+  const active = await prisma.liveStream.findMany({
+    where: { status: { in: ['IDLE', 'LIVE'] } },
+  });
+
+  for (const stream of active) {
+    try {
+      await roomService.deleteRoom(stream.livekitRoom);
+    } catch {
+      // Room may not exist
+    }
+  }
+
+  const result = await prisma.liveStream.updateMany({
+    where: { status: { in: ['IDLE', 'LIVE'] } },
+    data: { status: 'ENDED', endedAt: new Date() },
+  });
+
+  console.log(`[Streams] admin force-ended ${result.count} stream(s)`);
+  res.json({ ended: result.count });
+});
 
 // POST /streams — create a new stream for a venue
 router.post('/', requireAuth, async (req: Request, res: Response) => {
@@ -225,9 +248,10 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
   }
 
   const isCreator = stream.createdBy === userId;
+  const isAdmin = req.user!.role === 'ADMIN';
   const ownerCheck = await isVenueOwner(userId, stream.venueId);
 
-  if (!isCreator && !ownerCheck) {
+  if (!isCreator && !ownerCheck && !isAdmin) {
     res.status(403).json({ error: 'Not authorized to end this stream' });
     return;
   }
