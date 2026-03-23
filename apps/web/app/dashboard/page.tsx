@@ -3,40 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
   fetchMyVenues,
-  fetchActiveStreams,
   generateInvite,
   fetchVenuePromoters,
   removePromoter,
-  deleteClip,
   useAuthStore,
   VenueWithStats,
   VenuePromoter,
   Invite,
-  LiveStream,
 } from "@vibecheck/shared";
-
-/** Format seconds as m:ss. */
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-/** Format an ISO date string as a relative "time ago" label. */
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -50,9 +26,6 @@ export default function DashboardPage() {
   const [promoters, setPromoters] = useState<Record<string, VenuePromoter[]>>({});
   const [invites, setInvites] = useState<Record<string, Invite>>({});
   const [loadingPromoters, setLoadingPromoters] = useState<Record<string, boolean>>({});
-  const [deletingClipIds, setDeletingClipIds] = useState<Record<string, boolean>>({});
-  const [openClipMenuId, setOpenClipMenuId] = useState<string | null>(null);
-  const [activeStreams, setActiveStreams] = useState<Record<string, LiveStream>>({});
 
   const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
 
@@ -60,14 +33,8 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [nextVenues, streams] = await Promise.all([
-        fetchMyVenues(authToken),
-        fetchActiveStreams(),
-      ]);
+      const nextVenues = await fetchMyVenues(authToken);
       setVenues(nextVenues);
-      const streamMap: Record<string, LiveStream> = {};
-      for (const s of streams) streamMap[s.venueId] = s;
-      setActiveStreams(streamMap);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
@@ -90,31 +57,6 @@ export default function DashboardPage() {
 
     loadDashboard(token);
   }, [hydrated, user, token, router]);
-
-  useEffect(() => {
-    if (!openClipMenuId) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (target.closest("[data-clip-menu]")) return;
-      setOpenClipMenuId(null);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenClipMenuId(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [openClipMenuId]);
 
   /** Load promoters for a venue (owner only). */
   const loadPromoters = async (venueId: string) => {
@@ -155,21 +97,6 @@ export default function DashboardPage() {
     }
   };
 
-  /** Delete a clip and refresh the venue stats/list. */
-  const handleDeleteClip = async (clipId: string) => {
-    if (!token) return;
-    setOpenClipMenuId(null);
-    setDeletingClipIds((prev) => ({ ...prev, [clipId]: true }));
-    try {
-      await deleteClip(clipId, token);
-      await loadDashboard(token);
-    } catch {
-      // silently fail
-    } finally {
-      setDeletingClipIds((prev) => ({ ...prev, [clipId]: false }));
-    }
-  };
-
   if (!hydrated || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
@@ -179,25 +106,7 @@ export default function DashboardPage() {
             <div className="mb-1 h-6 w-36 rounded bg-zinc-800" />
             <div className="h-4 w-48 rounded bg-zinc-800" />
           </div>
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-lg bg-zinc-800 p-4">
-                <div className="mx-auto mb-2 h-7 w-12 rounded bg-zinc-700" />
-                <div className="mx-auto h-3 w-16 rounded bg-zinc-700" />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-2">
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg bg-zinc-800/50 p-3">
-                <div className="h-12 w-20 shrink-0 rounded bg-zinc-700" />
-                <div className="flex-1">
-                  <div className="mb-1 h-4 w-32 rounded bg-zinc-700" />
-                  <div className="h-3 w-20 rounded bg-zinc-700" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="mb-6 h-16 rounded-lg bg-zinc-800" />
         </div>
       </div>
     );
@@ -254,15 +163,15 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold">{venue.name}</h2>
                 <p className="text-sm text-zinc-400">{venue.location}</p>
               </div>
-              {activeStreams[venue.id] && (
+              {venue.isLive && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                  LIVE · {activeStreams[venue.id].currentViewerCount} viewers
+                  LIVE · {venue.currentViewerCount} viewers
                 </span>
               )}
             </div>
             <div className="flex shrink-0 gap-3">
-              {activeStreams[venue.id] ? (
+              {venue.isLive ? (
                 <Link
                   href={`/dashboard/live/${venue.id}`}
                   className="rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30"
@@ -294,109 +203,23 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Stats cards */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="rounded-lg bg-zinc-800 p-4 text-center">
-              <p className="text-2xl font-bold">{venue.stats.totalViews}</p>
-              <p className="text-xs text-zinc-400">Total Views</p>
-            </div>
-            <div className="rounded-lg bg-zinc-800 p-4 text-center">
-              <p className="text-2xl font-bold">{venue.stats.totalClips}</p>
-              <p className="text-xs text-zinc-400">Total Clips</p>
-            </div>
-            <div className="rounded-lg bg-zinc-800 p-4 text-center">
-              <p className="text-2xl font-bold">{venue.stats.clipsThisWeek}</p>
-              <p className="text-xs text-zinc-400">Clips This Week</p>
-            </div>
-          </div>
-
-          {/* Recent clips */}
-          <div className="mb-6">
-            <h3 className="mb-3 text-sm font-semibold text-zinc-300">
-              Recent Clips
-            </h3>
-            {venue.recentClips.length === 0 ? (
-              <p className="text-sm text-zinc-500">No clips uploaded yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {venue.recentClips.map((clip) => (
-                  <div
-                    key={clip.id}
-                    className="flex items-center gap-3 rounded-lg bg-zinc-800/50 p-3"
-                  >
-                    {/* Thumbnail */}
-                    <div className="relative h-12 w-20 shrink-0 overflow-hidden rounded bg-zinc-700">
-                      {clip.thumbnail ? (
-                        <Image
-                          src={clip.thumbnail}
-                          alt={clip.caption || "Clip"}
-                          fill
-                          sizes="80px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-zinc-500">
-                          No thumb
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {clip.caption || "Untitled clip"}
-                      </p>
-                      <p className="text-xs text-zinc-400">
-                        {formatDuration(clip.duration)} &middot;{" "}
-                        {timeAgo(clip.createdAt)}
-                      </p>
-                    </div>
-
-                    {/* Views */}
-                    <div className="flex items-center gap-1 text-xs text-zinc-400">
-                      <svg
-                        className="h-3 w-3"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
-                      </svg>
-                      {clip.views}
-                    </div>
-
-                    <div className="relative shrink-0" data-clip-menu>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setOpenClipMenuId((current) =>
-                            current === clip.id ? null : clip.id
-                          )
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white"
-                        aria-haspopup="menu"
-                        aria-expanded={openClipMenuId === clip.id}
-                        aria-label="Clip actions"
-                      >
-                        <span className="text-lg leading-none">...</span>
-                      </button>
-
-                      {openClipMenuId === clip.id && (
-                        <div className="absolute right-0 top-10 z-10 w-36 max-w-[calc(100vw-2rem)] rounded-lg border border-zinc-700 bg-zinc-900 p-1 shadow-lg">
-                        <button
-                          onClick={() => handleDeleteClip(clip.id)}
-                          disabled={!!deletingClipIds[clip.id]}
-                          className="block w-full rounded px-3 py-2 text-left text-xs text-red-400 transition-colors hover:bg-zinc-800 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {deletingClipIds[clip.id] ? "Removing..." : "Remove"}
-                        </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          {/* Go Live CTA when not streaming */}
+          {!venue.isLive && (
+            <Link
+              href={`/dashboard/live/${venue.id}`}
+              className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-3 transition-colors hover:border-red-500/30 hover:bg-red-500/10"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20">
+                <svg className="ml-0.5 h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-medium text-zinc-200">Start a live stream</p>
+                <p className="text-xs text-zinc-500">Broadcast to your audience in real time</p>
               </div>
-            )}
-          </div>
+            </Link>
+          )}
 
           {/* Manage Promoters (owner only) */}
           {isOwner && venue.ownerId === user?.id && (
@@ -421,7 +244,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Show generated invite code */}
               {invites[venue.id] && (
                 <div className="mb-3 rounded-lg bg-zinc-800 p-3">
                   <p className="text-xs text-zinc-400">
@@ -436,7 +258,6 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* Promoter list */}
               {promoters[venue.id] && promoters[venue.id].length > 0 ? (
                 <div className="space-y-2">
                   {promoters[venue.id].map((p) => (

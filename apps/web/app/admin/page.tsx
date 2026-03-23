@@ -63,14 +63,14 @@ export default function AdminOverviewPage() {
   const statCards = [
     { label: "Users", value: stats.counts.users, href: "/admin/users", description: "Review accounts and roles" },
     { label: "Venues", value: stats.counts.venues, href: "/admin/venues", description: "Inspect venue ownership" },
-    { label: "Clips", value: stats.counts.clips, href: "/admin/clips", description: "Moderate recent uploads" },
+    { label: "Active Streams", value: stats.counts.activeStreams, href: "/admin/venues", description: "Currently live" },
     { label: "Feedback", value: stats.counts.feedback, href: "/admin/feedback", description: "Triage platform issues" },
   ];
 
   const quickActions = [
     { title: "Review Feedback", href: "/admin/feedback", description: "Search bug reports, suggestions, and recent ratings." },
     { title: "Manage Users", href: "/admin/users", description: "Find owners, promoters, and account activity quickly." },
-    { title: "Moderate Clips", href: "/admin/clips", description: "Inspect recent uploads, thumbnails, and delete risky content." },
+    { title: "Manage Venues", href: "/admin/venues", description: "Inspect venue details, ownership, and promoter links." },
   ];
 
   return (
@@ -114,7 +114,7 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent Users</h2>
@@ -154,32 +154,6 @@ export default function AdminOverviewPage() {
                   <p className="text-xs text-zinc-500">{timeAgo(v.createdAt)}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent Clips</h2>
-            <Link href="/admin/clips" className="text-xs text-zinc-400 hover:text-white">View all</Link>
-          </div>
-          <div className="space-y-2">
-            {stats.recentClips.map((clip) => (
-              <Link key={clip.id} href="/admin/clips" className="block rounded-lg bg-zinc-800/50 px-4 py-2 transition-colors hover:bg-zinc-800">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium">{clip.caption || "Untitled clip"}</p>
-                    <p className="text-xs text-zinc-500">
-                      <span>{clip.views} views</span>
-                      {clip.venue ? <span> &middot; {clip.venue.name}</span> : null}
-                    </p>
-                    {clip.uploader ? (
-                      <p className="text-xs text-zinc-600">{clip.uploader.name} &middot; {clip.uploader.email}</p>
-                    ) : null}
-                  </div>
-                  <p className="text-xs text-zinc-500">{timeAgo(clip.createdAt)}</p>
-                </div>
-              </Link>
             ))}
           </div>
         </div>

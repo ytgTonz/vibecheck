@@ -47,12 +47,6 @@ export default function NavBar() {
                       Dashboard
                     </Link>
                     <Link
-                      href="/upload"
-                      className="rounded-lg bg-white px-3 py-1.5 font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
-                    >
-                      Upload
-                    </Link>
-                    <Link
                       href="/dashboard"
                       className="rounded-lg bg-red-500 px-3 py-1.5 font-medium text-white transition-colors hover:bg-red-600"
                     >

@@ -53,24 +53,15 @@ export default function BrowsePage() {
   );
   const groups = useMemo(() => groupBrowseVenues(filtered), [filtered]);
   const liveCount = groups.live.length;
-  const streamingCount = groups.streaming.length;
 
   const featuredVenue = useMemo(() => pickFeaturedVenue(groups), [groups]);
-  const streamingSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.streaming, featuredVenue),
-    [groups.streaming, featuredVenue]
-  );
   const liveSectionVenues = useMemo(
     () => excludeFeaturedVenue(groups.live, featuredVenue),
     [groups.live, featuredVenue]
   );
-  const freshSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.fresh, featuredVenue),
-    [groups.fresh, featuredVenue]
-  );
-  const quietSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.quiet, featuredVenue),
-    [groups.quiet, featuredVenue]
+  const offlineSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.offline, featuredVenue),
+    [groups.offline, featuredVenue]
   );
 
   return (
@@ -81,11 +72,11 @@ export default function BrowsePage() {
             Tonight In East London
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Open the venue stories before you decide where to pull up.
+            See what is live before you decide where to pull up.
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-base">
-            The browse page now works like a live directory: each venue card previews the
-            energy, recency, and feel of its latest story rather than looking like a plain listing.
+            Browse venues streaming right now. Each card shows you the live status
+            so you can jump straight into a stream.
           </p>
         </div>
       </section>
@@ -93,10 +84,10 @@ export default function BrowsePage() {
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-100">
-            Browse Stories
+            Browse Venues
           </h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Scan the latest venue energy first, then open the full feed that feels right.
+            Live venues first, then everything else.
           </p>
         </div>
       </div>
@@ -108,8 +99,7 @@ export default function BrowsePage() {
       {!loading && !error && filtered.length > 0 && (
         <p className="mb-6 text-xs text-zinc-500">
           {filtered.length} venue{filtered.length !== 1 ? "s" : ""}
-          {streamingCount > 0 && ` · ${streamingCount} streaming live`}
-          {liveCount > 0 && ` · ${liveCount} live now`}
+          {liveCount > 0 && ` \u00b7 ${liveCount} live now`}
         </p>
       )}
 
@@ -120,11 +110,6 @@ export default function BrowsePage() {
               key={i}
               className="animate-pulse overflow-hidden rounded-[1.75rem] border border-zinc-800 bg-zinc-950 p-5"
             >
-              <div className="mb-5 flex gap-1.5">
-                <div className="h-1 flex-1 rounded-full bg-zinc-800" />
-                <div className="h-1 flex-1 rounded-full bg-zinc-900" />
-                <div className="h-1 flex-1 rounded-full bg-zinc-900" />
-              </div>
               <div className="mb-4 h-4 w-20 rounded bg-zinc-800" />
               <div className="mb-3 h-8 w-48 rounded bg-zinc-800" />
               <div className="mb-5 h-4 w-40 rounded bg-zinc-800" />
@@ -169,10 +154,8 @@ export default function BrowsePage() {
             </div>
           )}
 
-          <VenueSection title="Streaming live" venues={streamingSectionVenues} />
           <VenueSection title="Live now" venues={liveSectionVenues} />
-          <VenueSection title="Fresh tonight" venues={freshSectionVenues} />
-          <VenueSection title="More venues" venues={quietSectionVenues} />
+          <VenueSection title="All venues" venues={offlineSectionVenues} />
         </>
       )}
     </div>

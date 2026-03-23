@@ -24,25 +24,9 @@ model Venue {
   updatedAt  DateTime  @updatedAt
 
   owner     User            @relation("OwnedVenues", fields: [ownerId], references: [id])
-  clips     Clip[]
   promoters VenuePromoter[]
   invites   Invite[]
   streams   LiveStream[]
-}
-
-model Clip {
-  id         String   @id @default(cuid())
-  videoUrl   String
-  thumbnail  String?
-  duration   Int      // length of the clip in seconds
-  venueId    String
-  uploadedBy String   // user ID of the person who posted this
-  musicGenre String?
-  caption    String?
-  views      Int      @default(0)
-  createdAt  DateTime @default(now())
-
-  venue Venue @relation(fields: [venueId], references: [id])
 }
 
 model User {

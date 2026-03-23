@@ -1,6 +1,6 @@
 import {
-  Venue, Clip, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
-  PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue, AdminClip,
+  Venue, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
+  PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue,
 } from './types';
 import { FeedbackCategory, FeedbackRating } from './enums';
 
@@ -58,11 +58,6 @@ export function fetchVenues(): Promise<Venue[]> {
 /** Fetch a single venue by ID. */
 export function fetchVenue(id: string): Promise<Venue> {
   return apiFetch<Venue>(`/venues/${id}`);
-}
-
-/** Fetch all clips for a venue, newest first. */
-export function fetchVenueClips(venueId: string): Promise<Clip[]> {
-  return apiFetch<Clip[]>(`/venues/${venueId}/clips`);
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -130,7 +125,7 @@ export async function login(
 
 // ─── Protected venue endpoints ───────────────────────────────────────────────
 
-/** Venue with dashboard stats, returned by fetchMyVenues(). */
+/** Venue with live status, returned by fetchMyVenues(). */
 export interface VenueWithStats {
   id: string;
   name: string;
@@ -144,19 +139,9 @@ export interface VenueWithStats {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
-  stats: {
-    totalClips: number;
-    totalViews: number;
-    clipsThisWeek: number;
-  };
-  recentClips: {
-    id: string;
-    views: number;
-    createdAt: string;
-    caption: string | null;
-    thumbnail: string | null;
-    duration: number;
-  }[];
+  isLive: boolean;
+  activeStreamId?: string;
+  currentViewerCount: number;
 }
 
 /** Fetch venues the current user owns or is a promoter for, with stats. */
@@ -251,38 +236,6 @@ export async function removePromoter(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error || `Failed to remove promoter: ${res.status}`);
-  }
-}
-
-// ─── Clip actions ────────────────────────────────────────────────────────────
-
-/** Record a view for a clip. Returns the updated view count. */
-export async function recordClipView(
-  id: string
-): Promise<{ id: string; views: number }> {
-  const res = await fetch(`${baseUrl}/clips/${id}/view`, {
-    method: 'POST',
-  });
-
-  const body = await res.json();
-
-  if (!res.ok) {
-    throw new Error(body.error || `View tracking failed: ${res.status}`);
-  }
-
-  return body as { id: string; views: number };
-}
-
-/** Delete a clip the current user is allowed to manage. */
-export async function deleteClip(id: string, token: string): Promise<void> {
-  const res = await fetch(`${baseUrl}/clips/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error || `Failed to delete clip: ${res.status}`);
   }
 }
 
@@ -505,31 +458,3 @@ export async function deleteAdminVenue(id: string, token: string): Promise<void>
   }
 }
 
-/** Fetch paginated clips with venue and uploader info. */
-export async function fetchAdminClips(
-  token: string,
-  filters?: { page?: number; query?: string }
-): Promise<PaginatedResponse<AdminClip>> {
-  const params = new URLSearchParams();
-  if (filters?.page) params.set('page', String(filters.page));
-  if (filters?.query) params.set('query', filters.query);
-  const qs = params.toString();
-  const res = await fetch(`${baseUrl}/admin/clips${qs ? `?${qs}` : ''}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.error || `Failed to fetch clips: ${res.status}`);
-  return body as PaginatedResponse<AdminClip>;
-}
-
-/** Delete a clip by ID (admin only). */
-export async function deleteAdminClip(id: string, token: string): Promise<void> {
-  const res = await fetch(`${baseUrl}/admin/clips/${id}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error || `Failed to delete clip: ${res.status}`);
-  }
-}

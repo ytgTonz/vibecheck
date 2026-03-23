@@ -4,25 +4,25 @@ const pillars = [
   {
     eyebrow: "Live Discovery",
     title: "See the room before you spend the Uber.",
-    body: "Open recent venue stories, check if the floor is moving, and decide where to go with actual live context instead of stale posts.",
+    body: "Watch live streams from venues around East London and decide where to go with actual real-time context instead of stale posts.",
   },
   {
     eyebrow: "Venue Teams",
-    title: "Owners and promoters publish the signal.",
-    body: "The people linked to the venue control what gets posted, which keeps the feed tied to real venues instead of random user uploads.",
+    title: "Owners and promoters broadcast the signal.",
+    body: "The people linked to the venue control what gets streamed, keeping the feed tied to real venues instead of random user uploads.",
   },
   {
-    eyebrow: "Short Clips",
-    title: "Fast, watchable, and made for tonight.",
-    body: "VibeCheck is built around short uploadable clips that tell you whether the place is warm, packed, or worth skipping.",
+    eyebrow: "Watch Anywhere",
+    title: "Live, real-time, and made for tonight.",
+    body: "VibeCheck is built around live streaming that tells you whether the place is warm, packed, or worth skipping — right now.",
   },
 ];
 
 const useCases = [
-  "Check what is live right now",
+  "Watch what is happening live right now",
   "Compare multiple venues in minutes",
-  "See recent clips, not polished promos",
-  "Upload straight from linked venue teams",
+  "See real-time streams, not polished promos",
+  "Broadcast straight from linked venue teams",
 ];
 
 export default function LandingPage() {
@@ -39,7 +39,7 @@ export default function LandingPage() {
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
               VibeCheck helps people answer one question quickly: where should I go tonight?
-              Browse live venue stories, open short clips, and make the call with current signal instead of guesswork.
+              Watch live venue streams and make the call with real-time signal instead of guesswork.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -58,8 +58,8 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-10 flex flex-wrap gap-6 text-sm text-zinc-500">
-              <span>Short-form venue clips</span>
-              <span>Owner and promoter publishing</span>
+              <span>Live venue streaming</span>
+              <span>Owner and promoter broadcasting</span>
               <span>Built for tonight, not reviews from last month</span>
             </div>
           </div>
@@ -76,11 +76,11 @@ export default function LandingPage() {
                 What Browse Gives You
               </p>
               <h2 className="mt-4 text-2xl font-semibold">
-                Live now. Fresh tonight. Quiet if it is dead.
+                Live now. Offline if it is quiet.
               </h2>
               <p className="mt-4 text-sm leading-6 text-zinc-300">
-                The product is ranked around activity, not alphabetic directories. The busiest,
-                freshest venues surface first, and every card opens directly into that venue’s story flow.
+                The product is ranked around live activity. Streaming venues surface first,
+                and every card takes you straight into the live feed.
               </p>
 
               <div className="mt-6 space-y-3">
@@ -104,11 +104,11 @@ export default function LandingPage() {
             Why It Exists
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Social discovery patterns, but anchored around venues.
+            Live discovery, anchored around venues.
           </h2>
           <p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
-            VibeCheck borrows the speed of story and short-form interfaces, but keeps the information
-            architecture venue-first so the product still helps people choose a place, not just consume random clips.
+            VibeCheck brings the immediacy of live streaming to venue discovery, keeping the
+            experience venue-first so the product still helps people choose a place, not just watch random content.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ export default function LandingPage() {
               Ready To Explore
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              Open the browse surface and see what is actually moving tonight.
+              See what is actually live tonight.
             </h2>
           </div>
 

@@ -6,8 +6,7 @@ import { filterVenues, groupBrowseVenues } from '../venues';
 
 export interface VenueSection {
   live: Venue[];
-  fresh: Venue[];
-  quiet: Venue[];
+  offline: Venue[];
 }
 
 interface VenueState {
@@ -81,7 +80,7 @@ export const useVenueStore = create<VenueState>((set, get) => ({
   },
 
   groupedVenues: () => {
-    const { live, fresh, quiet } = groupBrowseVenues(get().filteredVenues());
-    return { live, fresh, quiet };
+    const { live, offline } = groupBrowseVenues(get().filteredVenues());
+    return { live, offline };
   },
 }));

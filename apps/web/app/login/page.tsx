@@ -86,7 +86,7 @@ export default function LoginPage() {
             name,
             inviteCode,
           });
-          router.push("/upload");
+          router.push("/dashboard");
         }
       } else {
         await login(email, password);

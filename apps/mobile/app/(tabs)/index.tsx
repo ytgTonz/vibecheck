@@ -25,7 +25,6 @@ export default function BrowseScreen() {
   useEffect(() => {
     loadVenues();
 
-    // Poll every 15s so live statuses stay current
     const interval = setInterval(() => {
       loadVenues();
     }, 15_000);
@@ -45,24 +44,15 @@ export default function BrowseScreen() {
   );
   const groups = useMemo(() => groupBrowseVenues(filtered), [filtered]);
   const liveCount = groups.live.length;
-  const streamingCount = groups.streaming.length;
 
   const featuredVenue = useMemo(() => pickFeaturedVenue(groups), [groups]);
-  const streamingSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.streaming, featuredVenue),
-    [groups.streaming, featuredVenue]
-  );
   const liveSectionVenues = useMemo(
     () => excludeFeaturedVenue(groups.live, featuredVenue),
     [groups.live, featuredVenue]
   );
-  const freshSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.fresh, featuredVenue),
-    [groups.fresh, featuredVenue]
-  );
-  const quietSectionVenues = useMemo(
-    () => excludeFeaturedVenue(groups.quiet, featuredVenue),
-    [groups.quiet, featuredVenue]
+  const offlineSectionVenues = useMemo(
+    () => excludeFeaturedVenue(groups.offline, featuredVenue),
+    [groups.offline, featuredVenue]
   );
 
   const renderSection = (title: string, venues: Venue[]) => {
@@ -119,7 +109,7 @@ export default function BrowseScreen() {
           <View className="pb-4 pt-2">
             <Text className="text-3xl font-bold text-zinc-100">VibeCheck</Text>
             <Text className="mt-1 text-sm text-zinc-400">
-              Open the venue stories before you decide where to pull up.
+              See the vibe before you arrive.
             </Text>
           </View>
 
@@ -129,7 +119,6 @@ export default function BrowseScreen() {
 
           <Text className="mb-6 text-xs text-zinc-500">
             {filtered.length} venue{filtered.length !== 1 ? 's' : ''}
-            {streamingCount > 0 ? ` · ${streamingCount} streaming live` : ''}
             {liveCount > 0 ? ` · ${liveCount} live now` : ''}
           </Text>
 
@@ -139,10 +128,8 @@ export default function BrowseScreen() {
             </View>
           ) : null}
 
-          {renderSection('Streaming live', streamingSectionVenues)}
           {renderSection('Live now', liveSectionVenues)}
-          {renderSection('Fresh tonight', freshSectionVenues)}
-          {renderSection('More venues', quietSectionVenues)}
+          {renderSection('All venues', offlineSectionVenues)}
         </ScrollView>
       )}
     </SafeAreaView>

@@ -4,7 +4,6 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import {
   deleteUserWithCascade,
   deleteVenueWithCascade,
-  deleteClipWithCleanup,
   AdminDeleteError,
 } from '../lib/adminHelpers';
 
@@ -41,28 +40,14 @@ function getQueryString(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-async function enrichClipsWithUploaders<T extends { uploadedBy: string }>(clips: T[]) {
-  const uploaderIds = [...new Set(clips.map((clip) => clip.uploadedBy))];
-  const uploaders = await prisma.user.findMany({
-    where: { id: { in: uploaderIds } },
-    select: { id: true, name: true, email: true },
-  });
-  const uploaderMap = new Map(uploaders.map((u) => [u.id, u]));
-
-  return clips.map((clip) => ({
-    ...clip,
-    uploader: uploaderMap.get(clip.uploadedBy) || null,
-  }));
-}
-
 // GET /admin/stats — platform overview
 router.get('/stats', async (_req: Request, res: Response) => {
-  const [userCount, venueCount, clipCount, feedbackCount, usersByRole, recentUsers, recentVenues, recentClips] =
+  const [userCount, venueCount, feedbackCount, activeStreamCount, usersByRole, recentUsers, recentVenues] =
     await Promise.all([
       prisma.user.count(),
       prisma.venue.count(),
-      prisma.clip.count(),
       prisma.feedback.count(),
+      prisma.liveStream.count({ where: { status: 'LIVE' } }),
       prisma.user.groupBy({
         by: ['role'],
         _count: { role: true },
@@ -76,23 +61,14 @@ router.get('/stats', async (_req: Request, res: Response) => {
         take: 5,
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.clip.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          venue: { select: { id: true, name: true } },
-        },
-      }),
     ]);
-
-  const recentClipsWithUploaders = await enrichClipsWithUploaders(recentClips);
 
   res.json({
     counts: {
       users: userCount,
       venues: venueCount,
-      clips: clipCount,
       feedback: feedbackCount,
+      activeStreams: activeStreamCount,
     },
     usersByRole: usersByRole.map((r) => ({
       role: r.role,
@@ -100,7 +76,6 @@ router.get('/stats', async (_req: Request, res: Response) => {
     })),
     recentUsers,
     recentVenues,
-    recentClips: recentClipsWithUploaders,
   });
 });
 
@@ -255,7 +230,6 @@ router.get('/venues', async (req: Request, res: Response) => {
         owner: { select: { id: true, name: true, email: true } },
         _count: {
           select: {
-            clips: true,
             promoters: true,
           },
         },
@@ -280,70 +254,6 @@ router.delete('/venues/:id', async (req: Request, res: Response) => {
 
   await deleteVenueWithCascade(req.params.id);
   res.status(204).end();
-});
-
-// GET /admin/clips — paginated clips with venue info and uploader lookup
-router.get('/clips', async (req: Request, res: Response) => {
-  const { page, limit, skip } = parsePagination(req.query);
-  const search = getQueryString(req.query.query);
-
-  let uploaderIds: string[] = [];
-  if (search) {
-    const matchedUploaders = await prisma.user.findMany({
-      where: {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { email: { contains: search, mode: 'insensitive' } },
-        ],
-      },
-      select: { id: true },
-    });
-    uploaderIds = matchedUploaders.map((user) => user.id);
-  }
-
-  const clipSearchConditions: Record<string, unknown>[] = [];
-  if (search) {
-    clipSearchConditions.push(
-      { caption: { contains: search, mode: 'insensitive' as const } },
-      { venue: { name: { contains: search, mode: 'insensitive' as const } } },
-    );
-    if (uploaderIds.length > 0) {
-      clipSearchConditions.push({ uploadedBy: { in: uploaderIds } });
-    }
-  }
-
-  const where = clipSearchConditions.length > 0 ? { OR: clipSearchConditions } : {};
-
-  const [data, total] = await Promise.all([
-    prisma.clip.findMany({
-      where,
-      include: {
-        venue: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    }),
-    prisma.clip.count({ where }),
-  ]);
-
-  const enrichedData = await enrichClipsWithUploaders(data);
-
-  res.json({ data: enrichedData, total, page, limit });
-});
-
-// DELETE /admin/clips/:id — delete clip with cleanup
-router.delete('/clips/:id', async (req: Request, res: Response) => {
-  try {
-    await deleteClipWithCleanup(req.params.id);
-    res.status(204).end();
-  } catch (err) {
-    if (err instanceof AdminDeleteError) {
-      res.status(err.status).json({ error: err.message });
-      return;
-    }
-    throw err;
-  }
 });
 
 export default router;

@@ -13,26 +13,8 @@ export interface Venue {
   ownerId: string;
   createdAt: string; // ISO date string (JSON serialised from Date)
   updatedAt: string;
-  clipCount: number;
-  lastClipAt: string | null; // most recent clip timestamp (from GET /venues)
-  latestClipThumbnail: string | null;
-  latestClipCaption: string | null;
-  latestClipViews: number | null;
   isLive?: boolean;
   activeStreamId?: string;
-}
-
-export interface Clip {
-  id: string;
-  videoUrl: string;
-  thumbnail: string | null;
-  duration: number;
-  venueId: string;
-  uploadedBy: string;
-  musicGenre: string | null;
-  caption: string | null;
-  views: number;
-  createdAt: string;
 }
 
 export interface User {
@@ -102,11 +84,10 @@ export interface PaginatedResponse<T> {
 }
 
 export interface AdminStats {
-  counts: { users: number; venues: number; clips: number; feedback: number };
+  counts: { users: number; venues: number; feedback: number; activeStreams: number };
   usersByRole: { role: string; count: number }[];
   recentUsers: User[];
   recentVenues: AdminVenueSummary[];
-  recentClips: AdminClip[];
 }
 
 export interface AdminVenueSummary {
@@ -134,10 +115,5 @@ export interface AdminUser extends User {
 
 export interface AdminVenue extends AdminVenueSummary {
   owner: { id: string; name: string; email: string };
-  _count: { clips: number; promoters: number };
-}
-
-export interface AdminClip extends Clip {
-  venue: { id: string; name: string };
-  uploader?: { id: string; name: string; email: string } | null;
+  _count: { promoters: number };
 }

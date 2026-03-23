@@ -3,6 +3,7 @@ let VideoTrack: any;
 let useRemoteParticipants: any;
 let useTracks: any;
 let useChat: any;
+let useLocalParticipant: any;
 let isTrackReference: any;
 let TrackSource: any;
 let AudioSession: any;
@@ -15,6 +16,7 @@ try {
   useRemoteParticipants = lkComponents.useRemoteParticipants;
   useTracks = lkComponents.useTracks;
   useChat = lkComponents.useChat;
+  useLocalParticipant = lkComponents.useLocalParticipant;
   isTrackReference = lkComponents.isTrackReference;
   AudioSession = lkComponents.AudioSession;
   AndroidAudioTypePresets = lkComponents.AndroidAudioTypePresets;
@@ -32,6 +34,7 @@ export {
   LiveKitRoom,
   TrackSource,
   useChat,
+  useLocalParticipant,
   useRemoteParticipants,
   useTracks,
   VideoTrack,

@@ -10,102 +10,30 @@ const INVITE_EXPIRY_DAYS = 7;
 
 // ─── Public routes ───────────────────────────────────────────────────────────
 
-function getVenueActivityTier(lastClipAt: Date | null, now: number) {
-  const TWO_HOURS = 2 * 60 * 60 * 1000;
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-  if (!lastClipAt) return 2;
-  const age = now - new Date(lastClipAt).getTime();
-  if (age < TWO_HOURS) return 0;
-  if (age < TWENTY_FOUR_HOURS) return 1;
-  return 2;
-}
-
-function mapVenueWithLatestClip(
-  venue: {
-    clips: { createdAt: Date; thumbnail: string | null; caption: string | null; views: number }[];
-    _count: { clips: number };
-    id: string;
-    name: string;
-    type: string;
-    location: string;
-    city: string;
-    hours: string | null;
-    musicGenre: string[];
-    coverCharge: string | null;
-    drinkPrices: string | null;
-    ownerId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }
-) {
-  const { clips, _count, ...rest } = venue;
-  const latest = clips[0] ?? null;
-
-  return {
-    ...rest,
-    clipCount: _count.clips,
-    lastClipAt: latest?.createdAt ?? null,
-    latestClipThumbnail: latest?.thumbnail ?? null,
-    latestClipCaption: latest?.caption ?? null,
-    latestClipViews: latest?.views ?? null,
-  };
-}
-
-// GET /venues — return all venues ranked by activity
+// GET /venues — return all venues, live first then alphabetical
 router.get('/', async (_req: Request, res: Response) => {
   const [venues, activeStreams] = await Promise.all([
-    prisma.venue.findMany({
-      include: {
-        _count: {
-          select: { clips: true },
-        },
-        clips: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { createdAt: true, thumbnail: true, caption: true, views: true },
-        },
-      },
-    }),
+    prisma.venue.findMany(),
     prisma.liveStream.findMany({
       where: { status: 'LIVE' },
       select: { id: true, venueId: true },
     }),
   ]);
 
-  // Build a map of venueId → active stream id
   const liveMap = new Map(activeStreams.map((s) => [s.venueId, s.id]));
 
-  const now = Date.now();
   const enriched = venues.map((venue) => {
-    const base = mapVenueWithLatestClip(venue);
     const activeStreamId = liveMap.get(venue.id);
     return {
-      ...base,
+      ...venue,
       isLive: !!activeStreamId,
       activeStreamId: activeStreamId ?? undefined,
     };
   });
 
-  // Activity-based ranking: streaming (tier -1) > live (2h) > fresh (24h) > quiet
+  // Live venues first, then alphabetical
   enriched.sort((a, b) => {
-    const tierA = a.isLive ? -1 : getVenueActivityTier(a.lastClipAt, now);
-    const tierB = b.isLive ? -1 : getVenueActivityTier(b.lastClipAt, now);
-    if (tierA !== tierB) return tierA - tierB;
-
-    // Within live/fresh tiers: most recent first, tie-break by clip count
-    if (tierA < 2) {
-      const timeA = a.lastClipAt ? new Date(a.lastClipAt).getTime() : 0;
-      const timeB = b.lastClipAt ? new Date(b.lastClipAt).getTime() : 0;
-      if (timeB !== timeA) return timeB - timeA;
-      if (b.clipCount !== a.clipCount) return b.clipCount - a.clipCount;
-      return a.name.localeCompare(b.name);
-    }
-
-    // Quiet tier: most recent first (nulls last), tie-break by name
-    const timeA = a.lastClipAt ? new Date(a.lastClipAt).getTime() : 0;
-    const timeB = b.lastClipAt ? new Date(b.lastClipAt).getTime() : 0;
-    if (timeB !== timeA) return timeB - timeA;
+    if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
 
@@ -116,16 +44,6 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   const venue = await prisma.venue.findUnique({
     where: { id: req.params.id },
-    include: {
-      _count: {
-        select: { clips: true },
-      },
-      clips: {
-        orderBy: { createdAt: 'desc' },
-        take: 1,
-        select: { createdAt: true, thumbnail: true, caption: true, views: true },
-      },
-    },
   });
 
   if (!venue) {
@@ -139,34 +57,15 @@ router.get('/:id', async (req: Request, res: Response) => {
   });
 
   res.json({
-    ...mapVenueWithLatestClip(venue),
+    ...venue,
     isLive: !!activeStream,
     activeStreamId: activeStream?.id ?? undefined,
   });
 });
 
-// GET /venues/:id/clips — return all clips for a venue
-router.get('/:id/clips', async (req: Request, res: Response) => {
-  const venue = await prisma.venue.findUnique({
-    where: { id: req.params.id },
-  });
-
-  if (!venue) {
-    res.status(404).json({ error: 'Venue not found' });
-    return;
-  }
-
-  const clips = await prisma.clip.findMany({
-    where: { venueId: req.params.id },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  res.json(clips);
-});
-
 // ─── Protected routes ────────────────────────────────────────────────────────
 
-// GET /venues/my/venues — return venues the user owns or is a promoter for, with stats
+// GET /venues/my/venues — return venues the user owns or is a promoter for
 router.get('/my/venues', requireAuth, async (req: Request, res: Response) => {
   const userId = req.user!.userId;
 
@@ -178,33 +77,23 @@ router.get('/my/venues', requireAuth, async (req: Request, res: Response) => {
       ],
     },
     include: {
-      clips: {
-        select: {
-          id: true,
-          views: true,
-          createdAt: true,
-          caption: true,
-          thumbnail: true,
-          duration: true,
-        },
-        orderBy: { createdAt: 'desc' },
+      streams: {
+        where: { status: 'LIVE' },
+        select: { id: true, currentViewerCount: true },
+        take: 1,
       },
     },
   });
 
-  // Calculate stats for each venue
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-  const result = venues.map(({ clips, ...venue }) => ({
-    ...venue,
-    stats: {
-      totalClips: clips.length,
-      totalViews: clips.reduce((sum, c) => sum + c.views, 0),
-      clipsThisWeek: clips.filter((c) => new Date(c.createdAt) >= weekAgo).length,
-    },
-    recentClips: clips.slice(0, 5),
-  }));
+  const result = venues.map(({ streams, ...venue }) => {
+    const activeStream = streams[0] ?? null;
+    return {
+      ...venue,
+      isLive: !!activeStream,
+      activeStreamId: activeStream?.id ?? undefined,
+      currentViewerCount: activeStream?.currentViewerCount ?? 0,
+    };
+  });
 
   res.json(result);
 });

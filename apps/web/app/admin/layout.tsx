@@ -10,7 +10,6 @@ const tabs = [
   { label: "Feedback", href: "/admin/feedback" },
   { label: "Users", href: "/admin/users" },
   { label: "Venues", href: "/admin/venues" },
-  { label: "Clips", href: "/admin/clips" },
 ];
 
 export default function AdminLayout({

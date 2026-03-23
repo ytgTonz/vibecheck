@@ -52,7 +52,7 @@ export default function AdminVenuesPage() {
 
   const handleDelete = async (venueId: string, venueName: string) => {
     if (!token) return;
-    if (!window.confirm(`Delete venue "${venueName}"? This will remove all clips, invites, and promoter links.`)) return;
+    if (!window.confirm(`Delete venue "${venueName}"? This will remove all streams, invites, and promoter links.`)) return;
 
     setDeletingVenueId(venueId);
     setNotice(null);
@@ -235,11 +235,7 @@ export default function AdminVenuesPage() {
               <p className="text-xs text-zinc-500">{v.owner.email}</p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-zinc-800/70 px-3 py-2 text-center">
-                <p className="text-lg font-semibold text-white">{v._count.clips}</p>
-                <p className="text-[11px] uppercase tracking-wide text-zinc-500">Clips</p>
-              </div>
+            <div className="mt-4">
               <div className="rounded-lg bg-zinc-800/70 px-3 py-2 text-center">
                 <p className="text-lg font-semibold text-white">{v._count.promoters}</p>
                 <p className="text-[11px] uppercase tracking-wide text-zinc-500">Promoters</p>
@@ -268,7 +264,6 @@ export default function AdminVenuesPage() {
               <th className="pb-2 pr-4">Type</th>
               <th className="pb-2 pr-4">Location</th>
               <th className="pb-2 pr-4">Owner</th>
-              <th className="pb-2 pr-4 text-center">Clips</th>
               <th className="pb-2 pr-4 text-center">Promoters</th>
               <th className="pb-2 pr-4">Created</th>
               <th className="pb-2" />
@@ -288,7 +283,6 @@ export default function AdminVenuesPage() {
                   <p className="text-sm">{v.owner.name}</p>
                   <p className="text-xs text-zinc-500">{v.owner.email}</p>
                 </td>
-                <td className="py-3 pr-4 text-center text-zinc-400">{v._count.clips}</td>
                 <td className="py-3 pr-4 text-center text-zinc-400">{v._count.promoters}</td>
                 <td className="py-3 pr-4 text-xs text-zinc-500">{new Date(v.createdAt).toLocaleDateString()}</td>
                 <td className="py-3">

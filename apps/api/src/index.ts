@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import venueRoutes from './routes/venues';
-import clipRoutes from './routes/clips';
 import authRoutes from './routes/auth';
 import feedbackRoutes from './routes/feedback';
 import adminRoutes from './routes/admin';
@@ -30,7 +29,6 @@ app.get('/health', (_req, res) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/venues', venueRoutes);
-app.use('/clips', clipRoutes);
 app.use('/feedback', feedbackRoutes);
 app.use('/admin', adminRoutes);
 app.use('/streams', streamRoutes);

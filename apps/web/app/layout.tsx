@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VibeCheck — See the vibe before you arrive",
   description:
-    "Watch 30-second clips from East London venues and decide where to go tonight.",
+    "Watch live streams from East London venues and decide where to go tonight.",
 };
 
 export default function RootLayout({

@@ -1,33 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  deleteClip,
   fetchMyVenues,
   useAuthStore,
   VenueWithStats,
 } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
-
-function formatDuration(seconds: number) {
-  const totalSeconds = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -35,8 +15,11 @@ export default function DashboardScreen() {
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deletingClipId, setDeletingClipId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const canBroadcast = useMemo(
+    () => user?.role === 'VENUE_OWNER' || user?.role === 'VENUE_PROMOTER',
+    [user?.role],
+  );
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -67,20 +50,6 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }, [token]);
 
-  const handleDeleteClip = async (clipId: string) => {
-    if (!token) return;
-
-    setDeletingClipId(clipId);
-    try {
-      await deleteClip(clipId, token);
-      await loadDashboard(token);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove clip');
-    } finally {
-      setDeletingClipId(null);
-    }
-  };
-
   if (!user || !token) {
     return (
       <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
@@ -92,7 +61,7 @@ export default function DashboardScreen() {
           <View className="mt-6">
             <AuthPanel
               title="Sign in to your dashboard"
-              body="Your linked venues, clip stats, and recent posts live here."
+              body="Your linked venues and live stream controls live here."
             />
           </View>
         </ScrollView>
@@ -117,7 +86,7 @@ export default function DashboardScreen() {
           <View className="flex-1 pr-4">
             <Text className="text-3xl font-semibold text-zinc-100">Dashboard</Text>
             <Text className="mt-2 text-sm leading-6 text-zinc-400">
-              Linked venues, basic stats, and recent clips in one place.
+              Your linked venues and live streaming controls.
             </Text>
           </View>
           <Pressable onPress={logout} className="rounded-full border border-zinc-700 px-3 py-2">
@@ -134,7 +103,7 @@ export default function DashboardScreen() {
         {loading ? (
           <View className="mt-10 items-center justify-center">
             <ActivityIndicator color="#f4f4f5" />
-            <Text className="mt-3 text-sm text-zinc-400">Loading venues…</Text>
+            <Text className="mt-3 text-sm text-zinc-400">Loading venues...</Text>
           </View>
         ) : null}
 
@@ -160,6 +129,32 @@ export default function DashboardScreen() {
                 <Text className="text-xl font-semibold text-zinc-100">{venue.name}</Text>
                 <Text className="mt-1 text-sm text-zinc-400">{venue.location}</Text>
               </View>
+              {venue.isLive && (
+                <View className="flex-row items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1">
+                  <View className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                  <Text className="text-xs font-semibold text-red-400">
+                    LIVE · {venue.currentViewerCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View className="flex-row gap-3">
+              {canBroadcast ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: '/broadcast/[venueId]',
+                      params: { venueId: venue.id },
+                    })
+                  }
+                  className={`flex-1 rounded-2xl px-4 py-3 ${venue.isLive ? 'bg-zinc-100' : 'bg-red-500'}`}
+                >
+                  <Text className={`text-center text-sm font-semibold ${venue.isLive ? 'text-zinc-950' : 'text-white'}`}>
+                    {venue.isLive ? 'View Stream' : 'Go Live'}
+                  </Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 onPress={() =>
                   router.push({
@@ -167,59 +162,11 @@ export default function DashboardScreen() {
                     params: { id: venue.id },
                   })
                 }
-                className="rounded-full border border-zinc-700 px-3 py-2"
+                className={`${canBroadcast ? 'flex-1' : 'w-full'} rounded-2xl border border-zinc-700 px-4 py-3`}
               >
-                <Text className="text-xs font-medium text-zinc-300">Open</Text>
+                <Text className="text-center text-sm font-medium text-zinc-300">View venue</Text>
               </Pressable>
             </View>
-
-            <View className="mb-5 flex-row gap-3">
-              <View className="flex-1 rounded-2xl bg-zinc-950 px-4 py-4">
-                <Text className="text-2xl font-semibold text-zinc-100">{venue.stats.totalViews}</Text>
-                <Text className="mt-1 text-xs uppercase tracking-[1.5px] text-zinc-500">Views</Text>
-              </View>
-              <View className="flex-1 rounded-2xl bg-zinc-950 px-4 py-4">
-                <Text className="text-2xl font-semibold text-zinc-100">{venue.stats.totalClips}</Text>
-                <Text className="mt-1 text-xs uppercase tracking-[1.5px] text-zinc-500">Clips</Text>
-              </View>
-              <View className="flex-1 rounded-2xl bg-zinc-950 px-4 py-4">
-                <Text className="text-2xl font-semibold text-zinc-100">{venue.stats.clipsThisWeek}</Text>
-                <Text className="mt-1 text-xs uppercase tracking-[1.5px] text-zinc-500">This week</Text>
-              </View>
-            </View>
-
-            <Text className="text-sm font-semibold text-zinc-200">Recent clips</Text>
-            {venue.recentClips.length === 0 ? (
-              <Text className="mt-3 text-sm text-zinc-500">No clips uploaded yet.</Text>
-            ) : (
-              <View className="mt-3 gap-3">
-                {venue.recentClips.map((clip) => (
-                  <View key={clip.id} className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4">
-                    <View className="flex-row items-start justify-between gap-3">
-                      <View className="flex-1 pr-3">
-                        <Text className="text-sm font-semibold text-zinc-100">
-                          {clip.caption || 'Untitled clip'}
-                        </Text>
-                        <Text className="mt-1 text-xs text-zinc-400">
-                          {formatDuration(clip.duration)} • {timeAgo(clip.createdAt)}
-                        </Text>
-                        <Text className="mt-1 text-xs text-zinc-500">{clip.views} views</Text>
-                      </View>
-                      <Pressable
-                        onPress={() => handleDeleteClip(clip.id)}
-                        disabled={deletingClipId === clip.id}
-                        className="rounded-full border border-zinc-700 px-3 py-2"
-                        style={{ opacity: deletingClipId === clip.id ? 0.5 : 1 }}
-                      >
-                        <Text className="text-xs font-medium text-red-300">
-                          {deletingClipId === clip.id ? 'Removing…' : 'Remove'}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         ))}
       </ScrollView>
