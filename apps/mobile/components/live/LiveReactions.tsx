@@ -1,5 +1,15 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 export const QUICK_REACTIONS = ['🔥'] as const;
 
@@ -47,180 +57,62 @@ function QuickReactionButton({
   onReact: (reaction: string) => void;
   vertical: boolean;
 }) {
-  const lift = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(1)).current;
-  const sparkleOpacity = useRef(new Animated.Value(0)).current;
-  const glowScale = useRef(new Animated.Value(0.7)).current;
-  const glowOpacity = useRef(new Animated.Value(0)).current;
-  const ringScale = useRef(new Animated.Value(0.6)).current;
-  const ringOpacity = useRef(new Animated.Value(0)).current;
+  const emojiScale = useSharedValue(1);
+  const emojiTranslateY = useSharedValue(0);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handlePress = () => {
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(lift, {
-          toValue: -10,
-          duration: 120,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(lift, {
-          toValue: 0,
-          duration: 180,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(scale, {
-          toValue: 1.16,
-          duration: 110,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          friction: 5,
-          tension: 110,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(sparkleOpacity, {
-          toValue: 1,
-          duration: 90,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(sparkleOpacity, {
-          toValue: 0,
-          duration: 180,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(glowOpacity, {
-          toValue: 0.32,
-          duration: 80,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowOpacity, {
-          toValue: 0,
-          duration: 220,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(glowScale, {
-          toValue: 1.35,
-          duration: 220,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowScale, {
-          toValue: 1,
-          duration: 1,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(ringOpacity, {
-          toValue: 0.9,
-          duration: 70,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(ringOpacity, {
-          toValue: 0,
-          duration: 220,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        Animated.timing(ringScale, {
-          toValue: 1.7,
-          duration: 290,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(ringScale, {
-          toValue: 1,
-          duration: 1,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
+  const emojiStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: emojiTranslateY.value }, { scale: emojiScale.value }],
+  }));
 
+  const fireOnce = useCallback(() => {
+    cancelAnimation(emojiScale);
+    cancelAnimation(emojiTranslateY);
+    emojiScale.value = 1;
+    emojiTranslateY.value = 0;
+
+    emojiTranslateY.value = withSequence(
+      withTiming(-6, { duration: 80, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 100, easing: Easing.inOut(Easing.quad) }),
+    );
+    emojiScale.value = withSequence(
+      withTiming(1.3, { duration: 80, easing: Easing.out(Easing.quad) }),
+      withSpring(1, { damping: 12, stiffness: 150 }),
+    );
     onReact(reaction);
-  };
+  }, [onReact, reaction, emojiScale, emojiTranslateY]);
+
+  const stopFiring = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const startFiring = useCallback(() => {
+    fireOnce();
+    intervalRef.current = setInterval(fireOnce, 120);
+  }, [fireOnce]);
+
+  useEffect(() => stopFiring, [stopFiring]);
 
   return (
-    <Animated.View
-      style={{
-        transform: [{ translateY: lift }, { scale }],
-      }}
+    <Pressable
+      onPress={fireOnce}
+      onLongPress={startFiring}
+      onPressOut={stopFiring}
+      delayLongPress={200}
+      hitSlop={12}
+      className={
+        vertical
+          ? 'h-14 w-14 items-center justify-center rounded-full bg-black/30'
+          : 'rounded-full border border-white/10 bg-black/55 px-3 py-2'
+      }
     >
-      {vertical ? (
-        <>
-          <Animated.View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 6,
-              left: 6,
-              right: 6,
-              bottom: 6,
-              borderRadius: 999,
-              backgroundColor: '#fb923c',
-              opacity: glowOpacity,
-              transform: [{ scale: glowScale }],
-            }}
-          />
-          <Animated.View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              borderRadius: 999,
-              borderWidth: 2,
-              borderColor: 'rgba(255,255,255,0.9)',
-              opacity: ringOpacity,
-              transform: [{ scale: ringScale }],
-            }}
-          />
-        </>
-      ) : null}
-      <Pressable
-        onPress={handlePress}
-        hitSlop={12}
-        className={
-          vertical
-            ? 'h-14 w-14 items-center justify-center rounded-full bg-black/30'
-            : 'rounded-full border border-white/10 bg-black/55 px-3 py-2'
-        }
-      >
-        <Animated.Text
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: -6,
-            right: -2,
-            opacity: sparkleOpacity,
-            fontSize: 10,
-          }}
-        >
-          ✦
-        </Animated.Text>
-        <Text className={vertical ? 'text-xl' : 'text-lg'}>{reaction}</Text>
-      </Pressable>
-    </Animated.View>
+      <Animated.Text style={emojiStyle} className={vertical ? 'text-xl' : 'text-lg'}>
+        {reaction}
+      </Animated.Text>
+    </Pressable>
   );
 }
 
@@ -231,73 +123,61 @@ function FloatingReactionBubble({
   bubble: FloatingReaction;
   onDone: (id: number) => void;
 }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.7)).current;
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const scale = useSharedValue(0.7);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    position: 'absolute',
+    left: bubble.left,
+    bottom: bubble.bottom,
+    width: bubble.size,
+    height: bubble.size,
+    borderRadius: bubble.size / 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value },
+      { translateX: translateX.value },
+      { scale: scale.value },
+    ],
+  }));
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 180,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: bubble.duration - 180,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.timing(translateY, {
-        toValue: -260,
-        duration: bubble.duration,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateX, {
-        toValue: bubble.drift,
-        duration: bubble.duration,
-        easing: Easing.inOut(Easing.sin),
-        useNativeDriver: true,
-      }),
-      Animated.sequence([
-        Animated.spring(scale, {
-          toValue: 1.12,
-          friction: 6,
-          tension: 90,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scale, {
-          toValue: 0.92,
+    const fadeOutStart = 180;
+    const fadeOutDuration = bubble.duration - fadeOutStart;
+
+    opacity.value = withSequence(
+      withTiming(1, { duration: fadeOutStart, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: fadeOutDuration, easing: Easing.in(Easing.quad) }),
+    );
+    translateY.value = withTiming(-260, {
+      duration: bubble.duration,
+      easing: Easing.out(Easing.cubic),
+    });
+    translateX.value = withTiming(bubble.drift, {
+      duration: bubble.duration,
+      easing: Easing.inOut(Easing.sin),
+    });
+    scale.value = withSequence(
+      withSpring(1.12, { damping: 8, stiffness: 90 }),
+      withDelay(
+        0,
+        withTiming(0.92, {
           duration: Math.max(220, bubble.duration - 260),
           easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
         }),
-      ]),
-    ]).start(() => onDone(bubble.id));
+      ),
+    );
+
+    const timeout = setTimeout(() => onDone(bubble.id), bubble.duration);
+    return () => clearTimeout(timeout);
   }, [bubble, onDone, opacity, scale, translateX, translateY]);
 
   return (
-    <Animated.View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        left: bubble.left,
-        bottom: bubble.bottom,
-        width: bubble.size,
-        height: bubble.size,
-        borderRadius: bubble.size / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-        opacity,
-        transform: [{ translateY }, { translateX }, { scale }],
-      }}
-    >
+    <Animated.View pointerEvents="none" style={animatedStyle}>
       <Text style={{ fontSize: bubble.size * 0.48 }}>{bubble.emoji}</Text>
     </Animated.View>
   );

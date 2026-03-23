@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -8,6 +8,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { isReactionMessage } from './LiveReactions';
 
 type ChatMessage = {
@@ -23,8 +29,40 @@ export function LiveChatOverlay({
   onSend: (msg: string) => void;
 }) {
   const [text, setText] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const messageCount = messages.length;
+  const keyboardOffset = useSharedValue(0);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardVisible(true);
+      const extra = Platform.OS === 'android' ? 24 : 10;
+      keyboardOffset.value = withTiming(e.endCoordinates.height + extra, {
+        duration: Platform.OS === 'ios' ? 250 : 150,
+        easing: Easing.out(Easing.quad),
+      });
+    });
+    const onHide = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+      keyboardOffset.value = withTiming(0, {
+        duration: Platform.OS === 'ios' ? 200 : 100,
+        easing: Easing.in(Easing.quad),
+      });
+    });
+
+    return () => {
+      onShow.remove();
+      onHide.remove();
+    };
+  }, [keyboardOffset]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -34,19 +72,20 @@ export function LiveChatOverlay({
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
-      style={{
-        position: 'absolute',
-        bottom: 6,
-        left: 0,
-        right: 0,
-        zIndex: 20,
-        paddingHorizontal: 12,
-      }}
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          bottom: 6,
+          left: 0,
+          right: 0,
+          zIndex: 20,
+          paddingHorizontal: 12,
+        },
+        animatedStyle,
+      ]}
     >
-      <View style={{ maxWidth: '76%' }} className="mb-2">
+      {!keyboardVisible && <View style={{ maxWidth: '76%' }} className="mb-2">
         <ScrollView
           ref={scrollRef}
           onContentSizeChange={() =>
@@ -98,7 +137,7 @@ export function LiveChatOverlay({
             )
           )}
         </ScrollView>
-      </View>
+      </View>}
 
       <View className="flex-row items-center gap-2 rounded-full border border-white/10 bg-black/55 px-3 py-2">
         <TextInput
@@ -121,6 +160,6 @@ export function LiveChatOverlay({
           </Text>
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
