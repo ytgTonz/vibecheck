@@ -27,6 +27,7 @@ import {
   VideoTrack,
 } from '@/components/live/livekit';
 import { ErrorState, LoadingState } from '@/components/live/LiveStates';
+import { LiveChatOverlay } from '@/components/live/LiveChatOverlay';
 
 const LIVEKIT_URL = process.env.EXPO_PUBLIC_LIVEKIT_URL || '';
 
@@ -100,7 +101,7 @@ function BroadcastRoom({
 }) {
   const router = useRouter();
   const participants = useRemoteParticipants?.() || [];
-  const chat = useChat?.() || { chatMessages: [] };
+  const chat = useChat?.() || { chatMessages: [], send: () => {} };
   const { localParticipant } = useLocalParticipant?.() || { localParticipant: null };
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
@@ -154,24 +155,24 @@ function BroadcastRoom({
           <Text className="mt-1 text-sm text-zinc-400">{venue.location}</Text>
         </View>
 
-        <View className="mb-4 h-[420px] overflow-hidden rounded-[28px]">
+        <View className="relative mb-4 flex-1 overflow-hidden rounded-[28px]">
           <BroadcasterPreview />
+          <View className="absolute bottom-0 left-0 right-0 top-0">
+            <View className="absolute left-3 top-3 flex-row gap-2">
+              <View className="rounded-full bg-black/50 px-3 py-1.5">
+                <Text className="text-xs font-semibold text-zinc-100">
+                  {participants.length} viewer{participants.length === 1 ? '' : 's'}
+                </Text>
+              </View>
+            </View>
+            <LiveChatOverlay
+              messages={chat.chatMessages || []}
+              onSend={(msg) => chat.send?.(msg)}
+            />
+          </View>
         </View>
 
         <GoLiveOnPublish streamId={stream.id} authToken={authToken} />
-
-        <View className="mb-4 flex-row flex-wrap gap-3">
-          <View className="rounded-full border border-white/10 bg-zinc-900 px-4 py-2">
-            <Text className="text-sm text-zinc-100">
-              {participants.length} viewer{participants.length === 1 ? '' : 's'}
-            </Text>
-          </View>
-          <View className="rounded-full border border-white/10 bg-zinc-900 px-4 py-2">
-            <Text className="text-sm text-zinc-100">
-              {chat.chatMessages?.length || 0} chat
-            </Text>
-          </View>
-        </View>
 
         <View className="flex-row gap-3">
           <Pressable
