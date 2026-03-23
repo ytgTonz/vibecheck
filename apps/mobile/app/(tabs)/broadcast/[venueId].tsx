@@ -12,6 +12,7 @@ import {
   LiveStream,
   Venue,
   useAuthStore,
+  useBroadcastStore,
 } from '@vibecheck/shared';
 import {
   AndroidAudioTypePresets,
@@ -264,6 +265,7 @@ export default function MobileBroadcastScreen() {
               if (cancelled) return;
               setLivekitToken(broadcasterToken);
               setPhase('live');
+              setBroadcast(venueId, activeStream.id, venueData.name, broadcasterToken);
             } catch {
               setPhase('setup');
             }
@@ -283,6 +285,8 @@ export default function MobileBroadcastScreen() {
     };
   }, [authToken, venueId]);
 
+  const { setBroadcast, clearBroadcast } = useBroadcastStore();
+
   const canBroadcast = useMemo(
     () => user?.role === 'VENUE_OWNER' || user?.role === 'VENUE_PROMOTER',
     [user?.role],
@@ -300,6 +304,7 @@ export default function MobileBroadcastScreen() {
       const { token: broadcasterToken } = await fetchStreamToken(newStream.id, authToken);
       setLivekitToken(broadcasterToken);
       setPhase('live');
+      setBroadcast(venueId, newStream.id, venue?.name || '', broadcasterToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start stream.');
       setPhase('setup');
@@ -422,6 +427,7 @@ export default function MobileBroadcastScreen() {
           stream={stream}
           authToken={authToken}
           onEnded={() => {
+            clearBroadcast();
             setStream(null);
             setLivekitToken(null);
             setError(null);

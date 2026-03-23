@@ -1,13 +1,75 @@
-import React, { useEffect, useMemo } from 'react';
-import { Text, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@vibecheck/shared';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore, useBroadcastStore } from '@vibecheck/shared';
+
+function LiveBanner() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { venueId, venueName } = useBroadcastStore();
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const isOnBroadcastPage = segments.includes('broadcast' as never);
+
+  useEffect(() => {
+    if (!venueId || isOnBroadcastPage) return;
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.4,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [venueId, isOnBroadcastPage, pulseAnim]);
+
+  if (!venueId || isOnBroadcastPage) return null;
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/broadcast/${venueId}` as any)}
+      style={{
+        backgroundColor: '#dc2626',
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+      }}
+    >
+      <Animated.View
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: '#ffffff',
+          opacity: pulseAnim,
+        }}
+      />
+      <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '600' }}>
+        You are live at {venueName || 'a venue'} — tap to return
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { user, hydrate } = useAuthStore();
+  const broadcastVenueId = useBroadcastStore((s) => s.venueId);
 
   useEffect(() => {
     hydrate();
@@ -19,6 +81,8 @@ export default function TabLayout() {
   );
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#09090b' }} edges={['top']}>
+    <LiveBanner />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#f5f5f5',
@@ -74,11 +138,11 @@ export default function TabLayout() {
                       backgroundColor: focused ? '#ef4444' : '#dc2626',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      borderWidth: 3,
-                      borderColor: '#18181b',
-                      shadowColor: '#ef4444',
-                      shadowOpacity: 0.35,
-                      shadowRadius: 14,
+                      borderWidth: broadcastVenueId ? 2 : 3,
+                      borderColor: broadcastVenueId ? '#4ade80' : '#18181b',
+                      shadowColor: broadcastVenueId ? '#22c55e' : '#ef4444',
+                      shadowOpacity: broadcastVenueId ? 0.6 : 0.35,
+                      shadowRadius: broadcastVenueId ? 18 : 14,
                       shadowOffset: { width: 0, height: 8 },
                       elevation: 10,
                     }}
@@ -96,10 +160,14 @@ export default function TabLayout() {
                       marginTop: 1,
                       fontSize: 11,
                       fontWeight: '700',
-                      color: focused ? '#fca5a5' : '#f87171',
+                      color: broadcastVenueId
+                        ? '#4ade80'
+                        : focused
+                          ? '#fca5a5'
+                          : '#f87171',
                     }}
                   >
-                    Go Live
+                    {broadcastVenueId ? 'LIVE' : 'Go Live'}
                   </Text>
                 ),
               }
@@ -123,5 +191,6 @@ export default function TabLayout() {
       <Tabs.Screen name="venues/[id]" options={{ href: null }} />
       <Tabs.Screen name="venues/[id]/live" options={{ href: null }} />
     </Tabs>
+    </SafeAreaView>
   );
 }
