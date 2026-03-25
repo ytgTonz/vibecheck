@@ -22,6 +22,13 @@ const venueTypeAccent: Record<string, string> = {
   OTHER: 'bg-zinc-400',
 };
 
+function getVibeLabel(score: number): { label: string; textColor: string; bgColor: string } {
+  if (score >= 80) return { label: 'On Fire', textColor: 'text-red-400', bgColor: 'bg-red-500/20' };
+  if (score >= 50) return { label: 'Heating Up', textColor: 'text-orange-400', bgColor: 'bg-orange-500/20' };
+  if (score >= 20) return { label: 'Warming Up', textColor: 'text-amber-400', bgColor: 'bg-amber-500/20' };
+  return { label: 'Chill', textColor: 'text-zinc-500', bgColor: 'bg-zinc-800' };
+}
+
 export default function VenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
   const isLive = venue.isLive;
@@ -53,6 +60,16 @@ export default function VenueCard({ venue }: { venue: Venue }) {
         <Text className="text-[11px] uppercase tracking-[1.5px] text-zinc-500">
           {venueTypeLabel[venue.type] ?? venue.type}
         </Text>
+        {venue.vibeScore != null && venue.vibeScore > 0 && (() => {
+          const vibe = getVibeLabel(venue.vibeScore);
+          return (
+            <View className={`rounded-full px-2 py-0.5 ${vibe.bgColor}`}>
+              <Text className={`text-[10px] font-semibold ${vibe.textColor}`}>
+                {vibe.label}
+              </Text>
+            </View>
+          );
+        })()}
       </View>
 
       <Text className="mt-2 text-lg font-semibold text-zinc-100">

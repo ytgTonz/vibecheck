@@ -34,7 +34,9 @@ export function groupBrowseVenues(venues: Venue[]): BrowseVenueGroups {
 }
 
 export function pickFeaturedVenue(groups: BrowseVenueGroups): Venue | null {
-  return groups.live[0] ?? groups.offline[0] ?? null;
+  const all = [...groups.live, ...groups.offline];
+  if (all.length === 0) return null;
+  return all.reduce((best, v) => ((v.vibeScore ?? 0) > (best.vibeScore ?? 0) ? v : best));
 }
 
 export function excludeFeaturedVenue(venues: Venue[], featuredVenue: Venue | null): Venue[] {

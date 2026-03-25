@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
 import { isVenueOwner } from '../lib/venueAuth';
+import { computeVibeScore } from '../lib/vibeScore';
 
 const router = Router();
 
@@ -10,30 +11,56 @@ const INVITE_EXPIRY_DAYS = 7;
 
 // ─── Public routes ───────────────────────────────────────────────────────────
 
-// GET /venues — return all venues, live first then alphabetical
+// GET /venues — return all venues ranked by vibe score
 router.get('/', async (_req: Request, res: Response) => {
-  const [venues, activeStreams] = await Promise.all([
+  const [venues, activeStreams, recentEndedStreams] = await Promise.all([
     prisma.venue.findMany(),
     prisma.liveStream.findMany({
       where: { status: 'LIVE' },
-      select: { id: true, venueId: true },
+      select: { id: true, venueId: true, currentViewerCount: true },
+    }),
+    prisma.liveStream.findMany({
+      where: {
+        status: 'ENDED',
+        endedAt: { not: null, gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      },
+      select: { venueId: true, viewerPeak: true, endedAt: true },
+      orderBy: { endedAt: 'desc' },
     }),
   ]);
 
-  const liveMap = new Map(activeStreams.map((s) => [s.venueId, s.id]));
+  const liveMap = new Map(
+    activeStreams.map((s) => [s.venueId, { id: s.id, viewers: s.currentViewerCount }]),
+  );
+
+  // Group ended streams by venue (max 10 per venue for avg peak calc)
+  const historyMap = new Map<string, { viewerPeak: number; endedAt: Date }[]>();
+  for (const s of recentEndedStreams) {
+    const list = historyMap.get(s.venueId) || [];
+    if (list.length < 10 && s.endedAt) {
+      list.push({ viewerPeak: s.viewerPeak, endedAt: s.endedAt });
+      historyMap.set(s.venueId, list);
+    }
+  }
 
   const enriched = venues.map((venue) => {
-    const activeStreamId = liveMap.get(venue.id);
+    const active = liveMap.get(venue.id);
+    const isLive = !!active;
     return {
       ...venue,
-      isLive: !!activeStreamId,
-      activeStreamId: activeStreamId ?? undefined,
+      isLive,
+      activeStreamId: active?.id ?? undefined,
+      vibeScore: computeVibeScore({
+        isLive,
+        currentViewerCount: active?.viewers ?? 0,
+        recentStreams: historyMap.get(venue.id) || [],
+      }),
     };
   });
 
-  // Live venues first, then alphabetical
+  // Sort by vibe score descending, then alphabetical as tiebreaker
   enriched.sort((a, b) => {
-    if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+    if (a.vibeScore !== b.vibeScore) return b.vibeScore - a.vibeScore;
     return a.name.localeCompare(b.name);
   });
 

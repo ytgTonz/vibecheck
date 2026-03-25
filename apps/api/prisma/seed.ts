@@ -99,6 +99,7 @@ const seedOwners = venues.map((venue, index) => ({
 async function main() {
   // Clear existing data in foreign-key order.
   console.log('Clearing old data...');
+  await prisma.feedback.deleteMany();
   await prisma.liveStream.deleteMany();
   await prisma.invite.deleteMany();
   await prisma.venuePromoter.deleteMany();

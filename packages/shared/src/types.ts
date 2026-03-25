@@ -15,6 +15,7 @@ export interface Venue {
   updatedAt: string;
   isLive?: boolean;
   activeStreamId?: string;
+  vibeScore?: number;
 }
 
 export interface User {
