@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
 import { isVenueOwner } from '../lib/venueAuth';
 import { computeVibeScore } from '../lib/vibeScore';
 
@@ -91,6 +91,31 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // ─── Protected routes ────────────────────────────────────────────────────────
+
+// POST /venues — create a new venue (venue owners only)
+router.post('/', requireAuth, requireRole('VENUE_OWNER'), async (req: Request, res: Response) => {
+  const { name, type, location, hours, musicGenre, coverCharge, drinkPrices } = req.body;
+
+  if (!name || !type || !location) {
+    res.status(400).json({ error: 'Venue name, type, and location are required' });
+    return;
+  }
+
+  const venue = await prisma.venue.create({
+    data: {
+      name,
+      type,
+      location,
+      hours: hours ?? null,
+      musicGenre: musicGenre ?? [],
+      coverCharge: coverCharge ?? null,
+      drinkPrices: drinkPrices ?? null,
+      ownerId: req.user!.userId,
+    },
+  });
+
+  res.status(201).json(venue);
+});
 
 // GET /venues/my/venues — return venues the user owns or is a promoter for
 router.get('/my/venues', requireAuth, async (req: Request, res: Response) => {

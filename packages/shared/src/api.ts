@@ -183,6 +183,40 @@ export async function updateVenue(
   return body as Venue;
 }
 
+/** Payload for creating a new venue. */
+export interface CreateVenuePayload {
+  name: string;
+  type: string;
+  location: string;
+  hours?: string;
+  musicGenre?: string[];
+  coverCharge?: string;
+  drinkPrices?: string;
+}
+
+/** Create a new venue (venue owner only). */
+export async function createVenue(
+  data: CreateVenuePayload,
+  token: string
+): Promise<Venue> {
+  const res = await fetch(`${baseUrl}/venues`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to create venue: ${res.status}`);
+  }
+
+  return body as Venue;
+}
+
 // ─── Invite & promoter management ───────────────────────────────────────────
 
 /** Generate an invite code for a venue (owner only). */
