@@ -142,6 +142,14 @@ export default function DashboardPage() {
               ? "You haven't registered a venue yet."
               : "You haven't been invited to any venues yet. Ask a venue owner for an invite code."}
           </p>
+          {isOwner && (
+            <Link
+              href="/dashboard/new"
+              className="mt-4 inline-block rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+            >
+              Add venue
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -149,7 +157,17 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Venue Dashboard</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Venue Dashboard</h1>
+        {isOwner && (
+          <Link
+            href="/dashboard/new"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+          >
+            Add venue
+          </Link>
+        )}
+      </div>
 
       {venues.map((venue) => (
         <div
