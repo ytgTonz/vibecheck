@@ -4,6 +4,7 @@ import prisma from '../lib/prisma';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { isVenueMember, isVenueOwner } from '../lib/venueAuth';
 import { createToken, roomService } from '../lib/livekit';
+import { emitStreamStarted, emitStreamLive, emitStreamEnded } from '../lib/socket';
 
 const router = Router();
 const STALE_IDLE_STREAM_MS = 60 * 60 * 1000;
@@ -87,6 +88,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     });
 
     console.log('[Streams] created stream:', stream.id, 'status:', stream.status, 'room:', stream.livekitRoom);
+    emitStreamStarted({ venueId, streamId: stream.id });
     res.status(201).json(stream);
   } catch (err: unknown) {
     // Partial unique index violation — concurrent request created a stream
@@ -201,6 +203,7 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
   });
 
   console.log('[Streams] go-live success — IDLE→LIVE, stream:', updated.id);
+  emitStreamLive({ venueId: stream.venueId, streamId: stream.id });
   res.json(updated);
 });
 
@@ -271,6 +274,7 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
     },
   });
 
+  emitStreamEnded({ venueId: stream.venueId, streamId: stream.id });
   res.json(updated);
 });
 

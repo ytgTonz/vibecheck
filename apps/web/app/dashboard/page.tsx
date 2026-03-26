@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -9,9 +9,12 @@ import {
   fetchVenuePromoters,
   removePromoter,
   useAuthStore,
+  useSocket,
   VenueWithStats,
   VenuePromoter,
   Invite,
+  StreamEvent,
+  ViewerEvent,
 } from "@vibecheck/shared";
 
 export default function DashboardPage() {
@@ -28,6 +31,43 @@ export default function DashboardPage() {
   const [loadingPromoters, setLoadingPromoters] = useState<Record<string, boolean>>({});
 
   const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
+
+  // ─── Real-time updates via WebSocket ────────────────────────────────────
+  const handleStreamLive = useCallback((data: StreamEvent) => {
+    setVenues((prev) =>
+      prev.map((v) =>
+        v.id === data.venueId
+          ? { ...v, isLive: true, activeStreamId: data.streamId, currentViewerCount: 0 }
+          : v
+      )
+    );
+  }, []);
+
+  const handleStreamEnded = useCallback((data: StreamEvent) => {
+    setVenues((prev) =>
+      prev.map((v) =>
+        v.id === data.venueId
+          ? { ...v, isLive: false, activeStreamId: undefined, currentViewerCount: 0 }
+          : v
+      )
+    );
+  }, []);
+
+  const handleViewerUpdate = useCallback((data: ViewerEvent) => {
+    setVenues((prev) =>
+      prev.map((v) =>
+        v.id === data.venueId
+          ? { ...v, currentViewerCount: data.currentViewerCount }
+          : v
+      )
+    );
+  }, []);
+
+  useSocket({
+    'stream:live': handleStreamLive,
+    'stream:ended': handleStreamEnded,
+    'stream:viewers': handleViewerUpdate,
+  });
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);

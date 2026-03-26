@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import venueRoutes from './routes/venues';
@@ -7,11 +8,16 @@ import feedbackRoutes from './routes/feedback';
 import adminRoutes from './routes/admin';
 import streamRoutes from './routes/streams';
 import webhookRoutes from './routes/webhooks';
+import { initSocket } from './lib/socket';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
+
+// Initialise Socket.IO
+initSocket(httpServer);
 
 // Middleware
 app.use(cors());
@@ -33,6 +39,6 @@ app.use('/feedback', feedbackRoutes);
 app.use('/admin', adminRoutes);
 app.use('/streams', streamRoutes);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`VibeCheck API running on port ${PORT}`);
 });

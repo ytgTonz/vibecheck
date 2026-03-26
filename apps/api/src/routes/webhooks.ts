@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { webhookReceiver } from '../lib/livekit';
 import { authorizeHeader, TrackSource } from 'livekit-server-sdk';
+import { emitStreamLive, emitStreamEnded, emitViewerUpdate } from '../lib/socket';
 
 const router = Router();
 
@@ -46,20 +47,32 @@ router.post('/livekit', async (req: Request, res: Response) => {
           pub?.permission?.canPublish &&
           track?.source === TrackSource.CAMERA
         ) {
+          const transitioned = await prisma.liveStream.findFirst({
+            where: { livekitRoom: roomName, status: 'IDLE' },
+          });
           await prisma.liveStream.updateMany({
             where: { livekitRoom: roomName, status: 'IDLE' },
             data: { status: 'LIVE', startedAt: new Date() },
           });
+          if (transitioned) {
+            emitStreamLive({ venueId: transitioned.venueId, streamId: transitioned.id });
+          }
           console.log('[Webhook] IDLE→LIVE transition triggered for room:', roomName);
         }
         break;
       }
 
       case 'room_finished': {
+        const ending = await prisma.liveStream.findMany({
+          where: { livekitRoom: roomName, status: { not: 'ENDED' } },
+        });
         await prisma.liveStream.updateMany({
           where: { livekitRoom: roomName, status: { not: 'ENDED' } },
           data: { status: 'ENDED', endedAt: new Date() },
         });
+        for (const s of ending) {
+          emitStreamEnded({ venueId: s.venueId, streamId: s.id });
+        }
         break;
       }
 
@@ -81,6 +94,7 @@ router.post('/livekit', async (req: Request, res: Response) => {
               viewerPeak: Math.max(stream.viewerPeak, newCount),
             },
           });
+          emitViewerUpdate({ venueId: stream.venueId, streamId: stream.id, currentViewerCount: newCount });
         }
         break;
       }
@@ -94,12 +108,12 @@ router.post('/livekit', async (req: Request, res: Response) => {
         });
 
         if (stream && stream.status !== 'ENDED') {
+          const newCount = Math.max(0, stream.currentViewerCount - 1);
           await prisma.liveStream.update({
             where: { id: stream.id },
-            data: {
-              currentViewerCount: Math.max(0, stream.currentViewerCount - 1),
-            },
+            data: { currentViewerCount: newCount },
           });
+          emitViewerUpdate({ venueId: stream.venueId, streamId: stream.id, currentViewerCount: newCount });
         }
         break;
       }

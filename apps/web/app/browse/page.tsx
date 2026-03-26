@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   useVenueStore,
+  useSocket,
   Venue,
+  StreamEvent,
+  ViewerEvent,
   filterVenues,
   groupBrowseVenues,
   pickFeaturedVenue,
@@ -42,6 +45,21 @@ export default function BrowsePage() {
   const venues = useVenueStore((s) => s.venues);
   const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
   const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
+  const setVenueLive = useVenueStore((s) => s.setVenueLive);
+  const setVenueOffline = useVenueStore((s) => s.setVenueOffline);
+  const setViewerCount = useVenueStore((s) => s.setViewerCount);
+
+  useSocket({
+    'stream:live': useCallback((data: StreamEvent) => {
+      setVenueLive(data.venueId, data.streamId);
+    }, [setVenueLive]),
+    'stream:ended': useCallback((data: StreamEvent) => {
+      setVenueOffline(data.venueId);
+    }, [setVenueOffline]),
+    'stream:viewers': useCallback((data: ViewerEvent) => {
+      setViewerCount(data.venueId, data.currentViewerCount);
+    }, [setViewerCount]),
+  });
 
   useEffect(() => {
     loadVenues();

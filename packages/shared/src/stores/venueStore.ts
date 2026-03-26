@@ -42,6 +42,15 @@ interface VenueState {
 
   /** Returns filtered venues split into live/fresh/quiet sections. */
   groupedVenues: () => VenueSection;
+
+  /** Mark a venue as live (from WebSocket event). */
+  setVenueLive: (venueId: string, streamId: string) => void;
+
+  /** Mark a venue as offline (from WebSocket event). */
+  setVenueOffline: (venueId: string) => void;
+
+  /** Update viewer count for a venue (from WebSocket event). */
+  setViewerCount: (venueId: string, count: number) => void;
 }
 
 export const useVenueStore = create<VenueState>((set, get) => ({
@@ -83,4 +92,25 @@ export const useVenueStore = create<VenueState>((set, get) => ({
     const { live, offline } = groupBrowseVenues(get().filteredVenues());
     return { live, offline };
   },
+
+  setVenueLive: (venueId, streamId) =>
+    set({
+      venues: get().venues.map((v) =>
+        v.id === venueId ? { ...v, isLive: true, activeStreamId: streamId } : v
+      ),
+    }),
+
+  setVenueOffline: (venueId) =>
+    set({
+      venues: get().venues.map((v) =>
+        v.id === venueId ? { ...v, isLive: false, activeStreamId: undefined } : v
+      ),
+    }),
+
+  setViewerCount: (venueId, count) =>
+    set({
+      venues: get().venues.map((v) =>
+        v.id === venueId ? { ...v, currentViewerCount: count } : v
+      ),
+    }),
 }));
