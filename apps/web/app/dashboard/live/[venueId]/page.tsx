@@ -7,6 +7,7 @@ import {
   fetchVenue,
   createStream,
   fetchStreamToken,
+  fetchViewerToken,
   endStream,
   goLiveStream,
   useAuthStore,
@@ -17,6 +18,7 @@ import {
 import {
   LiveKitRoom,
   VideoTrack,
+  RoomAudioRenderer,
   useLocalParticipant,
   useRemoteParticipants,
   useTracks,
@@ -211,6 +213,32 @@ function LiveControls({
   );
 }
 
+function RemoteVideo() {
+  const tracks = useTracks(
+    [Track.Source.Camera, Track.Source.ScreenShare],
+    { onlySubscribed: true }
+  );
+
+  const videoTrack = tracks.find(
+    (t) => t.source === Track.Source.Camera || t.source === Track.Source.ScreenShare
+  );
+
+  if (!videoTrack) {
+    return (
+      <div className="flex aspect-video items-center justify-center bg-zinc-900 rounded-xl">
+        <p className="text-sm text-zinc-400">Waiting for broadcaster...</p>
+      </div>
+    );
+  }
+
+  return (
+    <VideoTrack
+      trackRef={videoTrack}
+      className="h-full w-full rounded-xl object-cover"
+    />
+  );
+}
+
 export default function BroadcastPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
@@ -221,7 +249,7 @@ export default function BroadcastPage() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
-  const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "ended">(
+  const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "monitoring" | "ended">(
     "idle"
   );
   const [error, setError] = useState<string | null>(null);
@@ -251,7 +279,28 @@ export default function BroadcastPage() {
     if (!venueId) return;
 
     fetchVenue(venueId)
-      .then(setVenue)
+      .then(async (v) => {
+        setVenue(v);
+
+        // If the venue is live and the current user is the owner (not the broadcaster),
+        // enter monitoring mode with a viewer token.
+        if (v.isLive && v.activeStreamId && v.ownerId === user.id) {
+          // Check if this user is already the broadcaster (via broadcast store)
+          const bs = useBroadcastStore.getState();
+          if (bs.venueId === venueId && bs.streamId === v.activeStreamId) {
+            return; // Already broadcasting — the restore effect handles this
+          }
+
+          try {
+            const { token: viewerToken } = await fetchViewerToken(v.activeStreamId);
+            setStream({ id: v.activeStreamId } as LiveStream);
+            setLivekitToken(viewerToken);
+            setPhase("monitoring");
+          } catch {
+            setError("Failed to connect to stream");
+          }
+        }
+      })
       .catch(() => setError("Failed to load venue"));
   }, [hydrated, user, authToken, venueId, router]);
 
@@ -358,6 +407,76 @@ export default function BroadcastPage() {
             {phase === "connecting" ? "Connecting..." : "Start Stream"}
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // phase === "monitoring" — VO watching a promoter's stream
+  if (phase === "monitoring" && livekitToken && stream) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-4">
+        {/* Header */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="text-sm text-zinc-400 hover:text-zinc-200"
+            >
+              &larr; Dashboard
+            </Link>
+            <h1 className="text-lg font-semibold">{venue.name}</h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+              LIVE
+            </span>
+          </div>
+          <span className="text-xs text-zinc-500">Monitoring as owner</span>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
+
+        <LiveKitRoom
+          serverUrl={LIVEKIT_URL}
+          token={livekitToken}
+          connect={true}
+          video={false}
+          audio={false}
+          className="flex flex-col gap-4 lg:flex-row"
+        >
+          <RoomAudioRenderer />
+
+          {/* Video feed from broadcaster */}
+          <div className="relative flex-1">
+            <div className="aspect-video overflow-hidden rounded-xl bg-black">
+              <RemoteVideo />
+            </div>
+            <div className="absolute left-4 top-4">
+              <ViewerCount />
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={handleEndStream}
+                className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+              >
+                End Stream
+              </button>
+            </div>
+          </div>
+
+          {/* Chat */}
+          <div className="flex h-[500px] w-full flex-col rounded-xl border border-zinc-800 bg-zinc-900 lg:h-auto lg:w-80">
+            <div className="border-b border-zinc-800 px-4 py-3">
+              <h3 className="text-sm font-semibold">Live Chat</h3>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <BroadcastChat />
+            </div>
+          </div>
+        </LiveKitRoom>
       </div>
     );
   }
