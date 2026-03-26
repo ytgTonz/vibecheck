@@ -8,10 +8,12 @@ import {
   VenueWithStats,
 } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, token, hydrate, logout } = useAuthStore();
+  const { unregisterToken } = useNotifications();
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function DashboardScreen() {
               Your linked venues and live streaming controls.
             </Text>
           </View>
-          <Pressable onPress={logout} className="rounded-full border border-zinc-700 px-3 py-2">
+          <Pressable onPress={async () => { if (token) await unregisterToken(token); logout(); }} className="rounded-full border border-zinc-700 px-3 py-2">
             <Text className="text-xs font-medium text-zinc-300">Log out</Text>
           </Pressable>
         </View>

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore, registerPushToken } from '@vibecheck/shared';
+import { useAuthStore, registerPushToken, unregisterPushToken } from '@vibecheck/shared';
 
 let Notifications: typeof import('expo-notifications') | null = null;
 let Device: typeof import('expo-device') | null = null;
@@ -29,6 +29,7 @@ export function useNotifications() {
   const { token } = useAuthStore();
   const notificationListener = useRef<{ remove(): void } | null>(null);
   const responseListener = useRef<{ remove(): void } | null>(null);
+  const pushTokenRef = useRef<string | null>(null);
 
   // Register push token on mount and whenever the auth token changes (links token to user after login)
   useEffect(() => {
@@ -61,6 +62,7 @@ export function useNotifications() {
       });
 
       console.log('[Notifications] Push token:', pushToken.data);
+      pushTokenRef.current = pushToken.data;
 
       // Register token with our API — auth token optional.
       // If logged in, this links the push token to the user account.
@@ -100,4 +102,15 @@ export function useNotifications() {
       responseListener.current?.remove();
     };
   }, [token, router]);
+
+  async function unregisterToken(authToken: string) {
+    if (!pushTokenRef.current) return;
+    try {
+      await unregisterPushToken(pushTokenRef.current, authToken);
+    } catch (err) {
+      console.error('[Notifications] Failed to unregister push token:', err);
+    }
+  }
+
+  return { unregisterToken };
 }
