@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   fetchMyVenues,
+  fetchVenueRecentStreams,
   generateInvite,
   fetchVenuePromoters,
   removePromoter,
@@ -13,9 +14,11 @@ import {
   VenueWithStats,
   VenuePromoter,
   Invite,
+  LiveStream,
   StreamEvent,
   ViewerEvent,
 } from "@vibecheck/shared";
+import StreamFunnelCard from "../components/StreamFunnelCard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,6 +27,10 @@ export default function DashboardPage() {
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Recent streams (keyed by venueId) for the attendance funnel
+  const [recentStreams, setRecentStreams] = useState<Record<string, LiveStream[]>>({});
+  const [loadingStreams, setLoadingStreams] = useState<Record<string, boolean>>({});
 
   // Promoter management state (keyed by venueId)
   const [promoters, setPromoters] = useState<Record<string, VenuePromoter[]>>({});
@@ -75,6 +82,21 @@ export default function DashboardPage() {
     try {
       const nextVenues = await fetchMyVenues(authToken);
       setVenues(nextVenues);
+
+      // Fetch recent streams for all venues in parallel (non-blocking for the main render)
+      const streamLoadingInit = Object.fromEntries(nextVenues.map((v) => [v.id, true]));
+      setLoadingStreams(streamLoadingInit);
+
+      nextVenues.forEach(async (venue) => {
+        try {
+          const streams = await fetchVenueRecentStreams(venue.id);
+          setRecentStreams((prev) => ({ ...prev, [venue.id]: streams }));
+        } catch {
+          setRecentStreams((prev) => ({ ...prev, [venue.id]: [] }));
+        } finally {
+          setLoadingStreams((prev) => ({ ...prev, [venue.id]: false }));
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
@@ -278,6 +300,12 @@ export default function DashboardPage() {
               </div>
             </Link>
           )}
+
+          {/* Attendance funnel for recent streams */}
+          <StreamFunnelCard
+            streams={recentStreams[venue.id] ?? []}
+            loading={loadingStreams[venue.id] ?? true}
+          />
 
           {/* Manage Promoters (owner only) */}
           {isOwner && venue.ownerId === user?.id && (

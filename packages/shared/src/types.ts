@@ -75,6 +75,9 @@ export interface LiveStream {
   createdBy: string;
   createdAt: string;
   venue?: { id: string; name: string; type: string; location: string };
+  /** Attendance funnel — populated by the recent-streams endpoint */
+  intentCount?: number;
+  arrivalCount?: number;
 }
 
 // ─── Notification types ─────────────────────────────────────────────────────

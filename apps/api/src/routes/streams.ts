@@ -305,7 +305,7 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
   res.json(updated);
 });
 
-// GET /streams/venue/:venueId/recent — recent ended streams for a venue
+// GET /streams/venue/:venueId/recent — recent ended streams with attendance funnel counts
 router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
   const streams = await prisma.liveStream.findMany({
     where: { venueId: req.params.venueId, status: 'ENDED' },
@@ -316,7 +316,34 @@ router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
     },
   });
 
-  res.json(streams);
+  if (streams.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // Fetch attendance counts (INTENT + ARRIVAL) for all returned streams in one query
+  const streamIds = streams.map((s) => s.id);
+  const attendanceCounts = await prisma.streamAttendance.groupBy({
+    by: ['streamId', 'type'],
+    where: { streamId: { in: streamIds } },
+    _count: { _all: true },
+  });
+
+  // Build a lookup: streamId → { intentCount, arrivalCount }
+  const countMap: Record<string, { intentCount: number; arrivalCount: number }> = {};
+  for (const row of attendanceCounts) {
+    if (!countMap[row.streamId]) countMap[row.streamId] = { intentCount: 0, arrivalCount: 0 };
+    if (row.type === 'INTENT') countMap[row.streamId].intentCount = row._count._all;
+    if (row.type === 'ARRIVAL') countMap[row.streamId].arrivalCount = row._count._all;
+  }
+
+  const result = streams.map((s) => ({
+    ...s,
+    intentCount: countMap[s.id]?.intentCount ?? 0,
+    arrivalCount: countMap[s.id]?.arrivalCount ?? 0,
+  }));
+
+  res.json(result);
 });
 
 export default router;
