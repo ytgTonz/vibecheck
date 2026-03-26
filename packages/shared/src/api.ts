@@ -412,7 +412,7 @@ export async function unregisterPushToken(
   pushToken: string,
   authToken: string,
 ): Promise<void> {
-  await fetch(`${baseUrl}/notifications/push-token`, {
+  const res = await fetch(`${baseUrl}/notifications/push-token`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -420,6 +420,10 @@ export async function unregisterPushToken(
     },
     body: JSON.stringify({ token: pushToken }),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to unregister push token: ${res.status}`);
+  }
 }
 
 /** Fetch notifications for the current user. */
