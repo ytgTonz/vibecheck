@@ -585,6 +585,13 @@ export interface AttendanceResponse {
   alreadyPressed: boolean;
 }
 
+/** Fetch current intent + arrival counts for a stream. */
+export function fetchAttendanceCounts(
+  streamId: string,
+): Promise<{ intentCount: number; arrivalCount: number }> {
+  return apiFetch<{ intentCount: number; arrivalCount: number }>(`/attendance/${streamId}/counts`);
+}
+
 /** Record "I'm Coming" intent for a stream. */
 export async function recordAttendanceIntent(
   streamId: string,

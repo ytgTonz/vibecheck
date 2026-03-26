@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -8,12 +8,15 @@ import {
   createStream,
   fetchStreamToken,
   fetchViewerToken,
+  fetchAttendanceCounts,
   endStream,
   goLiveStream,
   useAuthStore,
   useBroadcastStore,
+  useSocket,
   LiveStream,
   Venue,
+  AttendanceUpdateEvent,
 } from "@vibecheck/shared";
 import {
   LiveKitRoom,
@@ -253,6 +256,27 @@ export default function BroadcastPage() {
     "idle"
   );
   const [error, setError] = useState<string | null>(null);
+  const [attendanceCounts, setAttendanceCounts] = useState({ intentCount: 0, arrivalCount: 0 });
+
+  // Fetch initial attendance counts once a stream is active
+  useEffect(() => {
+    if (!stream?.id || (phase !== "live" && phase !== "monitoring")) return;
+    fetchAttendanceCounts(stream.id)
+      .then(setAttendanceCounts)
+      .catch(() => {});
+  }, [stream?.id, phase]);
+
+  // Keep counts in sync via real-time socket updates
+  const handleAttendanceUpdate = useCallback(
+    (data: AttendanceUpdateEvent) => {
+      if (data.streamId === stream?.id) {
+        setAttendanceCounts({ intentCount: data.intentCount, arrivalCount: data.arrivalCount });
+      }
+    },
+    [stream?.id],
+  );
+
+  useSocket({ "attendance:update": handleAttendanceUpdate });
 
   useEffect(() => {
     hydrate();
@@ -430,7 +454,15 @@ export default function BroadcastPage() {
               LIVE
             </span>
           </div>
-          <span className="text-xs text-zinc-500">Monitoring as owner</span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
+              {attendanceCounts.intentCount} coming
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
+              {attendanceCounts.arrivalCount} arrived
+            </span>
+            <span className="text-xs text-zinc-500">Monitoring as owner</span>
+          </div>
         </div>
 
         {error && (
@@ -491,6 +523,14 @@ export default function BroadcastPage() {
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
             YOU ARE LIVE
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
+            {attendanceCounts.intentCount} coming
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
+            {attendanceCounts.arrivalCount} arrived
           </span>
         </div>
       </div>
