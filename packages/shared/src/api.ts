@@ -388,18 +388,17 @@ export async function endAllStreams(token: string): Promise<{ ended: number }> {
 
 // ─── Notifications ──────────────────────────────────────────────────────────
 
-/** Register a mobile push token for the current user. */
+/** Register a mobile push token. Auth token is optional — if omitted the token is stored anonymously and still receives broadcast notifications (e.g. venue go-live). */
 export async function registerPushToken(
   pushToken: string,
   platform: string,
-  authToken: string,
+  authToken?: string,
 ): Promise<void> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   const res = await fetch(`${baseUrl}/notifications/push-token`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
-    },
+    headers,
     body: JSON.stringify({ token: pushToken, platform }),
   });
   if (!res.ok) {

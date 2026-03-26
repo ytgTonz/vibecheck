@@ -41,6 +41,19 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+/** Middleware that attaches `req.user` if a valid token is present, but never rejects. */
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (JWT_SECRET && header?.startsWith('Bearer ')) {
+    try {
+      req.user = jwt.verify(header.slice(7), JWT_SECRET) as AuthPayload;
+    } catch {
+      // Invalid token — proceed as unauthenticated
+    }
+  }
+  next();
+}
+
 /** Middleware that checks the user has one of the allowed roles. */
 export function requireRole(...roles: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {

@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "com.ytgtonz.vibecheck",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",

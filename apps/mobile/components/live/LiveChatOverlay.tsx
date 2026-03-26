@@ -24,9 +24,11 @@ type ChatMessage = {
 export function LiveChatOverlay({
   messages,
   onSend,
+  bottomOffset = 6,
 }: {
   messages: ChatMessage[];
   onSend: (msg: string) => void;
+  bottomOffset?: number;
 }) {
   const [text, setText] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -76,7 +78,7 @@ export function LiveChatOverlay({
       style={[
         {
           position: 'absolute',
-          bottom: 6,
+          bottom: bottomOffset,
           left: 0,
           right: 0,
           zIndex: 20,

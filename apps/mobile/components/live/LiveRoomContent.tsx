@@ -141,13 +141,14 @@ export function LiveRoomContent({
         viewerCount={viewerCount}
       />
 
-      <View style={{ position: 'absolute', bottom: 130, right: 18, zIndex: 10 }}>
+      <View style={{ position: 'absolute', bottom: 185, right: 18, zIndex: 10 }}>
         <QuickReactionRow onReact={handleReact} vertical />
       </View>
 
       <LiveChatOverlay
         messages={chat.chatMessages}
         onSend={(message: string) => chat.send(message)}
+        bottomOffset={130}
       />
 
       <LiveAttendanceBar stream={stream} venue={venue} />

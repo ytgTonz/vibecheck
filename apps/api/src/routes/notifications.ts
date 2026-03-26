@@ -1,14 +1,17 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
 const PAGE_SIZE = 20;
 
-// POST /notifications/push-token — register a mobile push token
-router.post('/push-token', requireAuth, async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
+// POST /notifications/push-token — register a mobile push token (auth optional)
+// Unauthenticated users get a token stored without a userId so they still receive
+// broadcast notifications (e.g. "venue just went live"). When the same token is
+// registered again after login, we link it to the user.
+router.post('/push-token', optionalAuth, async (req: Request, res: Response) => {
+  const userId = req.user?.userId ?? undefined;
   const { token, platform } = req.body;
 
   if (!token || !platform) {
@@ -16,10 +19,12 @@ router.post('/push-token', requireAuth, async (req: Request, res: Response) => {
     return;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tokenData: any = userId ? { token, platform, userId } : { token, platform };
   await prisma.pushToken.upsert({
     where: { token },
-    create: { token, platform, userId },
-    update: { userId, platform },
+    create: tokenData,
+    update: tokenData,
   });
 
   res.status(201).json({ ok: true });

@@ -26,16 +26,16 @@ try {
 
 export function useNotifications() {
   const router = useRouter();
-  const { user, token } = useAuthStore();
+  const { token } = useAuthStore();
   const notificationListener = useRef<{ remove(): void } | null>(null);
   const responseListener = useRef<{ remove(): void } | null>(null);
 
+  // Register push token on mount and whenever the auth token changes (links token to user after login)
   useEffect(() => {
-    if (!Notifications || !Device || !user || !token) return;
+    if (!Notifications || !Device) return;
 
     const Notif = Notifications;
 
-    // Register for push notifications
     (async () => {
       if (!Device!.isDevice) {
         console.log('[Notifications] Must use physical device for push notifications');
@@ -62,9 +62,11 @@ export function useNotifications() {
 
       console.log('[Notifications] Push token:', pushToken.data);
 
-      // Register token with our API
+      // Register token with our API — auth token optional.
+      // If logged in, this links the push token to the user account.
+      // If not logged in, the token is stored anonymously and still receives broadcast notifications.
       try {
-        await registerPushToken(pushToken.data, Platform.OS, token);
+        await registerPushToken(pushToken.data, Platform.OS, token ?? undefined);
       } catch (err) {
         console.error('[Notifications] Failed to register push token:', err);
       }
@@ -97,5 +99,5 @@ export function useNotifications() {
       notificationListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [user, token, router]);
+  }, [token, router]);
 }
