@@ -92,7 +92,9 @@ export function useNotifications() {
     // Tap notification listener — navigate to relevant screen
     responseListener.current = Notif.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, string> | undefined;
-      if (data?.venueId) {
+      if (data?.venueId && data?.streamId) {
+        router.push(`/(tabs)/venues/${data.venueId}/live` as never);
+      } else if (data?.venueId) {
         router.push(`/(tabs)/venues/${data.venueId}` as never);
       }
     });
