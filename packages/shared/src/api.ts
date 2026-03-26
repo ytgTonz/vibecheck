@@ -1,6 +1,7 @@
 import {
   Venue, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
   PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue,
+  AppNotification,
 } from './types';
 import { FeedbackCategory, FeedbackRating } from './enums';
 
@@ -383,6 +384,76 @@ export async function endAllStreams(token: string): Promise<{ ended: number }> {
   const body = await res.json();
   if (!res.ok) throw new Error(body.error || `Failed to end streams: ${res.status}`);
   return body as { ended: number };
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+/** Register a mobile push token for the current user. */
+export async function registerPushToken(
+  pushToken: string,
+  platform: string,
+  authToken: string,
+): Promise<void> {
+  const res = await fetch(`${baseUrl}/notifications/push-token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ token: pushToken, platform }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to register push token: ${res.status}`);
+  }
+}
+
+/** Unregister a push token (on logout). */
+export async function unregisterPushToken(
+  pushToken: string,
+  authToken: string,
+): Promise<void> {
+  await fetch(`${baseUrl}/notifications/push-token`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ token: pushToken }),
+  });
+}
+
+/** Fetch notifications for the current user. */
+export async function fetchNotifications(
+  authToken: string,
+  filters?: { unreadOnly?: boolean; page?: number },
+): Promise<{ data: AppNotification[]; total: number; page: number; pageSize: number; totalPages: number }> {
+  const params = new URLSearchParams();
+  if (filters?.unreadOnly) params.set('unreadOnly', 'true');
+  if (filters?.page) params.set('page', String(filters.page));
+  const qs = params.toString();
+
+  const res = await fetch(`${baseUrl}/notifications${qs ? `?${qs}` : ''}`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch notifications: ${res.status}`);
+  return body;
+}
+
+/** Mark a notification as read. */
+export async function markNotificationRead(
+  id: string,
+  authToken: string,
+): Promise<void> {
+  const res = await fetch(`${baseUrl}/notifications/${id}/read`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `Failed to mark notification: ${res.status}`);
+  }
 }
 
 // ─── Feedback ───────────────────────────────────────────────────────────────

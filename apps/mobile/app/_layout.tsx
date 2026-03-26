@@ -16,6 +16,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import { useNotifications } from '../hooks/useNotifications';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -55,6 +56,7 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  useNotifications();
 
   return (
     <SafeAreaProvider>

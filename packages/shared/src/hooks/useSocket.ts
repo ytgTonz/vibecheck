@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { getSocket, StreamEvent, ViewerEvent } from '../socket';
+import { getSocket, StreamEvent, ViewerEvent, NotificationEvent } from '../socket';
 
 type EventMap = {
   'stream:started': StreamEvent;
   'stream:live': StreamEvent;
   'stream:ended': StreamEvent;
   'stream:viewers': ViewerEvent;
+  'notification': NotificationEvent;
 };
 
 /**

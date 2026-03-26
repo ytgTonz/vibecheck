@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import type { NotificationType } from './types';
 
 // ─── Event types ────────────────────────────────────────────────────────────
 
@@ -11,11 +12,19 @@ export interface ViewerEvent extends StreamEvent {
   currentViewerCount: number;
 }
 
+export interface NotificationEvent {
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}
+
 export type SocketEvents = {
   'stream:started': (data: StreamEvent) => void;
   'stream:live': (data: StreamEvent) => void;
   'stream:ended': (data: StreamEvent) => void;
   'stream:viewers': (data: ViewerEvent) => void;
+  'notification': (data: NotificationEvent) => void;
 };
 
 // ─── Singleton socket ───────────────────────────────────────────────────────
@@ -32,8 +41,8 @@ function resolveWsUrl(): string {
   return envBaseUrl.replace(/\/+$/, '');
 }
 
-/** Get (or create) the shared Socket.IO client. */
-export function getSocket(): Socket {
+/** Get (or create) the shared Socket.IO client. Optionally pass an auth token for targeted notifications. */
+export function getSocket(authToken?: string): Socket {
   if (!socket) {
     socket = io(resolveWsUrl(), {
       path: '/ws',
@@ -43,12 +52,16 @@ export function getSocket(): Socket {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      ...(authToken ? { auth: { token: authToken } } : {}),
     });
   }
   return socket;
 }
 
-/** Disconnect the shared socket (for cleanup). */
+/**
+ * Disconnect the shared socket (for cleanup).
+ * Call this on logout so the next login can reconnect with a fresh auth token.
+ */
 export function disconnectSocket() {
   if (socket) {
     socket.disconnect();

@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import { isVenueMember, isVenueOwner } from '../lib/venueAuth';
 import { createToken, roomService } from '../lib/livekit';
 import { emitStreamStarted, emitStreamLive, emitStreamEnded } from '../lib/socket';
+import { sendNotification } from '../lib/notifications';
 
 const router = Router();
 const STALE_IDLE_STREAM_MS = 60 * 60 * 1000;
@@ -198,12 +199,31 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
     where: { id: stream.id },
     data: { status: 'LIVE', startedAt: new Date() },
     include: {
-      venue: { select: { id: true, name: true, type: true, location: true } },
+      venue: { select: { id: true, name: true, type: true, location: true, ownerId: true } },
     },
   });
 
   console.log('[Streams] go-live success — IDLE→LIVE, stream:', updated.id);
   emitStreamLive({ venueId: stream.venueId, streamId: stream.id });
+
+  // Broadcast notification to all users
+  sendNotification({
+    type: 'STREAM_LIVE',
+    title: `${updated.venue!.name} just went live`,
+    body: 'Tune in now to see the vibe!',
+    data: { venueId: stream.venueId, streamId: stream.id },
+  });
+  // Targeted notification to venue owner
+  if (updated.venue!.ownerId !== userId) {
+    sendNotification({
+      type: 'STREAM_LIVE',
+      title: `Your venue ${updated.venue!.name} is now live`,
+      body: 'A promoter started streaming at your venue.',
+      data: { venueId: stream.venueId, streamId: stream.id },
+      targetUserId: updated.venue!.ownerId,
+    });
+  }
+
   res.json(updated);
 });
 
@@ -275,6 +295,13 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
   });
 
   emitStreamEnded({ venueId: stream.venueId, streamId: stream.id });
+  sendNotification({
+    type: 'STREAM_ENDED',
+    title: `Stream ended at ${updated.venue!.name}`,
+    body: `Peak viewers: ${updated.viewerPeak}`,
+    data: { venueId: stream.venueId, streamId: stream.id },
+    targetRole: 'ADMIN',
+  });
   res.json(updated);
 });
 

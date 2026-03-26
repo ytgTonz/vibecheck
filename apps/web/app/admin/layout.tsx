@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuthStore } from "@vibecheck/shared";
+import { useAuthStore, fetchNotifications } from "@vibecheck/shared";
 
 const tabs = [
   { label: "Overview", href: "/admin" },
   { label: "Feedback", href: "/admin/feedback" },
   { label: "Users", href: "/admin/users" },
   { label: "Venues", href: "/admin/venues" },
+  { label: "Notifications", href: "/admin/notifications" },
 ];
 
 export default function AdminLayout({
@@ -19,9 +20,10 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, hydrate } = useAuthStore();
+  const { user, token, hydrate } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
   const [accessState, setAccessState] = useState<"checking" | "unauthenticated" | "forbidden" | "allowed">("checking");
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     hydrate();
@@ -44,6 +46,14 @@ export default function AdminLayout({
 
     setAccessState("allowed");
   }, [hydrated, user, router]);
+
+  // Fetch unread notification count for the badge
+  useEffect(() => {
+    if (accessState !== "allowed" || !token) return;
+    fetchNotifications(token, { unreadOnly: true })
+      .then((res) => setUnreadCount(res.total))
+      .catch(() => {});
+  }, [accessState, token]);
 
   if (!hydrated || accessState === "checking") {
     return (
@@ -105,6 +115,11 @@ export default function AdminLayout({
               }`}
             >
               {tab.label}
+              {tab.label === "Notifications" && unreadCount > 0 && (
+                <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

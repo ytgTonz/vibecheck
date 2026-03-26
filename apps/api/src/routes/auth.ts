@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { sendNotification } from '../lib/notifications';
 
 const router = Router();
 
@@ -95,6 +96,13 @@ router.post('/register', async (req: Request, res: Response) => {
       return [user];
     });
 
+    sendNotification({
+      type: 'USER_REGISTERED',
+      title: `New user: ${user.name}`,
+      body: `Registered as venue owner`,
+      data: { userId: user.id },
+      targetRole: 'ADMIN',
+    });
     res.status(201).json(buildAuthResponse(user));
     return;
   }
@@ -155,6 +163,13 @@ router.post('/register', async (req: Request, res: Response) => {
     return [user];
   });
 
+  sendNotification({
+    type: 'USER_REGISTERED',
+    title: `New user: ${user.name}`,
+    body: `Registered as venue promoter`,
+    data: { userId: user.id },
+    targetRole: 'ADMIN',
+  });
   res.status(201).json(buildAuthResponse(user));
 });
 

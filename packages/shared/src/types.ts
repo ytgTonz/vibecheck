@@ -75,6 +75,21 @@ export interface LiveStream {
   venue?: { id: string; name: string; type: string; location: string };
 }
 
+// ─── Notification types ─────────────────────────────────────────────────────
+
+export type NotificationType = 'STREAM_LIVE' | 'STREAM_ENDED' | 'VENUE_CREATED' | 'USER_REGISTERED';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, string> | null;
+  userId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 // ─── Admin types ────────────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {

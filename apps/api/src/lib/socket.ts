@@ -1,5 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import jwt from 'jsonwebtoken';
+import { AuthPayload } from '../middleware/auth';
 
 let io: Server | null = null;
 
@@ -12,6 +14,20 @@ export function initSocket(httpServer: HttpServer): Server {
 
   io.on('connection', (socket: Socket) => {
     console.log('[WS] client connected:', socket.id);
+
+    // Join role/user rooms if the client provided an auth token
+    const token = socket.handshake.auth?.token as string | undefined;
+    if (token && process.env.JWT_SECRET) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET) as AuthPayload;
+        socket.join(`user:${payload.userId}`);
+        socket.join(`role:${payload.role}`);
+        console.log('[WS] authenticated:', payload.userId, 'role:', payload.role);
+      } catch {
+        // Invalid token — socket stays connected but won't receive targeted events
+      }
+    }
+
     socket.on('disconnect', () => {
       console.log('[WS] client disconnected:', socket.id);
     });

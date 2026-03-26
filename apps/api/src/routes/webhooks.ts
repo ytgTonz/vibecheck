@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { webhookReceiver } from '../lib/livekit';
 import { authorizeHeader, TrackSource } from 'livekit-server-sdk';
 import { emitStreamLive, emitStreamEnded, emitViewerUpdate } from '../lib/socket';
+import { sendNotification } from '../lib/notifications';
 
 const router = Router();
 
@@ -49,6 +50,7 @@ router.post('/livekit', async (req: Request, res: Response) => {
         ) {
           const transitioned = await prisma.liveStream.findFirst({
             where: { livekitRoom: roomName, status: 'IDLE' },
+            include: { venue: { select: { name: true, ownerId: true } } },
           });
           await prisma.liveStream.updateMany({
             where: { livekitRoom: roomName, status: 'IDLE' },
@@ -56,6 +58,12 @@ router.post('/livekit', async (req: Request, res: Response) => {
           });
           if (transitioned) {
             emitStreamLive({ venueId: transitioned.venueId, streamId: transitioned.id });
+            sendNotification({
+              type: 'STREAM_LIVE',
+              title: `${transitioned.venue.name} just went live`,
+              body: 'Tune in now to see the vibe!',
+              data: { venueId: transitioned.venueId, streamId: transitioned.id },
+            });
           }
           console.log('[Webhook] IDLE→LIVE transition triggered for room:', roomName);
         }

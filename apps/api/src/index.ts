@@ -7,6 +7,7 @@ import authRoutes from './routes/auth';
 import feedbackRoutes from './routes/feedback';
 import adminRoutes from './routes/admin';
 import streamRoutes from './routes/streams';
+import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
 import { initSocket } from './lib/socket';
 
@@ -38,6 +39,7 @@ app.use('/venues', venueRoutes);
 app.use('/feedback', feedbackRoutes);
 app.use('/admin', adminRoutes);
 app.use('/streams', streamRoutes);
+app.use('/notifications', notificationRoutes);
 
 httpServer.listen(PORT, () => {
   console.log(`VibeCheck API running on port ${PORT}`);

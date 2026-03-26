@@ -8,4 +8,4 @@ export { useAuthStore } from './stores/authStore';
 export { useBroadcastStore } from './stores/broadcastStore';
 export { useSocket } from './hooks/useSocket';
 export { getSocket, disconnectSocket } from './socket';
-export type { StreamEvent, ViewerEvent } from './socket';
+export type { StreamEvent, ViewerEvent, NotificationEvent } from './socket';

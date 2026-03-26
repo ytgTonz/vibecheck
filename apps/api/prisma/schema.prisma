@@ -42,6 +42,8 @@ model User {
   createdInvites Invite[]
   feedback       Feedback[]
   createdStreams  LiveStream[]    @relation("CreatedStreams")
+  pushTokens     PushToken[]
+  notifications  Notification[]
 }
 
 model VenuePromoter {
@@ -118,6 +120,13 @@ enum StreamStatus {
   ENDED
 }
 
+enum NotificationType {
+  STREAM_LIVE
+  STREAM_ENDED
+  VENUE_CREATED
+  USER_REGISTERED
+}
+
 // ─── Live Streaming ─────────────────────────────────────────────────────────
 
 model LiveStream {
@@ -137,4 +146,34 @@ model LiveStream {
 
   @@index([venueId, status])
   @@index([status])
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  userId    String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
 }

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth, requireRole } from '../middleware/auth';
+import { sendNotification } from '../lib/notifications';
 import { isVenueOwner } from '../lib/venueAuth';
 import { computeVibeScore } from '../lib/vibeScore';
 
@@ -112,6 +113,21 @@ router.post('/', requireAuth, requireRole('VENUE_OWNER'), async (req: Request, r
       drinkPrices: drinkPrices ?? null,
       ownerId: req.user!.userId,
     },
+  });
+
+  // Broadcast to all users + admin
+  sendNotification({
+    type: 'VENUE_CREATED',
+    title: `New venue: ${venue.name} just joined VibeCheck`,
+    body: `Check out ${venue.name} in ${venue.location}`,
+    data: { venueId: venue.id },
+  });
+  sendNotification({
+    type: 'VENUE_CREATED',
+    title: `New venue: ${venue.name}`,
+    body: `Added by ${req.user!.userId} in ${venue.location}`,
+    data: { venueId: venue.id },
+    targetRole: 'ADMIN',
   });
 
   res.status(201).json(venue);
