@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useAuthStore, registerPushToken, unregisterPushToken } from '@vibecheck/shared';
 
 let Notifications: typeof import('expo-notifications') | null = null;
@@ -58,7 +59,7 @@ export function useNotifications() {
 
       // Get the Expo push token
       const pushToken = await Notif.getExpoPushTokenAsync({
-        projectId: 'c7eb7128-8ab0-4a55-a11f-8d0d9f954d53',
+        projectId: Constants.expoConfig?.extra?.eas?.projectId,
       });
 
       console.log('[Notifications] Push token:', pushToken.data);

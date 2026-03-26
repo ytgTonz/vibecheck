@@ -4,6 +4,9 @@ import { getIO } from './socket';
 
 const expo = new Expo();
 
+/** In-memory queue of receipt IDs → token, awaiting Expo receipt check. */
+export const receiptQueue: Array<{ receiptId: string; token: string }> = [];
+
 export interface SendNotificationOptions {
   type: 'STREAM_LIVE' | 'STREAM_ENDED' | 'VENUE_CREATED' | 'USER_REGISTERED' | 'ATTENDANCE_INTENT';
   title: string;
@@ -107,7 +110,12 @@ async function sendPushNotifications(opts: SendNotificationOptions) {
   const chunks = expo.chunkPushNotifications(messages);
   for (const chunk of chunks) {
     try {
-      await expo.sendPushNotificationsAsync(chunk);
+      const tickets = await expo.sendPushNotificationsAsync(chunk);
+      tickets.forEach((ticket, i) => {
+        if (ticket.status === 'ok') {
+          receiptQueue.push({ receiptId: ticket.id, token: chunk[i]!.to as string });
+        }
+      });
     } catch (err) {
       console.error('[Notifications] Expo push error:', err);
     }

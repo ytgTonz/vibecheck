@@ -11,7 +11,7 @@ import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
 import attendanceRoutes from './routes/attendance';
 import { initSocket } from './lib/socket';
-import { startNotificationPoller } from './lib/scheduledNotifications';
+import { startNotificationPoller, startReceiptPoller } from './lib/scheduledNotifications';
 
 dotenv.config();
 
@@ -24,6 +24,9 @@ initSocket(httpServer);
 
 // Start scheduled notification poller
 startNotificationPoller();
+
+// Start Expo receipt poller — prunes dead push tokens every 15 minutes
+startReceiptPoller();
 
 // Middleware
 app.use(cors());
