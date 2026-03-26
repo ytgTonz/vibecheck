@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { getSocket, StreamEvent, ViewerEvent, NotificationEvent } from '../socket';
+import { getSocket, StreamEvent, ViewerEvent, NotificationEvent, AttendanceUpdateEvent } from '../socket';
 
 type EventMap = {
   'stream:started': StreamEvent;
@@ -7,6 +7,7 @@ type EventMap = {
   'stream:ended': StreamEvent;
   'stream:viewers': ViewerEvent;
   'notification': NotificationEvent;
+  'attendance:update': AttendanceUpdateEvent;
 };
 
 /**

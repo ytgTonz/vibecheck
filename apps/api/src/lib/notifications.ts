@@ -5,7 +5,7 @@ import { getIO } from './socket';
 const expo = new Expo();
 
 export interface SendNotificationOptions {
-  type: 'STREAM_LIVE' | 'STREAM_ENDED' | 'VENUE_CREATED' | 'USER_REGISTERED';
+  type: 'STREAM_LIVE' | 'STREAM_ENDED' | 'VENUE_CREATED' | 'USER_REGISTERED' | 'ATTENDANCE_INTENT';
   title: string;
   body: string;
   data?: Record<string, string>;

@@ -574,3 +574,51 @@ export async function deleteAdminVenue(id: string, token: string): Promise<void>
   }
 }
 
+// ─── Attendance tracking ─────────────────────────────────────────────────────
+
+export interface AttendanceResponse {
+  intentCount: number;
+  arrivalCount: number;
+  alreadyPressed: boolean;
+}
+
+/** Record "I'm Coming" intent for a stream. */
+export async function recordAttendanceIntent(
+  streamId: string,
+  deviceId: string,
+  token?: string,
+): Promise<AttendanceResponse> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${baseUrl}/attendance/intent`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ streamId, deviceId }),
+  });
+
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to record intent: ${res.status}`);
+  return body as AttendanceResponse;
+}
+
+/** Record "I'm Here" arrival for a stream. */
+export async function recordAttendanceArrival(
+  streamId: string,
+  deviceId: string,
+  token?: string,
+): Promise<AttendanceResponse> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${baseUrl}/attendance/arrival`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ streamId, deviceId }),
+  });
+
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to record arrival: ${res.status}`);
+  return body as AttendanceResponse;
+}
+

@@ -72,3 +72,13 @@ export function emitStreamEnded(data: StreamEvent) {
 export function emitViewerUpdate(data: ViewerEvent) {
   getIO().emit('stream:viewers', data);
 }
+
+export interface AttendanceUpdateEvent extends StreamEvent {
+  intentCount: number;
+  arrivalCount: number;
+}
+
+/** Intent or arrival count changed. */
+export function emitAttendanceUpdate(data: AttendanceUpdateEvent) {
+  getIO().emit('attendance:update', data);
+}

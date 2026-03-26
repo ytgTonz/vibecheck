@@ -125,6 +125,12 @@ enum NotificationType {
   STREAM_ENDED
   VENUE_CREATED
   USER_REGISTERED
+  ATTENDANCE_INTENT
+}
+
+enum AttendanceType {
+  INTENT
+  ARRIVAL
 }
 
 // ─── Live Streaming ─────────────────────────────────────────────────────────
@@ -141,8 +147,9 @@ model LiveStream {
   createdBy          String
   createdAt          DateTime     @default(now())
 
-  venue   Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  creator User  @relation("CreatedStreams", fields: [createdBy], references: [id])
+  venue      Venue              @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  creator    User               @relation("CreatedStreams", fields: [createdBy], references: [id])
+  attendance StreamAttendance[]
 
   @@index([venueId, status])
   @@index([status])
@@ -176,4 +183,35 @@ model Notification {
 
   @@index([userId, read])
   @@index([createdAt])
+}
+
+// ─── Attendance Tracking ─────────────────────────────────────────────────────
+
+model StreamAttendance {
+  id        String         @id @default(cuid())
+  streamId  String
+  venueId   String
+  deviceId  String
+  userId    String?
+  type      AttendanceType
+  createdAt DateTime       @default(now())
+
+  stream LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, streamId, type])
+  @@index([streamId, type])
+  @@index([venueId, createdAt])
+}
+
+model ScheduledNotification {
+  id           String   @id @default(cuid())
+  targetUserId String?
+  title        String
+  body         String
+  data         Json?
+  scheduledFor DateTime
+  sent         Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([sent, scheduledFor])
 }

@@ -16,6 +16,8 @@ export interface Venue {
   isLive?: boolean;
   activeStreamId?: string;
   vibeScore?: number;
+  intentCount?: number;
+  arrivalCount?: number;
 }
 
 export interface User {
@@ -77,7 +79,18 @@ export interface LiveStream {
 
 // ─── Notification types ─────────────────────────────────────────────────────
 
-export type NotificationType = 'STREAM_LIVE' | 'STREAM_ENDED' | 'VENUE_CREATED' | 'USER_REGISTERED';
+export type NotificationType =
+  | 'STREAM_LIVE'
+  | 'STREAM_ENDED'
+  | 'VENUE_CREATED'
+  | 'USER_REGISTERED'
+  | 'ATTENDANCE_INTENT';
+
+export interface AttendanceCounts {
+  intentCount: number;
+  arrivalCount: number;
+  alreadyPressed?: boolean;
+}
 
 export interface AppNotification {
   id: string;

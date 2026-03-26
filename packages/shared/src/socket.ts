@@ -19,12 +19,18 @@ export interface NotificationEvent {
   data?: Record<string, string>;
 }
 
+export interface AttendanceUpdateEvent extends StreamEvent {
+  intentCount: number;
+  arrivalCount: number;
+}
+
 export type SocketEvents = {
   'stream:started': (data: StreamEvent) => void;
   'stream:live': (data: StreamEvent) => void;
   'stream:ended': (data: StreamEvent) => void;
   'stream:viewers': (data: ViewerEvent) => void;
   'notification': (data: NotificationEvent) => void;
+  'attendance:update': (data: AttendanceUpdateEvent) => void;
 };
 
 // ─── Singleton socket ───────────────────────────────────────────────────────

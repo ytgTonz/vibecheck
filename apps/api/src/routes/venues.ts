@@ -84,10 +84,22 @@ router.get('/:id', async (req: Request, res: Response) => {
     select: { id: true },
   });
 
+  let intentCount = 0;
+  let arrivalCount = 0;
+
+  if (activeStream) {
+    [intentCount, arrivalCount] = await Promise.all([
+      prisma.streamAttendance.count({ where: { streamId: activeStream.id, type: 'INTENT' } }),
+      prisma.streamAttendance.count({ where: { streamId: activeStream.id, type: 'ARRIVAL' } }),
+    ]);
+  }
+
   res.json({
     ...venue,
     isLive: !!activeStream,
     activeStreamId: activeStream?.id ?? undefined,
+    intentCount,
+    arrivalCount,
   });
 });
 

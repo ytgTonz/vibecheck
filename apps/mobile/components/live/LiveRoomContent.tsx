@@ -18,6 +18,7 @@ import {
   useRemoteParticipants,
   useTracks,
 } from './livekit';
+import { LiveAttendanceBar } from './LiveAttendanceBar';
 
 export function LiveRoomContent({
   venue,
@@ -140,7 +141,7 @@ export function LiveRoomContent({
         viewerCount={viewerCount}
       />
 
-      <View style={{ position: 'absolute', bottom: 64, right: 18, zIndex: 10 }}>
+      <View style={{ position: 'absolute', bottom: 130, right: 18, zIndex: 10 }}>
         <QuickReactionRow onReact={handleReact} vertical />
       </View>
 
@@ -148,6 +149,8 @@ export function LiveRoomContent({
         messages={chat.chatMessages}
         onSend={(message: string) => chat.send(message)}
       />
+
+      <LiveAttendanceBar stream={stream} venue={venue} />
     </View>
   );
 }

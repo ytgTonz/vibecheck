@@ -9,7 +9,9 @@ import adminRoutes from './routes/admin';
 import streamRoutes from './routes/streams';
 import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
+import attendanceRoutes from './routes/attendance';
 import { initSocket } from './lib/socket';
+import { startNotificationPoller } from './lib/scheduledNotifications';
 
 dotenv.config();
 
@@ -19,6 +21,9 @@ const PORT = process.env.PORT || 3001;
 
 // Initialise Socket.IO
 initSocket(httpServer);
+
+// Start scheduled notification poller
+startNotificationPoller();
 
 // Middleware
 app.use(cors());
@@ -40,6 +45,7 @@ app.use('/feedback', feedbackRoutes);
 app.use('/admin', adminRoutes);
 app.use('/streams', streamRoutes);
 app.use('/notifications', notificationRoutes);
+app.use('/attendance', attendanceRoutes);
 
 httpServer.listen(PORT, () => {
   console.log(`VibeCheck API running on port ${PORT}`);
