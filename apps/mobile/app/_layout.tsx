@@ -9,11 +9,13 @@ try {
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setAuthStorage } from '@vibecheck/shared';
+import { setAuthStorage, useAuthStore } from '@vibecheck/shared';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import VibecheckIcon from '@/components/VibecheckIcon';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -64,16 +66,71 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+  const [splashVisible, setSplashVisible] = useState(true);
+  const splashOpacity = useRef(new Animated.Value(1)).current;
   useNotifications();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.timing(splashOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }).start(async () => {
+        setSplashVisible(false);
+        const seen = await AsyncStorage.getItem('vc_onboarding_seen');
+        const user = useAuthStore.getState().user;
+        if (!seen && !user) {
+          router.replace('/gate');
+        }
+      });
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [router, splashOpacity]);
 
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
+          <Stack.Screen name="gate" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>
+        {splashVisible && (
+          <Animated.View style={[styles.splash, { opacity: splashOpacity }]}>
+            <View style={styles.splashInner}>
+              <VibecheckIcon size={80} />
+              <Text style={styles.splashTitle}>VibeCheck</Text>
+              <Text style={styles.splashTagline}>See the vibe before you arrive.</Text>
+            </View>
+          </Animated.View>
+        )}
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  splash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#09090b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashInner: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  splashTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#f4f4f5',
+    letterSpacing: -0.5,
+  },
+  splashTagline: {
+    fontSize: 15,
+    color: '#71717a',
+  },
+});

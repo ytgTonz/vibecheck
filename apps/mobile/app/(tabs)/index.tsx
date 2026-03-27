@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useVenueStore,
@@ -12,6 +13,61 @@ import {
 import VenueCard from '@/components/VenueCard';
 import FeaturedVenueCard from '@/components/FeaturedVenueCard';
 import FilterBar from '@/components/FilterBar';
+
+function BrowseTip() {
+  const [visible, setVisible] = useState(false);
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let fadeOut: ReturnType<typeof setTimeout>;
+    let show: ReturnType<typeof setTimeout>;
+
+    AsyncStorage.getItem('vc_browse_tip_seen').then((seen) => {
+      if (seen) return;
+      void AsyncStorage.setItem('vc_browse_tip_seen', 'true');
+
+      show = setTimeout(() => {
+        setVisible(true);
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+
+        fadeOut = setTimeout(() => {
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }).start(() => setVisible(false));
+        }, 4000);
+      }, 800);
+    });
+
+    return () => {
+      clearTimeout(show);
+      clearTimeout(fadeOut);
+    };
+  }, [opacity]);
+
+  const dismiss = () => {
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => setVisible(false));
+  };
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View style={[styles.tip, { opacity }]} pointerEvents="box-none">
+      <Pressable onPress={dismiss} style={styles.tipPill}>
+        <Text style={styles.tipText}>Tap a venue to peek inside →</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function BrowseScreen() {
   const loading = useVenueStore((s) => s.loading);
@@ -74,7 +130,7 @@ export default function BrowseScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']} style={{ position: 'relative' }}>
       {loading && (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#a1a1aa" />
@@ -146,6 +202,31 @@ export default function BrowseScreen() {
           {renderSection('All venues', offlineSectionVenues)}
         </ScrollView>
       )}
+      <BrowseTip />
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  tip: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    pointerEvents: 'box-none',
+  },
+  tipPill: {
+    backgroundColor: '#27272a',
+    borderRadius: 999,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#3f3f46',
+  },
+  tipText: {
+    color: '#a1a1aa',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});
