@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Venue } from '@vibecheck/shared';
+import { PulseDot } from './PulseDot';
 
 const venueTypeLabel: Record<string, string> = {
   NIGHTCLUB: 'Nightclub',
@@ -32,7 +33,8 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
             : { pathname: '/venues/[id]', params: { id: venue.id } }
         )
       }
-      className={`overflow-hidden rounded-[28px] border bg-zinc-950 active:opacity-90 ${isLive ? 'border-red-500/40' : 'border-zinc-800'}`}
+      android_ripple={{ color: 'rgba(255,255,255,0.07)', borderless: false }}
+      className={`overflow-hidden rounded-[28px] border bg-zinc-950 active:opacity-90 ${isLive ? 'border-red-500/60' : 'border-zinc-800'}`}
       style={{
         shadowColor: '#000',
         shadowOpacity: 0.2,
@@ -43,9 +45,7 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
     >
       <View className="min-h-[260px] justify-end p-5">
         <View className="mb-4 flex-row flex-wrap items-center gap-2">
-          <View
-            className={`h-2.5 w-2.5 rounded-full ${isLive ? 'bg-red-500' : 'bg-zinc-500'}`}
-          />
+          <PulseDot live={isLive} />
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
             {isLive ? 'Live' : 'Offline'}
           </Text>

@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Venue } from '@vibecheck/shared';
+import { PulseDot } from './PulseDot';
 
 const venueTypeLabel: Record<string, string> = {
   NIGHTCLUB: 'Nightclub',
@@ -12,15 +13,6 @@ const venueTypeLabel: Record<string, string> = {
   OTHER: 'Other',
 };
 
-const venueTypeAccent: Record<string, string> = {
-  NIGHTCLUB: 'bg-fuchsia-400',
-  BAR: 'bg-amber-400',
-  RESTAURANT_BAR: 'bg-orange-300',
-  LOUNGE: 'bg-cyan-400',
-  SHISA_NYAMA: 'bg-red-400',
-  ROOFTOP: 'bg-sky-400',
-  OTHER: 'bg-zinc-400',
-};
 
 function getVibeLabel(score: number): { label: string; textColor: string; bgColor: string } {
   if (score >= 80) return { label: 'On Fire', textColor: 'text-red-400', bgColor: 'bg-red-500/20' };
@@ -32,7 +24,6 @@ function getVibeLabel(score: number): { label: string; textColor: string; bgColo
 export default function VenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
   const isLive = venue.isLive;
-  const accent = isLive ? 'bg-red-500' : (venueTypeAccent[venue.type] ?? venueTypeAccent.OTHER);
 
   return (
     <Pressable
@@ -43,7 +34,8 @@ export default function VenueCard({ venue }: { venue: Venue }) {
             : { pathname: '/venues/[id]', params: { id: venue.id } }
         )
       }
-      className={`mb-3 overflow-hidden rounded-[22px] border bg-zinc-950 px-4 py-3 active:opacity-90 ${isLive ? 'border-red-500/40' : 'border-zinc-800'}`}
+      android_ripple={{ color: 'rgba(255,255,255,0.07)', borderless: false }}
+      className={`mb-3 overflow-hidden rounded-[22px] border bg-zinc-950 px-4 py-3 active:opacity-90 ${isLive ? 'border-red-500/60' : 'border-zinc-800'}`}
       style={{
         shadowColor: '#000',
         shadowOpacity: 0.14,
@@ -53,7 +45,7 @@ export default function VenueCard({ venue }: { venue: Venue }) {
       }}
     >
       <View className="flex-row items-center gap-2">
-        <View className={`h-2.5 w-2.5 rounded-full ${accent}`} />
+        <PulseDot live={isLive} />
         <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
           {isLive ? 'Live' : 'Offline'}
         </Text>
@@ -93,8 +85,8 @@ export default function VenueCard({ venue }: { venue: Venue }) {
       )}
 
       <View className="mt-3">
-        <View className="self-start rounded-full bg-zinc-900 px-3 py-1">
-          <Text className="text-xs font-medium text-zinc-200">
+        <View className={`self-start rounded-full px-3 py-1 ${isLive ? 'bg-red-500' : 'bg-zinc-900'}`}>
+          <Text className={`text-xs font-medium ${isLive ? 'text-white' : 'text-zinc-200'}`}>
             {isLive ? 'Watch now' : 'View venue'}
           </Text>
         </View>

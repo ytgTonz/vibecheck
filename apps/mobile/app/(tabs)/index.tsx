@@ -20,6 +20,7 @@ export default function BrowseScreen() {
   const venues = useVenueStore((s) => s.venues);
   const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
   const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
+  const clearFilters = useVenueStore((s) => s.clearFilters);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -127,6 +128,13 @@ export default function BrowseScreen() {
               <FeaturedVenueCard venue={featuredVenue} />
             </View>
           ) : null}
+
+          {liveCount === 0 && (
+            <View className="mb-8 items-center rounded-[22px] border border-zinc-800 bg-zinc-950 px-4 py-6">
+              <Text className="text-sm font-medium text-zinc-400">No venues live right now</Text>
+              <Text className="mt-1 text-xs text-zinc-600">Check back later — streams go live on weekends</Text>
+            </View>
+          )}
 
           {renderSection('Live now', liveSectionVenues)}
           {renderSection('All venues', offlineSectionVenues)}
