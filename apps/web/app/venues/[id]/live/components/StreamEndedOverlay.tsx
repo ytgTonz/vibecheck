@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRoomContext } from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
+import { useSocket } from "@vibecheck/shared";
 
 interface StreamEndedOverlayProps {
   venueName: string;
+  streamId: string;
 }
 
-export function StreamEndedOverlay({ venueName }: StreamEndedOverlayProps) {
+export function StreamEndedOverlay({ venueName, streamId }: StreamEndedOverlayProps) {
   const room = useRoomContext();
   const [ended, setEnded] = useState(false);
 
@@ -18,6 +20,12 @@ export function StreamEndedOverlay({ venueName }: StreamEndedOverlayProps) {
     room.on(RoomEvent.Disconnected, handler);
     return () => { room.off(RoomEvent.Disconnected, handler); };
   }, [room]);
+
+  useSocket({
+    'stream:ended': useCallback((data) => {
+      if (data.streamId === streamId) setEnded(true);
+    }, [streamId]),
+  });
 
   if (!ended) return null;
 

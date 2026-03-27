@@ -93,7 +93,7 @@ export default function LiveWatchPage() {
       <LiveKitRoom serverUrl={LIVEKIT_URL} token={token} connect={true} className="relative h-full w-full">
         <div className="absolute inset-0"><BroadcasterVideo /></div>
         <RoomAudioRenderer />
-        <StreamEndedOverlay venueName={venue.name} />
+        <StreamEndedOverlay venueName={venue.name} streamId={stream.id} />
         <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link href="/browse" className="rounded-full bg-black/50 px-3 py-1.5 text-sm text-white/80 backdrop-blur-sm hover:bg-black/70">
