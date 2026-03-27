@@ -88,10 +88,10 @@ export default function VenueDetailPage() {
       {venue.isLive && venue.activeStreamId ? (
         <Link
           href={`/venues/${venue.id}/live`}
-          className="mb-8 flex items-center gap-4 rounded-[2rem] border border-red-500/30 bg-red-500/10 px-6 py-6 transition-colors hover:bg-red-500/15"
+          className="mb-8 flex flex-wrap items-center gap-4 rounded-[2rem] border border-red-500/30 bg-red-500/10 px-6 py-6 transition-colors hover:bg-red-500/15"
         >
-          <span className="h-4 w-4 animate-pulse rounded-full bg-red-500" />
-          <div>
+          <span className="h-4 w-4 shrink-0 animate-pulse rounded-full bg-red-500" />
+          <div className="flex-1">
             <p className="text-lg font-semibold text-red-400">
               This venue is streaming live right now
             </p>
@@ -99,7 +99,7 @@ export default function VenueDetailPage() {
               Tap to watch the live stream
             </p>
           </div>
-          <span className="ml-auto text-sm font-medium text-red-300">
+          <span className="text-sm font-medium text-red-300">
             Watch live &rarr;
           </span>
         </Link>

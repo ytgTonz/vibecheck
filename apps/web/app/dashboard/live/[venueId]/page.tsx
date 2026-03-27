@@ -181,7 +181,7 @@ export default function BroadcastPage() {
   if (phase === "monitoring" && livekitToken && stream) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-4">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-200">&larr; Dashboard</Link>
             <h1 className="text-lg font-semibold">{venue.name}</h1>
@@ -190,7 +190,7 @@ export default function BroadcastPage() {
               LIVE
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.intentCount} coming</span>
             <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.arrivalCount} arrived</span>
             <span className="text-xs text-zinc-500">Monitoring as owner</span>
@@ -223,7 +223,7 @@ export default function BroadcastPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold">{venue.name}</h1>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
@@ -231,7 +231,7 @@ export default function BroadcastPage() {
             YOU ARE LIVE
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.intentCount} coming</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.arrivalCount} arrived</span>
         </div>

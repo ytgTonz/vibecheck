@@ -25,7 +25,7 @@ export function VenueStreamCard({
 }: VenueStreamCardProps) {
   return (
     <div className="mb-8 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
           <div>
             <h2 className="text-xl font-bold">{venue.name}</h2>
@@ -38,7 +38,7 @@ export function VenueStreamCard({
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-3">
+        <div className="flex flex-wrap gap-2 sm:shrink-0 sm:gap-3">
           {venue.isLive ? (
             <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30">
               View Stream

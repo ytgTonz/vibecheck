@@ -77,7 +77,7 @@ export default function LoginPage() {
     "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none";
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-16">
+    <div className="mx-auto max-w-sm px-4 py-8 sm:py-16">
       <Link
         href="/"
         className="mb-8 inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
