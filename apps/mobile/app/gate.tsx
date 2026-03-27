@@ -38,6 +38,13 @@ export default function GateScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Pressable
+        style={({ pressed }) => [styles.skip, pressed && styles.btnPressed]}
+        onPress={handleBrowse}
+      >
+        <Text style={styles.skipText}>Skip</Text>
+      </Pressable>
+
       <View style={styles.top}>
         <VibecheckIcon size={80} />
         <Text style={styles.title}>VibeCheck</Text>
@@ -92,6 +99,15 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 15,
     color: '#71717a',
+  },
+  skip: {
+    alignSelf: 'flex-end',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  skipText: {
+    fontSize: 14,
+    color: '#52525b',
   },
   bottom: {
     paddingBottom: 12,
