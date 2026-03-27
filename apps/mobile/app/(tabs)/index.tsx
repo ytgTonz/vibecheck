@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useVenueStore,
@@ -89,8 +89,14 @@ export default function BrowseScreen() {
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <View className="flex-1 items-center justify-center px-4">
+        <View className="flex-1 items-center justify-center px-4 gap-3">
           <Text className="text-zinc-500">No venues match your filters.</Text>
+          <Pressable
+            onPress={clearFilters}
+            className="rounded-full bg-zinc-800 px-4 py-2 active:opacity-70"
+          >
+            <Text className="text-sm font-medium text-zinc-200">Clear filters</Text>
+          </Pressable>
         </View>
       )}
 
