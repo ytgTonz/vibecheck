@@ -11,6 +11,12 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
       className={`group relative block w-full overflow-hidden rounded-[1.75rem] border bg-zinc-950 text-white shadow-[0_18px_48px_rgba(0,0,0,0.18)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)] ${venue.isLive ? "border-red-500/40 hover:border-red-500/60" : "border-zinc-800 hover:border-zinc-700"}`}
     >
       <div className="flex flex-col p-6 sm:p-8">
+        <div className="mb-4 self-start rounded-full border border-white/15 bg-white/10 px-3 py-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-100">
+            Tonight&apos;s Pick
+          </span>
+        </div>
+
         <div className="mb-4 flex items-center gap-2">
           <span
             className={`h-2.5 w-2.5 rounded-full ${
