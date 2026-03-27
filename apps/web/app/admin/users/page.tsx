@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
+import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "@/lib/pagination.mjs";
 import {
   fetchAdminUsers,
   deleteAdminUser,

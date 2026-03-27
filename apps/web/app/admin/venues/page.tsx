@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "../lib/pagination.mjs";
+import { ADMIN_PAGE_SIZE, getTargetPageAfterDelete } from "@/lib/pagination.mjs";
 import {
   fetchAdminVenues,
   deleteAdminVenue,
