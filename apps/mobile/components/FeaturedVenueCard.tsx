@@ -43,7 +43,7 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         elevation: 8,
       }}
     >
-      <View className="min-h-[260px] justify-end p-5">
+      <View className="p-5">
         <View className="mb-4 flex-row flex-wrap items-center gap-2">
           <PulseDot live={isLive} />
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
