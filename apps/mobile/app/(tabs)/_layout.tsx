@@ -68,8 +68,11 @@ function LiveBanner() {
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
   const { user, hydrate } = useAuthStore();
   const broadcastVenueId = useBroadcastStore((s) => s.venueId);
+  const isFullscreenRoute =
+    segments.includes('broadcast' as never) || segments.includes('live' as never);
 
   useEffect(() => {
     hydrate();
@@ -81,7 +84,10 @@ export default function TabLayout() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#09090b' }} edges={['top']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#09090b' }}
+      edges={isFullscreenRoute ? [] : ['top']}
+    >
     <LiveBanner />
     <Tabs
       screenOptions={{
@@ -96,14 +102,16 @@ export default function TabLayout() {
           fontSize: 11,
           fontWeight: '600',
         },
-        tabBarStyle: {
-          height: 62 + insets.bottom,
-          paddingTop: 10,
-          paddingBottom: insets.bottom,
-          paddingHorizontal: 8,
-          backgroundColor: '#0c0c0f',
-          borderTopColor: '#1f1f23',
-        },
+        tabBarStyle: isFullscreenRoute
+          ? { display: 'none' }
+          : {
+              height: 62 + insets.bottom,
+              paddingTop: 10,
+              paddingBottom: insets.bottom,
+              paddingHorizontal: 8,
+              backgroundColor: '#0c0c0f',
+              borderTopColor: '#1f1f23',
+            },
         sceneStyle: {
           backgroundColor: '#09090b',
         },
@@ -189,6 +197,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen name="broadcast/[venueId]" options={{ href: null }} />
       <Tabs.Screen name="venues/[id]" options={{ href: null }} />
+      <Tabs.Screen name="venues/[id]/live" options={{ href: null }} />
     </Tabs>
     </SafeAreaView>
   );

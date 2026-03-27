@@ -22,7 +22,7 @@ function getVibeLabel(score: number): { label: string; textColor: string; bgColo
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
-  const isLive = venue.isLive;
+  const isLive = Boolean(venue.isLive);
 
   return (
     <Pressable

@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Venue } from '@vibecheck/shared';
 
 function compactNumber(value: number) {
@@ -20,10 +20,14 @@ export function LiveHeader({
   peakCount?: number;
 }) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView edges={['top']} className="absolute left-0 right-0 top-0 z-10">
-      <View className="flex-row items-center justify-between px-4 pt-1">
+    <View
+      className="absolute left-0 right-0 top-0 z-10"
+      style={{ paddingTop: Math.max(insets.top, 8) }}
+    >
+      <View className="flex-row items-center justify-between px-4">
         {/* Left: LIVE badge + viewer count */}
         <View className="flex-row items-center gap-2">
           <View className="rounded-md bg-red-500 px-2.5 py-1">
@@ -47,7 +51,7 @@ export function LiveHeader({
       </View>
 
       {/* Venue name — subtle, below the badges */}
-      <View className="px-4 mt-2">
+      <View className="mt-2 px-4">
         <Text className="text-sm font-semibold text-white" numberOfLines={1}>
           {venue.name}
         </Text>
@@ -55,6 +59,6 @@ export function LiveHeader({
           {venue.location}
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

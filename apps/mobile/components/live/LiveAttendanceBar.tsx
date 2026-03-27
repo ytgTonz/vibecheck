@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiveStream, Venue, useAuthStore, useSocket, recordAttendanceIntent, recordAttendanceArrival } from '@vibecheck/shared';
 import { getDeviceId } from '../../lib/deviceId';
 
@@ -19,6 +20,7 @@ function arrivalKey(streamId: string) {
 }
 
 export function LiveAttendanceBar({ stream, venue }: Props) {
+  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token) ?? undefined;
 
   const [intentPressed, setIntentPressed] = useState(false);
@@ -85,7 +87,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
   return (
     <View
       style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
-      className="px-4 pb-8 pt-2"
+      className="px-4 pt-2"
     >
       {/* Live counters */}
       <View className="mb-2 items-center">
@@ -111,7 +113,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
       )}
 
       {/* Action buttons */}
-      <View className="flex-row gap-3">
+      <View className="flex-row gap-3" style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
         <Pressable
           onPress={handleIntent}
           disabled={intentPressed}
