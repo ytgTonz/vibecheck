@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRoomContext } from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
-import { useSocket } from "@vibecheck/shared";
+import { StreamEvent, useSocket } from "@vibecheck/shared";
 
 interface StreamEndedOverlayProps {
   venueName: string;
@@ -22,7 +22,7 @@ export function StreamEndedOverlay({ venueName, streamId }: StreamEndedOverlayPr
   }, [room]);
 
   useSocket({
-    'stream:ended': useCallback((data) => {
+    'stream:ended': useCallback((data: StreamEvent) => {
       if (data.streamId === streamId) setEnded(true);
     }, [streamId]),
   });
