@@ -9,3 +9,6 @@
 - Always use best practices — no shortcuts or hardcoded values
 - Multiple promoters can broadcast different scenes of the same venue simultaneously
 - VO (Venue Owner) needs a privileged viewer mode: watch, chat, end stream — not broadcast
+
+## Design Reference
+When implementing UI, follow specs in docs/VIBECHECK_DESIGN_SYSTEM.md
