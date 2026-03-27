@@ -17,6 +17,7 @@ const typeConfig: Record<NotificationType, { label: string; color: string; icon:
   STREAM_ENDED: { label: "Stream Ended", color: "bg-zinc-700 text-zinc-300", icon: "⏹" },
   VENUE_CREATED: { label: "Venue Created", color: "bg-blue-900/50 text-blue-400", icon: "🏠" },
   USER_REGISTERED: { label: "User Registered", color: "bg-purple-900/50 text-purple-400", icon: "👤" },
+  ATTENDANCE_INTENT: { label: "Attendance Intent", color: "bg-yellow-900/50 text-yellow-400", icon: "📍" },
 };
 
 const filters = ["ALL", "UNREAD"] as const;
