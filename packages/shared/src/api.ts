@@ -2,8 +2,8 @@ import {
   Venue, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
   PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue,
   AppNotification,
-} from './types';
-import { FeedbackCategory, FeedbackRating } from './enums';
+} from './types/models';
+import { FeedbackCategory, FeedbackRating } from './types/enums';
 
 /**
  * API base URL — resolved from the active app environment by default.

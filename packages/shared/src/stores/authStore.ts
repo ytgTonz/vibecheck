@@ -1,51 +1,86 @@
 import { create } from 'zustand';
-import { User } from '../types';
+import { User } from '../types/models';
 import { login as apiLogin, register as apiRegister, RegisterPayload } from '../api';
 
 const TOKEN_KEY = 'vibecheck_token';
 const USER_KEY = 'vibecheck_user';
 
+type AuthStorage = {
+  getItem: (key: string) => string | null | Promise<string | null>;
+  setItem: (key: string, value: string) => void | Promise<void>;
+  removeItem: (key: string) => void | Promise<void>;
+};
+
 let memoryToken: string | null = null;
 let memoryUserJson: string | null = null;
+let customStorage: AuthStorage | null = null;
 
 function canUseLocalStorage() {
   return typeof localStorage !== 'undefined';
 }
 
-function saveAuth(token: string, user: User) {
-  const userJson = JSON.stringify(user);
-
-  if (canUseLocalStorage()) {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, userJson);
-    return;
-  }
-
-  memoryToken = token;
-  memoryUserJson = userJson;
+function memoryStorage(): AuthStorage {
+  return {
+    getItem: (key) => (key === TOKEN_KEY ? memoryToken : key === USER_KEY ? memoryUserJson : null),
+    setItem: (key, value) => {
+      if (key === TOKEN_KEY) memoryToken = value;
+      if (key === USER_KEY) memoryUserJson = value;
+    },
+    removeItem: (key) => {
+      if (key === TOKEN_KEY) memoryToken = null;
+      if (key === USER_KEY) memoryUserJson = null;
+    },
+  };
 }
 
-function clearAuth() {
+function localStorageAdapter(): AuthStorage {
+  return {
+    getItem: (key) => localStorage.getItem(key),
+    setItem: (key, value) => localStorage.setItem(key, value),
+    removeItem: (key) => localStorage.removeItem(key),
+  };
+}
+
+function getStorage(): AuthStorage {
   if (canUseLocalStorage()) {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    return localStorageAdapter();
   }
 
+  return customStorage ?? memoryStorage();
+}
+
+export function setAuthStorage(storage: AuthStorage) {
+  customStorage = storage;
+}
+
+async function saveAuth(token: string, user: User) {
+  const userJson = JSON.stringify(user);
+  const storage = getStorage();
+  await Promise.all([
+    Promise.resolve(storage.setItem(TOKEN_KEY, token)),
+    Promise.resolve(storage.setItem(USER_KEY, userJson)),
+  ]);
+}
+
+async function clearAuth() {
+  const storage = getStorage();
+  await Promise.all([
+    Promise.resolve(storage.removeItem(TOKEN_KEY)),
+    Promise.resolve(storage.removeItem(USER_KEY)),
+  ]);
   memoryToken = null;
   memoryUserJson = null;
 }
 
-function loadAuth() {
-  if (canUseLocalStorage()) {
-    return {
-      token: localStorage.getItem(TOKEN_KEY),
-      userJson: localStorage.getItem(USER_KEY),
-    };
-  }
-
+async function loadAuth() {
+  const storage = getStorage();
+  const [token, userJson] = await Promise.all([
+    Promise.resolve(storage.getItem(TOKEN_KEY)),
+    Promise.resolve(storage.getItem(USER_KEY)),
+  ]);
   return {
-    token: memoryToken,
-    userJson: memoryUserJson,
+    token,
+    userJson,
   };
 }
 
@@ -55,6 +90,9 @@ interface AuthState {
 
   /** JWT token for API calls. */
   token: string | null;
+
+  /** Whether initial auth hydration has completed. */
+  hydrated: boolean;
 
   /** True while a login/register request is in flight. */
   loading: boolean;
@@ -69,15 +107,16 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
 
   /** Log out and clear stored auth. */
-  logout: () => void;
+  logout: () => Promise<void>;
 
   /** Restore auth from localStorage (call on app load). */
-  hydrate: () => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
+  hydrated: false,
   loading: false,
   error: null,
 
@@ -85,8 +124,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { token, user } = await apiRegister(payload);
-      saveAuth(token, user);
-      set({ token, user, loading: false });
+      await saveAuth(token, user);
+      set({ token, user, loading: false, hydrated: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       set({ error: message, loading: false });
@@ -98,8 +137,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       const { token, user } = await apiLogin(email, password);
-      saveAuth(token, user);
-      set({ token, user, loading: false });
+      await saveAuth(token, user);
+      set({ token, user, loading: false, hydrated: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       set({ error: message, loading: false });
@@ -107,20 +146,25 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
-    clearAuth();
-    set({ token: null, user: null, error: null });
+  logout: async () => {
+    await clearAuth();
+    set({ token: null, user: null, error: null, hydrated: true });
   },
 
-  hydrate: () => {
-    const { token, userJson } = loadAuth();
+  hydrate: async () => {
+    const { token, userJson } = await loadAuth();
     if (token && userJson) {
       try {
         const user = JSON.parse(userJson) as User;
-        set({ token, user });
+        set({ token, user, hydrated: true });
+        return;
       } catch {
-        clearAuth();
+        await clearAuth();
+        set({ token: null, user: null, hydrated: true });
+        return;
       }
     }
+
+    set({ token: null, user: null, hydrated: true });
   },
 }));

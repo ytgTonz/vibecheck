@@ -1,5 +1,5 @@
-import { Venue } from './types';
-import { VenueType } from './enums';
+import { Venue } from './types/models';
+import { VenueType } from './types/enums';
 
 export const venueTypeLabel: Record<string, string> = {
   NIGHTCLUB: 'Nightclub',

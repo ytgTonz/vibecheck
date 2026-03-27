@@ -1,10 +1,9 @@
 export * from './types';
-export * from './enums';
 export * from './api';
 export * from './venues';
 export { useVenueStore } from './stores/venueStore';
 export type { VenueSection } from './stores/venueStore';
-export { useAuthStore } from './stores/authStore';
+export { useAuthStore, setAuthStorage } from './stores/authStore';
 export { useBroadcastStore } from './stores/broadcastStore';
 export { useSocket } from './hooks/useSocket';
 export { getSocket, disconnectSocket } from './socket';

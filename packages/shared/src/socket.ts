@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import type { NotificationType } from './types';
+import type { NotificationType } from './types/models';
 
 // ─── Event types ────────────────────────────────────────────────────────────
 

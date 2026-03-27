@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Venue } from '../types';
-import { VenueType } from '../enums';
+import { Venue } from '../types/models';
+import { VenueType } from '../types/enums';
 import { fetchVenues } from '../api';
 import { filterVenues, groupBrowseVenues } from '../venues';
 
