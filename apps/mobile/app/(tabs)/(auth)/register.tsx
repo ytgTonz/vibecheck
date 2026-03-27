@@ -82,7 +82,7 @@ export default function MobileRegisterScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingBottom: 40, justifyContent: 'center' }}>
         <View className="mb-8">
           <Text className="text-3xl font-bold text-zinc-100">Create account</Text>
           <Text className="mt-2 text-sm text-zinc-400">

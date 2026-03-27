@@ -93,11 +93,6 @@ export default function AuthPanel({
           </Text>
         </Pressable>
 
-        <Pressable onPress={() => router.push('/login')} className="pt-1">
-          <Text className="text-center text-sm text-zinc-500">
-            Sign in with a different method →
-          </Text>
-        </Pressable>
       </View>
     </View>
   );
