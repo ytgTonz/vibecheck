@@ -241,7 +241,7 @@ export default function MobileBroadcastScreen() {
   const [phase, setPhase] = useState<'setup' | 'connecting' | 'live'>('setup');
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {

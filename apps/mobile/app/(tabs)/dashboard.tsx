@@ -37,7 +37,7 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export default function DashboardScreen() {
               Your linked venues and live streaming controls.
             </Text>
           </View>
-          <Pressable onPress={async () => { if (token) await unregisterToken(token); logout(); }} className="rounded-full border border-zinc-700 px-3 py-2">
+          <Pressable onPress={async () => { if (token) await unregisterToken(token); await logout(); }} className="rounded-full border border-zinc-700 px-3 py-2">
             <Text className="text-xs font-medium text-zinc-300">Log out</Text>
           </Pressable>
         </View>

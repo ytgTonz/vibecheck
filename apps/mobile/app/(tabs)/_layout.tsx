@@ -75,7 +75,7 @@ export default function TabLayout() {
     segments.includes('broadcast' as never) || segments.includes('live' as never);
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   const canBroadcast = useMemo(

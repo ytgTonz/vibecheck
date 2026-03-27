@@ -78,7 +78,7 @@ export default function GoLiveScreen() {
   }, [token]);
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   useEffect(() => {

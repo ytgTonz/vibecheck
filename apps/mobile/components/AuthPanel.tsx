@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@vibecheck/shared';
 
 export default function AuthPanel({
@@ -9,13 +10,14 @@ export default function AuthPanel({
   title: string;
   body: string;
 }) {
-  const { user, loading, error, login, hydrate } = useAuthStore();
+  const router = useRouter();
+  const { user, loading, error, hydrated, login, hydrate } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
-    hydrate();
+    void hydrate();
   }, [hydrate]);
 
   const handleLogin = async () => {
@@ -35,6 +37,14 @@ export default function AuthPanel({
 
   if (user) {
     return null;
+  }
+
+  if (!hydrated) {
+    return (
+      <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-5">
+        <Text className="text-base font-medium text-zinc-400">Restoring session…</Text>
+      </View>
+    );
   }
 
   return (
@@ -77,8 +87,17 @@ export default function AuthPanel({
           </Text>
         </Pressable>
 
+        <Pressable
+          onPress={() => router.push('/register')}
+          className="rounded-2xl border border-zinc-700 px-4 py-3"
+        >
+          <Text className="text-center text-sm font-medium text-zinc-300">
+            Create account
+          </Text>
+        </Pressable>
+
         <Text className="text-xs leading-5 text-zinc-500">
-          Use an existing venue owner or promoter account. Mobile registration can follow after upload/dashboard parity.
+          Sign in with an existing account or create a new venue owner/promoter account on mobile.
         </Text>
       </View>
     </View>
