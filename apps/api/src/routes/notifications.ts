@@ -19,12 +19,10 @@ router.post('/push-token', optionalAuth, async (req: Request, res: Response) => 
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tokenData: any = userId ? { token, platform, userId } : { token, platform };
   await prisma.pushToken.upsert({
     where: { token },
-    create: tokenData,
-    update: tokenData,
+    create: { token, platform, userId: userId ?? null },
+    update: { platform, userId: userId ?? null },
   });
 
   res.status(201).json({ ok: true });
