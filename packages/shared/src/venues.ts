@@ -1,6 +1,16 @@
 import { Venue } from './types';
 import { VenueType } from './enums';
 
+export const venueTypeLabel: Record<string, string> = {
+  NIGHTCLUB: 'Nightclub',
+  BAR: 'Bar',
+  RESTAURANT_BAR: 'Restaurant & Bar',
+  LOUNGE: 'Lounge',
+  SHISA_NYAMA: 'Shisa Nyama',
+  ROOFTOP: 'Rooftop',
+  OTHER: 'Other',
+};
+
 export interface BrowseVenueGroups {
   live: Venue[];
   offline: Venue[];

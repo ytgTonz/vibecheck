@@ -1,24 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Venue } from '@vibecheck/shared';
+import { Venue, venueTypeLabel } from '@vibecheck/shared';
 import { PulseDot } from './PulseDot';
-
-const venueTypeLabel: Record<string, string> = {
-  NIGHTCLUB: 'Nightclub',
-  BAR: 'Bar',
-  RESTAURANT_BAR: 'Restaurant & Bar',
-  LOUNGE: 'Lounge',
-  SHISA_NYAMA: 'Shisa Nyama',
-  ROOFTOP: 'Rooftop',
-  OTHER: 'Other',
-};
-
-function getVibeLabel(score: number): { label: string; textColor: string; bgColor: string } {
-  if (score >= 80) return { label: 'On Fire', textColor: 'text-red-400', bgColor: 'bg-red-500/20' };
-  if (score >= 50) return { label: 'Heating Up', textColor: 'text-orange-400', bgColor: 'bg-orange-500/20' };
-  if (score >= 20) return { label: 'Warming Up', textColor: 'text-amber-400', bgColor: 'bg-amber-500/20' };
-  return { label: 'Chill', textColor: 'text-zinc-500', bgColor: 'bg-zinc-800' };
-}
+import { getVibeLabel } from '../lib/venueUtils';
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
@@ -44,6 +28,12 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
       }}
     >
       <View className="p-5">
+        <View className="mb-3 self-start rounded-full border border-white/15 bg-white/10 px-3 py-1.5">
+          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-100">
+            Tonight&apos;s Pick
+          </Text>
+        </View>
+
         <View className="mb-4 flex-row flex-wrap items-center gap-2">
           <PulseDot live={isLive} />
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">

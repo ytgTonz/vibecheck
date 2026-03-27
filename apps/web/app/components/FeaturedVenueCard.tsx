@@ -1,15 +1,5 @@
 import Link from "next/link";
-import { Venue } from "@vibecheck/shared";
-
-const venueTypeLabel: Record<string, string> = {
-  NIGHTCLUB: "Nightclub",
-  BAR: "Bar",
-  RESTAURANT_BAR: "Restaurant & Bar",
-  LOUNGE: "Lounge",
-  SHISA_NYAMA: "Shisa Nyama",
-  ROOFTOP: "Rooftop",
-  OTHER: "Other",
-};
+import { Venue, venueTypeLabel } from "@vibecheck/shared";
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const status = venue.isLive ? "Live" : "Offline";
