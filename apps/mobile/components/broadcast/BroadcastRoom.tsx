@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { endStream, LiveStream, Venue } from '@vibecheck/shared';
+import { endStream, LiveStream, useSocket, Venue } from '@vibecheck/shared';
+import type { StreamEvent } from '@vibecheck/shared';
 import {
   TrackSource,
   useChat,
@@ -29,6 +30,12 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const [micEnabled, setMicEnabled] = useState(true);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [ending, setEnding] = useState(false);
+
+  useSocket({
+    'stream:ended': useCallback((data: StreamEvent) => {
+      if (data.streamId === stream.id) onEnded();
+    }, [stream.id, onEnded]),
+  });
 
   const handleToggleCamera = async () => {
     if (!localParticipant) return;

@@ -158,7 +158,7 @@ export default function MobileBroadcastScreen() {
       <BroadcastSetupScreen
         venue={venue}
         stream={stream}
-        phase={phase}
+        phase={phase as 'setup' | 'connecting'}
         error={error}
         onStart={startStream}
       />
