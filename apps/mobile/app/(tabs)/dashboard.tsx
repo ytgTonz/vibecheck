@@ -54,16 +54,11 @@ export default function DashboardScreen() {
 
   if (!user || !token) {
     return (
-      <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <Text className="text-3xl font-semibold text-zinc-100">Dashboard</Text>
-          <View className="mt-6">
-            <AuthPanel
-              title="Sign in to your dashboard"
-              body="Your linked venues and live stream controls live here."
-            />
-          </View>
-        </ScrollView>
+      <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
+        <AuthPanel
+          title="Dashboard"
+          body="Your linked venues and live stream controls live here."
+        />
       </SafeAreaView>
     );
   }
@@ -81,57 +76,69 @@ export default function DashboardScreen() {
           />
         }
       >
+        {/* Header */}
         <View className="mb-6 flex-row items-start justify-between">
           <View className="flex-1 pr-4">
-            <Text className="text-3xl font-semibold text-zinc-100">Dashboard</Text>
-            <Text className="mt-2 text-sm leading-6 text-zinc-400">
-              Your linked venues and live streaming controls.
-            </Text>
+            <Text className="text-3xl font-bold text-zinc-100">Dashboard</Text>
+            <Text className="mt-1 text-sm text-zinc-400">Your venues and live controls.</Text>
           </View>
-          <Pressable onPress={async () => { if (token) await unregisterToken(token); await logout(); }} className="rounded-full border border-zinc-700 px-3 py-2">
+          <Pressable
+            onPress={async () => {
+              if (token) await unregisterToken(token);
+              await logout();
+            }}
+            className="rounded-full border border-zinc-700 px-4 py-2"
+          >
             <Text className="text-xs font-medium text-zinc-300">Log out</Text>
           </Pressable>
         </View>
 
-        <View className="mb-5 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-4">
-          <Text className="text-xs uppercase tracking-[2px] text-zinc-500">Signed in as</Text>
+        {/* Signed-in-as card */}
+        <View className="mb-5 rounded-[20px] border border-zinc-800 bg-zinc-900 px-4 py-4">
+          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500">
+            Signed in as
+          </Text>
           <Text className="mt-2 text-base font-semibold text-zinc-100">{user.name}</Text>
-          <Text className="mt-1 text-sm text-zinc-400">{user.email}</Text>
+          <Text className="mt-0.5 text-sm text-zinc-400">{user.email}</Text>
         </View>
 
-        {loading ? (
-          <View className="mt-10 items-center justify-center">
+        {loading && (
+          <View className="mt-8 items-center justify-center">
             <ActivityIndicator color="#f4f4f5" />
             <Text className="mt-3 text-sm text-zinc-400">Loading venues...</Text>
           </View>
-        ) : null}
+        )}
 
-        {error ? (
+        {error && (
           <View className="mb-5 rounded-2xl border border-red-900/50 bg-red-950/30 px-4 py-3">
             <Text className="text-sm text-red-300">{error}</Text>
           </View>
-        ) : null}
+        )}
 
-        {!loading && venues.length === 0 ? (
-          <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-5">
-            <Text className="text-lg font-semibold text-zinc-100">No linked venues yet</Text>
-            <Text className="mt-2 text-sm leading-6 text-zinc-400">
+        {/* Empty state */}
+        {!loading && venues.length === 0 && (
+          <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-8 items-center">
+            <View className="w-14 h-14 rounded-full bg-zinc-800 items-center justify-center mb-4">
+              <Text className="text-2xl">🏢</Text>
+            </View>
+            <Text className="text-base font-semibold text-zinc-100 mb-2">No linked venues yet</Text>
+            <Text className="text-sm text-zinc-500 text-center leading-relaxed max-w-[240px]">
               Once you own a venue or receive a promoter invite, it will show up here.
             </Text>
           </View>
-        ) : null}
+        )}
 
+        {/* Venue cards */}
         {venues.map((venue) => (
-          <View key={venue.id} className="mb-5 rounded-[28px] border border-zinc-800 bg-zinc-900 p-5">
-            <View className="mb-4 flex-row items-start justify-between gap-3">
-              <View className="flex-1 pr-3">
-                <Text className="text-xl font-semibold text-zinc-100">{venue.name}</Text>
-                <Text className="mt-1 text-sm text-zinc-400">{venue.location}</Text>
+          <View key={venue.id} className="mb-4 rounded-[24px] border border-zinc-800 bg-zinc-900 px-5 py-6">
+            <View className="mb-5 flex-row items-start justify-between gap-3">
+              <View className="flex-1 pr-2">
+                <Text className="text-2xl font-semibold text-zinc-100">{venue.name}</Text>
+                <Text className="mt-1.5 text-sm text-zinc-400">{venue.location}</Text>
               </View>
               {venue.isLive && (
-                <View className="flex-row items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1">
-                  <View className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                  <Text className="text-xs font-semibold text-red-400">
+                <View className="flex-row items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5">
+                  <Text className="text-xs font-semibold text-white">
                     LIVE · {venue.currentViewerCount}
                   </Text>
                 </View>
@@ -139,7 +146,7 @@ export default function DashboardScreen() {
             </View>
 
             <View className="flex-row gap-3">
-              {canBroadcast ? (
+              {canBroadcast && (
                 <Pressable
                   onPress={() =>
                     router.push({
@@ -147,23 +154,26 @@ export default function DashboardScreen() {
                       params: { venueId: venue.id },
                     })
                   }
-                  className={`flex-1 rounded-2xl px-4 py-3 ${venue.isLive ? 'bg-zinc-100' : 'bg-red-500'}`}
+                  className={`flex-1 rounded-2xl px-4 py-3.5 ${
+                    venue.isLive ? 'bg-zinc-100' : 'bg-red-600'
+                  }`}
                 >
-                  <Text className={`text-center text-sm font-semibold ${venue.isLive ? 'text-zinc-950' : 'text-white'}`}>
-                    {venue.isLive ? 'View Stream' : 'Go Live'}
+                  <Text
+                    className={`text-center text-[15px] font-semibold ${
+                      venue.isLive ? 'text-zinc-950' : 'text-white'
+                    }`}
+                  >
+                    {venue.isLive ? 'View stream' : 'Go live'}
                   </Text>
                 </Pressable>
-              ) : null}
+              )}
               <Pressable
                 onPress={() =>
-                  router.push({
-                    pathname: '/venues/[id]',
-                    params: { id: venue.id },
-                  })
+                  router.push({ pathname: '/venues/[id]', params: { id: venue.id } })
                 }
-                className={`${canBroadcast ? 'flex-1' : 'w-full'} rounded-2xl border border-zinc-700 px-4 py-3`}
+                className={`${canBroadcast ? 'flex-1' : 'w-full'} rounded-2xl border border-zinc-700 px-4 py-3.5`}
               >
-                <Text className="text-center text-sm font-medium text-zinc-300">View venue</Text>
+                <Text className="text-center text-[15px] font-medium text-zinc-300">View venue</Text>
               </Pressable>
             </View>
           </View>

@@ -26,24 +26,22 @@ export default function MobileLoginScreen() {
       setLocalError('Enter your email and password.');
       return;
     }
-
     setLocalError(null);
-
     try {
       await login(email.trim(), password);
       router.replace('/dashboard');
     } catch {
-      // store error is rendered below
+      // store error rendered below
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: 'center' }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
         <View className="mb-8">
-          <Text className="text-3xl font-semibold text-zinc-100">Sign in</Text>
-          <Text className="mt-2 text-sm leading-6 text-zinc-400">
-            Access your linked venues, upload tools, and live controls.
+          <Text className="text-3xl font-bold text-zinc-100">Sign in</Text>
+          <Text className="mt-2 text-sm text-zinc-400">
+            Access your venues and live controls.
           </Text>
         </View>
 
@@ -54,23 +52,21 @@ export default function MobileLoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             placeholder="Email"
-            placeholderTextColor="#71717a"
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            placeholderTextColor="#52525b"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
           />
-
           <TextInput
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             placeholder="Password"
-            placeholderTextColor="#71717a"
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            placeholderTextColor="#52525b"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
           />
 
-          {!hydrated ? (
+          {!hydrated && (
             <Text className="text-sm text-zinc-500">Restoring session…</Text>
-          ) : null}
-
+          )}
           {(localError || error) && (
             <Text className="text-sm text-red-400">{localError || error}</Text>
           )}
@@ -78,19 +74,19 @@ export default function MobileLoginScreen() {
           <Pressable
             onPress={handleLogin}
             disabled={loading || !hydrated}
-            className="rounded-2xl bg-zinc-100 px-4 py-3"
+            className="rounded-2xl bg-zinc-100 py-3.5 px-4"
             style={{ opacity: loading || !hydrated ? 0.6 : 1 }}
           >
-            <Text className="text-center text-sm font-semibold text-zinc-950">
+            <Text className="text-center text-[15px] font-semibold text-zinc-950">
               {loading ? 'Signing in…' : 'Sign in'}
             </Text>
           </Pressable>
 
           <Pressable
             onPress={() => router.push('/register')}
-            className="rounded-2xl border border-zinc-700 px-4 py-3"
+            className="rounded-2xl border border-zinc-700 py-3.5 px-4"
           >
-            <Text className="text-center text-sm font-medium text-zinc-300">
+            <Text className="text-center text-[15px] font-medium text-zinc-300">
               Create account
             </Text>
           </Pressable>

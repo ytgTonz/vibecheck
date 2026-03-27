@@ -2,11 +2,11 @@ import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Venue, venueTypeLabel } from '@vibecheck/shared';
 import { PulseDot } from './PulseDot';
-import { getVibeLabel } from '../lib/venueUtils';
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
   const isLive = Boolean(venue.isLive);
+  const viewerCount = isLive ? ((venue as any).currentViewerCount ?? 0) : null;
 
   return (
     <Pressable
@@ -18,7 +18,7 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         )
       }
       android_ripple={{ color: 'rgba(255,255,255,0.07)', borderless: false }}
-      className={`overflow-hidden rounded-[28px] border bg-zinc-950 active:opacity-90 ${isLive ? 'border-red-500/60' : 'border-zinc-800'}`}
+      className="overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-900 active:opacity-90"
       style={{
         shadowColor: '#000',
         shadowOpacity: 0.2,
@@ -27,58 +27,32 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         elevation: 8,
       }}
     >
-      <View className="p-5">
-        <View className="mb-3 self-start rounded-full border border-white/15 bg-white/10 px-3 py-1.5">
-          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-100">
-            Tonight&apos;s Pick
-          </Text>
+      <View className="p-6 pt-14">
+        {/* Featured label — absolute top left */}
+        <View className="absolute left-5 top-5 flex-row items-center gap-1 rounded-xl bg-amber-500/20 px-3 py-1.5">
+          <Text className="text-[11px] font-semibold text-amber-400">★ TONIGHT'S PICK</Text>
         </View>
 
-        <View className="mb-4 flex-row flex-wrap items-center gap-2">
-          <PulseDot live={isLive} />
-          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-300">
-            {isLive ? 'Live' : 'Offline'}
-          </Text>
-          <View className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1">
-            <Text className="text-xs font-medium text-zinc-300">
-              {venueTypeLabel[venue.type] ?? venue.type}
-            </Text>
-          </View>
-          {venue.vibeScore != null && venue.vibeScore > 0 && (() => {
-            const vibe = getVibeLabel(venue.vibeScore);
-            return (
-              <View className={`rounded-full px-3 py-1 ${vibe.bgColor}`}>
-                <Text className={`text-xs font-semibold ${vibe.textColor}`}>
-                  {vibe.label}
-                </Text>
-              </View>
-            );
-          })()}
-        </View>
-
-        <Text className="text-3xl font-semibold text-zinc-100">
-          {venue.name}
-        </Text>
-        <Text className="mt-2 text-sm text-zinc-300">{venue.location}</Text>
-
-        {venue.musicGenre.length > 0 && (
-          <View className="mt-4 flex-row flex-wrap gap-2">
-            {venue.musicGenre.map((genre) => (
-              <View key={genre} className="rounded-full border border-zinc-800 px-3 py-1">
-                <Text className="text-[11px] uppercase tracking-[1.5px] text-zinc-300">
-                  {genre}
-                </Text>
-              </View>
-            ))}
+        {/* LIVE badge — absolute top right */}
+        {isLive && (
+          <View className="absolute right-5 top-5 flex-row items-center gap-1.5 rounded-xl bg-red-600 px-3 py-1.5">
+            <PulseDot size={7} color="white" />
+            <Text className="text-[11px] font-semibold text-white">LIVE</Text>
           </View>
         )}
 
-        <View className="mt-5 flex-row items-center justify-between">
-          <View className={`rounded-full px-5 py-3 ${isLive ? 'bg-red-500' : 'bg-zinc-100'}`}>
-            <Text className={`text-sm font-semibold ${isLive ? 'text-white' : 'text-zinc-950'}`}>
-              {isLive ? 'Watch live' : 'View venue'}
-            </Text>
-          </View>
+        <Text className="text-[26px] font-semibold text-zinc-100 leading-tight">{venue.name}</Text>
+        <Text className="mt-1.5 text-sm text-zinc-400">
+          {venueTypeLabel[venue.type] ?? venue.type} · {venue.location}
+        </Text>
+
+        <View className="mt-4 flex-row gap-5">
+          {isLive && viewerCount != null && (
+            <Text className="text-sm font-semibold text-amber-400">👁 {viewerCount} watching</Text>
+          )}
+          {venue.musicGenre.length > 0 && (
+            <Text className="text-sm text-zinc-500">🎵 {venue.musicGenre[0]}</Text>
+          )}
         </View>
       </View>
     </Pressable>

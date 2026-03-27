@@ -12,7 +12,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchVenue, fetchStream, Venue, LiveStream, useAuthStore } from '@vibecheck/shared';
 import { LiveStreamBanner } from '@/components/venue-detail/LiveStreamBanner';
 import { VenueInfoCard } from '@/components/venue-detail/VenueInfoCard';
-import { VenueDetailsCard } from '@/components/venue-detail/VenueDetailsCard';
+import { VenueAttendanceCard } from '@/components/venue-detail/VenueAttendanceCard';
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -118,16 +118,17 @@ export default function VenueDetailScreen() {
           )}
 
           {!venue.isLive && (
-            <View className="mb-5 flex-row items-center gap-3 rounded-[28px] border border-zinc-800 bg-zinc-900/50 px-5 py-4">
-              <View className="h-3 w-3 rounded-full bg-zinc-500" />
-              <Text className="text-sm text-zinc-400">
-                This venue is currently offline. Check back later.
-              </Text>
+            <View className="mb-5 flex-row items-center gap-3 rounded-[20px] border border-zinc-800 bg-zinc-900 px-4 py-3.5">
+              <View className="h-2 w-2 rounded-full bg-zinc-600" />
+              <Text className="text-sm text-zinc-500">Offline — check back later</Text>
             </View>
           )}
 
           <VenueInfoCard venue={venue} isOwner={!!user && venue.ownerId === user.id} />
-          <VenueDetailsCard venue={venue} />
+
+          {venue.isLive && activeStream && (
+            <VenueAttendanceCard stream={activeStream} venue={venue} />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

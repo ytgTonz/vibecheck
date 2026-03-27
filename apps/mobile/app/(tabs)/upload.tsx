@@ -94,19 +94,11 @@ export default function GoLiveScreen() {
 
   if (!user || !token) {
     return (
-      <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <Text className="text-3xl font-semibold text-zinc-100">Go Live</Text>
-          <Text className="mt-2 text-sm text-zinc-400">
-            Sign in as a venue owner or promoter to broadcast.
-          </Text>
-          <View className="mt-6">
-            <AuthPanel
-              title="Sign in to go live"
-              body="Mobile broadcasting is available to linked venue owners and promoters."
-            />
-          </View>
-        </ScrollView>
+      <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
+        <AuthPanel
+          title="Go Live"
+          body="Sign in as a venue owner or promoter to start broadcasting."
+        />
       </SafeAreaView>
     );
   }

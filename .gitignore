@@ -30,3 +30,6 @@ dist-ssr
 memory/
 .vite/
 .vercel
+
+#design system
+docs/designs/*

@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { endStream, LiveStream, useSocket, Venue } from '@vibecheck/shared';
 import type { StreamEvent } from '@vibecheck/shared';
 import {
@@ -21,8 +21,14 @@ interface BroadcastRoomProps {
   onEnded: () => void;
 }
 
+function formatElapsed(secs: number) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRoomProps) {
-  const router = useRouter();
   const participants = useRemoteParticipants?.() || [];
   const chat = useChat?.() || { chatMessages: [], send: () => {} };
   const { localParticipant } = useLocalParticipant?.() || { localParticipant: null };
@@ -30,25 +36,43 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const [micEnabled, setMicEnabled] = useState(true);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [ending, setEnding] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [intentCount, setIntentCount] = useState(0);
+  const [arrivalCount, setArrivalCount] = useState(0);
+
+  // Elapsed timer
+  useEffect(() => {
+    const start = stream.startedAt ? new Date(stream.startedAt).getTime() : Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [stream.startedAt]);
 
   useSocket({
     'stream:ended': useCallback((data: StreamEvent) => {
       if (data.streamId === stream.id) onEnded();
     }, [stream.id, onEnded]),
+    'attendance:update': useCallback((data: any) => {
+      if (data.streamId === stream.id) {
+        setIntentCount(data.intentCount);
+        setArrivalCount(data.arrivalCount);
+      }
+    }, [stream.id]),
   });
 
   const handleToggleCamera = async () => {
     if (!localParticipant) return;
-    const nextValue = !cameraEnabled;
-    await localParticipant.setCameraEnabled(nextValue);
-    setCameraEnabled(nextValue);
+    const next = !cameraEnabled;
+    await localParticipant.setCameraEnabled(next);
+    setCameraEnabled(next);
   };
 
   const handleToggleMic = async () => {
     if (!localParticipant) return;
-    const nextValue = !micEnabled;
-    await localParticipant.setMicrophoneEnabled(nextValue);
-    setMicEnabled(nextValue);
+    const next = !micEnabled;
+    await localParticipant.setMicrophoneEnabled(next);
+    setMicEnabled(next);
   };
 
   const handleFlipCamera = async () => {
@@ -57,9 +81,9 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
       const publication = localParticipant.getTrackPublication(TrackSource?.Camera);
       const track = publication?.track;
       if (track && typeof track.restartTrack === 'function') {
-        const nextMode = facingMode === 'user' ? 'environment' : 'user';
-        await track.restartTrack({ facingMode: nextMode });
-        setFacingMode(nextMode);
+        const next = facingMode === 'user' ? 'environment' : 'user';
+        await track.restartTrack({ facingMode: next });
+        setFacingMode(next);
       }
     } catch (err) {
       console.error('[MobileBroadcast] flip camera failed:', err);
@@ -78,43 +102,49 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-1 px-4 pb-4 pt-2">
-        <View className="mb-4 flex-row items-center justify-between">
-          <Pressable
-            onPress={() => router.replace('/dashboard')}
-            className="rounded-full border border-white/10 bg-black/50 px-4 py-2"
-          >
-            <Text className="text-sm font-semibold text-white">Close</Text>
-          </Pressable>
-          <View className="rounded-full bg-red-500/20 px-3 py-1.5">
-            <Text className="text-xs font-semibold uppercase tracking-[2px] text-red-300">
-              You are live
+
+      <View className="flex-1 px-4 pt-3 pb-4 gap-3">
+        {/* Status bar: LIVE badge + timer */}
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2 rounded-xl bg-red-600 px-4 py-2">
+            <View className="w-2.5 h-2.5 rounded-full bg-white" />
+            <Text className="text-sm font-semibold text-white">LIVE</Text>
+          </View>
+          <View className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2">
+            <Text className="text-sm font-semibold text-zinc-100 tabular-nums">
+              {formatElapsed(elapsed)}
             </Text>
           </View>
         </View>
 
-        <View className="mb-4">
-          <Text className="text-2xl font-semibold text-zinc-100">{venue.name}</Text>
-          <Text className="mt-1 text-sm text-zinc-400">{venue.location}</Text>
-        </View>
-
-        <View className="relative mb-4 flex-1 overflow-hidden rounded-[28px]">
+        {/* Camera preview */}
+        <View className="relative flex-1 overflow-hidden rounded-[24px] bg-zinc-900">
           <BroadcasterPreview />
-          <View className="absolute bottom-0 left-0 right-0 top-0">
+          <View className="absolute inset-0">
+            {/* Camera controls overlay */}
             <View className="absolute left-3 right-3 top-3 flex-row items-center justify-between">
-              <View className="rounded-full bg-black/50 px-3 py-1.5">
-                <Text className="text-xs font-semibold text-zinc-100">
-                  {participants.length} viewer{participants.length === 1 ? '' : 's'}
-                </Text>
-              </View>
               <Pressable
                 onPress={handleFlipCamera}
                 className="h-9 w-9 items-center justify-center rounded-full bg-black/50"
               >
                 <Text className="text-base text-white">⟲</Text>
               </Pressable>
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={handleToggleCamera}
+                  className={`h-9 w-9 items-center justify-center rounded-full ${cameraEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
+                >
+                  <Text className="text-sm">{cameraEnabled ? '📷' : '🚫'}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleToggleMic}
+                  className={`h-9 w-9 items-center justify-center rounded-full ${micEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
+                >
+                  <Text className="text-sm">{micEnabled ? '🎙' : '🔇'}</Text>
+                </Pressable>
+              </View>
             </View>
             <LiveChatOverlay
               messages={chat.chatMessages || []}
@@ -125,32 +155,49 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
 
         <GoLiveOnPublish streamId={stream.id} authToken={authToken} />
 
+        {/* Stats grid */}
         <View className="flex-row gap-3">
-          <Pressable
-            onPress={handleToggleCamera}
-            className={`flex-1 rounded-2xl px-4 py-3 ${cameraEnabled ? 'bg-zinc-900' : 'bg-red-500/20'}`}
-          >
-            <Text className={`text-center text-sm font-semibold ${cameraEnabled ? 'text-zinc-100' : 'text-red-300'}`}>
-              {cameraEnabled ? 'Camera On' : 'Camera Off'}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={handleToggleMic}
-            className={`flex-1 rounded-2xl px-4 py-3 ${micEnabled ? 'bg-zinc-900' : 'bg-red-500/20'}`}
-          >
-            <Text className={`text-center text-sm font-semibold ${micEnabled ? 'text-zinc-100' : 'text-red-300'}`}>
-              {micEnabled ? 'Mic On' : 'Mic Off'}
-            </Text>
-          </Pressable>
+          {[
+            { value: participants.length, label: 'VIEWERS' },
+            { value: intentCount, label: 'COMING' },
+            { value: arrivalCount, label: 'ARRIVED' },
+          ].map((stat) => (
+            <View key={stat.label} className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 py-5 items-center">
+              <Text className="text-3xl font-semibold text-zinc-100">{stat.value}</Text>
+              <Text className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mt-1.5">
+                {stat.label}
+              </Text>
+            </View>
+          ))}
         </View>
 
+        {/* Peak + quality row */}
+        <View className="flex-row gap-3">
+          <View className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 px-4 py-4">
+            <Text className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Peak viewers
+            </Text>
+            <Text className="text-2xl font-semibold text-zinc-100 mt-1.5">
+              {stream.viewerPeak}
+            </Text>
+          </View>
+          <View className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 px-4 py-4">
+            <Text className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              Stream quality
+            </Text>
+            <Text className="text-2xl font-semibold text-green-400 mt-1.5">Good</Text>
+          </View>
+        </View>
+
+        {/* End stream */}
         <Pressable
           onPress={handleEnd}
           disabled={ending}
-          className="mt-3 rounded-2xl bg-red-500 px-4 py-3"
+          className="rounded-[20px] bg-zinc-800 border border-zinc-700 py-5"
+          style={{ opacity: ending ? 0.6 : 1 }}
         >
-          <Text className="text-center text-sm font-semibold text-white">
-            {ending ? 'Ending...' : 'End Stream'}
+          <Text className="text-center text-[17px] font-semibold text-zinc-100">
+            {ending ? 'Ending…' : 'End stream'}
           </Text>
         </Pressable>
       </View>

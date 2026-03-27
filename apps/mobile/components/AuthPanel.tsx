@@ -25,51 +25,48 @@ export default function AuthPanel({
       setLocalError('Enter your email and password.');
       return;
     }
-
     setLocalError(null);
-
     try {
       await login(email.trim(), password);
     } catch {
-      // store error is rendered below
+      // store error rendered below
     }
   };
 
-  if (user) {
-    return null;
-  }
+  if (user) return null;
 
   if (!hydrated) {
     return (
-      <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-5">
-        <Text className="text-base font-medium text-zinc-400">Restoring session…</Text>
+      <View className="flex-1 items-center justify-center px-6">
+        <Text className="text-base text-zinc-500">Restoring session…</Text>
       </View>
     );
   }
 
   return (
-    <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-5">
-      <Text className="text-xl font-semibold text-zinc-100">{title}</Text>
-      <Text className="mt-2 text-sm leading-6 text-zinc-400">{body}</Text>
+    <View className="flex-1 justify-center px-6">
+      <View className="mb-8">
+        <Text className="text-3xl font-bold text-zinc-100">{title}</Text>
+        <Text className="mt-2 text-sm text-zinc-400">{body}</Text>
+      </View>
 
-      <View className="mt-5 gap-3">
+      <View className="gap-3">
         <TextInput
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Email"
-          placeholderTextColor="#71717a"
-          className="rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+          placeholderTextColor="#52525b"
+          className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
         />
-
         <TextInput
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Password"
-          placeholderTextColor="#71717a"
-          className="rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100"
+          placeholderTextColor="#52525b"
+          className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
         />
 
         {(localError || error) && (
@@ -79,26 +76,28 @@ export default function AuthPanel({
         <Pressable
           onPress={handleLogin}
           disabled={loading}
-          className="rounded-2xl bg-zinc-100 px-4 py-3"
+          className="rounded-2xl bg-zinc-100 py-3.5 px-4"
           style={{ opacity: loading ? 0.6 : 1 }}
         >
-          <Text className="text-center text-sm font-semibold text-zinc-950">
+          <Text className="text-center text-[15px] font-semibold text-zinc-950">
             {loading ? 'Signing in…' : 'Sign in'}
           </Text>
         </Pressable>
 
         <Pressable
           onPress={() => router.push('/register')}
-          className="rounded-2xl border border-zinc-700 px-4 py-3"
+          className="rounded-2xl border border-zinc-700 py-3.5 px-4"
         >
-          <Text className="text-center text-sm font-medium text-zinc-300">
+          <Text className="text-center text-[15px] font-medium text-zinc-300">
             Create account
           </Text>
         </Pressable>
 
-        <Text className="text-xs leading-5 text-zinc-500">
-          Sign in with an existing account or create a new venue owner/promoter account on mobile.
-        </Text>
+        <Pressable onPress={() => router.push('/login')} className="pt-1">
+          <Text className="text-center text-sm text-zinc-500">
+            Sign in with a different method →
+          </Text>
+        </Pressable>
       </View>
     </View>
   );

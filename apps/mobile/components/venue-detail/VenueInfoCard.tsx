@@ -16,44 +16,47 @@ interface VenueInfoCardProps {
   isOwner: boolean;
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-row justify-between py-3.5 border-b border-zinc-800">
+      <Text className="text-sm text-zinc-500">{label}</Text>
+      <Text className="text-sm text-zinc-200 text-right flex-1 ml-6">{value}</Text>
+    </View>
+  );
+}
+
 export function VenueInfoCard({ venue, isOwner }: VenueInfoCardProps) {
   return (
-    <View className="mb-6 overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-950 px-4 py-5">
-      <View className="mb-4 flex-row flex-wrap items-center gap-2">
-        <View className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1">
-          <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-orange-200">
-            Venue
-          </Text>
-        </View>
-        <View className="rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1">
-          <Text className="text-xs text-zinc-300">
+    <View className="mb-5 rounded-[24px] border border-zinc-800 bg-zinc-900 px-5 py-6">
+      <Text className="text-[26px] font-semibold text-zinc-100 leading-tight">{venue.name}</Text>
+
+      <View className="flex-row gap-2 flex-wrap mt-3 mb-4">
+        <View className="bg-zinc-700 rounded-lg px-3 py-1.5 self-start">
+          <Text className="text-xs text-zinc-300 uppercase tracking-[1px]">
             {venueTypeLabel[venue.type] ?? venue.type}
           </Text>
         </View>
-      </View>
-
-      <Text className="text-4xl font-semibold text-zinc-100">{venue.name}</Text>
-
-      <View className="mt-4 flex-row flex-wrap gap-2">
-        <View className="rounded-full bg-zinc-900 px-3 py-1.5">
-          <Text className="text-sm text-zinc-100">{venue.location}</Text>
-        </View>
         {isOwner && (
-          <View className="rounded-full bg-emerald-500/15 px-3 py-1.5">
-            <Text className="text-sm font-medium text-emerald-300">You own this venue</Text>
+          <View className="bg-emerald-500/15 rounded-lg px-3 py-1.5 self-start">
+            <Text className="text-xs font-medium text-emerald-300">You own this venue</Text>
           </View>
         )}
       </View>
 
-      {venue.musicGenre.length > 0 && (
-        <View className="mt-5 flex-row flex-wrap gap-2">
-          {venue.musicGenre.map((genre) => (
-            <View key={genre} className="rounded-full border border-zinc-800 px-3 py-1">
-              <Text className="text-[11px] uppercase tracking-[1.5px] text-zinc-300">{genre}</Text>
-            </View>
-          ))}
-        </View>
-      )}
+      <View className="border-t border-zinc-800">
+        <InfoRow label="Location" value={venue.location} />
+        {venue.hours && <InfoRow label="Hours" value={venue.hours} />}
+        {venue.musicGenre.length > 0 && (
+          <InfoRow label="Music" value={venue.musicGenre.join(', ')} />
+        )}
+        {venue.coverCharge && <InfoRow label="Cover" value={venue.coverCharge} />}
+        {venue.drinkPrices && (
+          <View className="flex-row justify-between py-3.5">
+            <Text className="text-sm text-zinc-500">Drinks</Text>
+            <Text className="text-sm text-zinc-200">{venue.drinkPrices}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }

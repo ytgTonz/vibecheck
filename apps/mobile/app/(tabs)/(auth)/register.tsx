@@ -36,7 +36,7 @@ export default function MobileRegisterScreen() {
   };
 
   const handleRegister = async () => {
-    if (!accountType) { setLocalError('Choose whether you are a venue owner or promoter.'); return; }
+    if (!accountType) { setLocalError('Choose your account type.'); return; }
     if (!name.trim() || !email.trim() || !password) { setLocalError('Fill in your name, email, and password.'); return; }
     if (password.length < 8) { setLocalError('Password must be at least 8 characters.'); return; }
 
@@ -76,29 +76,27 @@ export default function MobileRegisterScreen() {
       await register(payload);
       router.replace(accountType === 'owner' ? '/dashboard' : '/upload');
     } catch {
-      // store error is rendered below
+      // store error rendered below
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
         <View className="mb-8">
-          <Text className="text-3xl font-semibold text-zinc-100">Create account</Text>
-          <Text className="mt-2 text-sm leading-6 text-zinc-400">
-            Register as a venue owner or join as a promoter with an invite code.
+          <Text className="text-3xl font-bold text-zinc-100">Create account</Text>
+          <Text className="mt-2 text-sm text-zinc-400">
+            Join VibeCheck to discover venues or manage your own.
           </Text>
         </View>
 
-        <AccountTypeSelector accountType={accountType} onSelect={setAccountType} />
-
-        <View className="gap-3">
+        <View className="gap-3 mb-5">
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Name"
-            placeholderTextColor="#71717a"
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            placeholder="Full name"
+            placeholderTextColor="#52525b"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
           />
           <TextInput
             value={email}
@@ -106,18 +104,22 @@ export default function MobileRegisterScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             placeholder="Email"
-            placeholderTextColor="#71717a"
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            placeholderTextColor="#52525b"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
           />
           <TextInput
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="Password (min 8 characters)"
-            placeholderTextColor="#71717a"
-            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            placeholder="Password"
+            placeholderTextColor="#52525b"
+            className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
           />
+        </View>
 
+        <AccountTypeSelector accountType={accountType} onSelect={setAccountType} />
+
+        <View className="gap-3">
           {accountType === 'owner' && (
             <VenueRegistrationFields
               venueName={venueName}
@@ -137,9 +139,9 @@ export default function MobileRegisterScreen() {
             <PromoterInviteField inviteCode={inviteCode} onInviteCodeChange={setInviteCode} />
           )}
 
-          {!hydrated ? (
+          {!hydrated && (
             <Text className="text-sm text-zinc-500">Restoring session…</Text>
-          ) : null}
+          )}
 
           {(localError || error) && (
             <Text className="text-sm text-red-400">{localError || error}</Text>
@@ -148,20 +150,18 @@ export default function MobileRegisterScreen() {
           <Pressable
             onPress={handleRegister}
             disabled={loading || !hydrated}
-            className="rounded-2xl bg-zinc-100 px-4 py-3"
+            className="rounded-2xl bg-zinc-100 py-3.5 px-4"
             style={{ opacity: loading || !hydrated ? 0.6 : 1 }}
           >
-            <Text className="text-center text-sm font-semibold text-zinc-950">
+            <Text className="text-center text-[15px] font-semibold text-zinc-950">
               {loading ? 'Creating account…' : 'Create account'}
             </Text>
           </Pressable>
 
-          <Pressable
-            onPress={() => router.push('/login')}
-            className="rounded-2xl border border-zinc-700 px-4 py-3"
-          >
-            <Text className="text-center text-sm font-medium text-zinc-300">
-              Already have an account? Sign in
+          <Pressable onPress={() => router.push('/login')}>
+            <Text className="text-center text-sm text-zinc-500 pt-1">
+              Already have an account?{' '}
+              <Text className="text-zinc-300 font-medium">Sign in</Text>
             </Text>
           </Pressable>
         </View>
