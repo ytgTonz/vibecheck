@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { VenueType, useVenueStore } from '@vibecheck/shared';
 
 const venueTypeOptions: { value: VenueType; label: string }[] = [
@@ -58,7 +59,6 @@ export default function FilterBar() {
   if (expanded) {
     return (
       <View className="rounded-[20px] border border-zinc-800 bg-zinc-900 p-4 gap-4">
-        {/* Venue type */}
         <View>
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500 mb-3">
             Venue type
@@ -82,7 +82,6 @@ export default function FilterBar() {
           </View>
         </View>
 
-        {/* Music genre */}
         {genreOptions.length > 0 && (
           <View>
             <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500 mb-3">
@@ -108,7 +107,6 @@ export default function FilterBar() {
           </View>
         )}
 
-        {/* Actions */}
         <View className="flex-row gap-3 pt-1">
           <Pressable
             onPress={() => { clearFilters(); }}
@@ -147,9 +145,10 @@ export default function FilterBar() {
         ))}
         <Pressable
           onPress={() => setExpanded(true)}
-          className="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-1.5"
+          className="flex-row items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1.5"
         >
-          <Text className="text-xs text-zinc-400">More ›</Text>
+          <Ionicons name="options-outline" size={13} color="#a1a1aa" />
+          <Text className="text-xs text-zinc-400">More</Text>
         </Pressable>
       </View>
     </ScrollView>

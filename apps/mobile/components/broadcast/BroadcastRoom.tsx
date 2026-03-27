@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { endStream, LiveStream, useSocket, Venue } from '@vibecheck/shared';
 import type { StreamEvent } from '@vibecheck/shared';
 import {
@@ -40,7 +41,6 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const [intentCount, setIntentCount] = useState(0);
   const [arrivalCount, setArrivalCount] = useState(0);
 
-  // Elapsed timer
   useEffect(() => {
     const start = stream.startedAt ? new Date(stream.startedAt).getTime() : Date.now();
     const interval = setInterval(() => {
@@ -123,26 +123,33 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
         <View className="relative flex-1 overflow-hidden rounded-[24px] bg-zinc-900">
           <BroadcasterPreview />
           <View className="absolute inset-0">
-            {/* Camera controls overlay */}
             <View className="absolute left-3 right-3 top-3 flex-row items-center justify-between">
               <Pressable
                 onPress={handleFlipCamera}
                 className="h-9 w-9 items-center justify-center rounded-full bg-black/50"
               >
-                <Text className="text-base text-white">⟲</Text>
+                <Ionicons name="camera-reverse-outline" size={18} color="white" />
               </Pressable>
               <View className="flex-row gap-2">
                 <Pressable
                   onPress={handleToggleCamera}
                   className={`h-9 w-9 items-center justify-center rounded-full ${cameraEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
                 >
-                  <Text className="text-sm">{cameraEnabled ? '📷' : '🚫'}</Text>
+                  <Ionicons
+                    name={cameraEnabled ? 'camera-outline' : 'camera-off-outline'}
+                    size={17}
+                    color="white"
+                  />
                 </Pressable>
                 <Pressable
                   onPress={handleToggleMic}
                   className={`h-9 w-9 items-center justify-center rounded-full ${micEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
                 >
-                  <Text className="text-sm">{micEnabled ? '🎙' : '🔇'}</Text>
+                  <Ionicons
+                    name={micEnabled ? 'mic-outline' : 'mic-off-outline'}
+                    size={17}
+                    color="white"
+                  />
                 </Pressable>
               </View>
             </View>

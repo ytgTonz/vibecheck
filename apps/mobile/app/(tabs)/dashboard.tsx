@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -119,7 +120,7 @@ export default function DashboardScreen() {
         {!loading && venues.length === 0 && (
           <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-8 items-center">
             <View className="w-14 h-14 rounded-full bg-zinc-800 items-center justify-center mb-4">
-              <Text className="text-2xl">🏢</Text>
+              <Ionicons name="business-outline" size={28} color="#52525b" />
             </View>
             <Text className="text-base font-semibold text-zinc-100 mb-2">No linked venues yet</Text>
             <Text className="text-sm text-zinc-500 text-center leading-relaxed max-w-[240px]">

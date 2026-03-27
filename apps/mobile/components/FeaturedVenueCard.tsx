@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Venue, venueTypeLabel } from '@vibecheck/shared';
 import { PulseDot } from './PulseDot';
 
@@ -29,8 +30,9 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
     >
       <View className="p-6 pt-14">
         {/* Featured label — absolute top left */}
-        <View className="absolute left-5 top-5 flex-row items-center gap-1 rounded-xl bg-amber-500/20 px-3 py-1.5">
-          <Text className="text-[11px] font-semibold text-amber-400">★ TONIGHT'S PICK</Text>
+        <View className="absolute left-5 top-5 flex-row items-center gap-1.5 rounded-xl bg-amber-500/20 px-3 py-1.5">
+          <Ionicons name="star" size={10} color="#fbbf24" />
+          <Text className="text-[11px] font-semibold text-amber-400">TONIGHT'S PICK</Text>
         </View>
 
         {/* LIVE badge — absolute top right */}
@@ -48,10 +50,16 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
 
         <View className="mt-4 flex-row gap-5">
           {isLive && viewerCount != null && (
-            <Text className="text-sm font-semibold text-amber-400">👁 {viewerCount} watching</Text>
+            <View className="flex-row items-center gap-1.5">
+              <Ionicons name="eye-outline" size={14} color="#fbbf24" />
+              <Text className="text-sm font-semibold text-amber-400">{viewerCount} watching</Text>
+            </View>
           )}
           {venue.musicGenre.length > 0 && (
-            <Text className="text-sm text-zinc-500">🎵 {venue.musicGenre[0]}</Text>
+            <View className="flex-row items-center gap-1.5">
+              <Ionicons name="musical-notes-outline" size={14} color="#71717a" />
+              <Text className="text-sm text-zinc-500">{venue.musicGenre[0]}</Text>
+            </View>
           )}
         </View>
       </View>

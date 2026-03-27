@@ -1,7 +1,19 @@
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { LiveStream, Venue, venueTypeLabel } from '@vibecheck/shared';
+
+let mediaDevices: any;
+let RTCView: any;
+try {
+  const webrtc = require('@livekit/react-native-webrtc');
+  mediaDevices = webrtc.mediaDevices;
+  RTCView = webrtc.RTCView;
+} catch {
+  // Not available in Expo Go
+}
 
 interface BroadcastSetupScreenProps {
   venue: Venue;
@@ -14,31 +26,86 @@ interface BroadcastSetupScreenProps {
 export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: BroadcastSetupScreenProps) {
   const router = useRouter();
   const isConnecting = phase === 'connecting';
+  const [cameraStream, setCameraStream] = useState<any>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  useEffect(() => {
+    if (!mediaDevices) return;
+    let cancelled = false;
+    let localStream: any = null;
+
+    const startCamera = async () => {
+      try {
+        const stream = await mediaDevices.getUserMedia({
+          video: { facingMode },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t: any) => t.stop());
+          return;
+        }
+        localStream = stream;
+        setCameraStream(stream);
+      } catch {
+        // Permission denied or unavailable
+      }
+    };
+
+    void startCamera();
+
+    return () => {
+      cancelled = true;
+      localStream?.getTracks().forEach((t: any) => t.stop());
+      setCameraStream(null);
+    };
+  }, [facingMode]);
+
+  const handleFlip = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Header row */}
+      {/* Header */}
       <View className="flex-row items-center justify-between px-5 pt-3 pb-4">
         <Pressable
           onPress={() => router.replace('/upload')}
           className="w-10 h-10 rounded-full bg-zinc-800 items-center justify-center"
         >
-          <Text className="text-zinc-200 text-lg">←</Text>
+          <Ionicons name="arrow-back" size={20} color="#e4e4e7" />
         </Pressable>
-        <View className="w-10 h-10 rounded-full bg-zinc-800 items-center justify-center">
-          <Text className="text-zinc-400 text-lg">📷</Text>
-        </View>
+        <Pressable
+          onPress={handleFlip}
+          className="w-10 h-10 rounded-full bg-zinc-800 items-center justify-center"
+        >
+          <Ionicons name="camera-reverse-outline" size={22} color="#a1a1aa" />
+        </Pressable>
       </View>
 
-      {/* Camera preview placeholder */}
-      <View className="flex-1 mx-5 rounded-[28px] bg-zinc-900 border border-zinc-800 items-center justify-center mb-5">
-        <View className="w-20 h-20 rounded-full bg-zinc-800 items-center justify-center mb-4">
-          <Text className="text-4xl">📷</Text>
-        </View>
-        <Text className="text-base text-zinc-600 font-medium">Camera preview</Text>
-        <Text className="text-xs text-zinc-700 mt-1">Will appear when live</Text>
+      {/* Camera preview */}
+      <View className="flex-1 mx-5 rounded-[28px] overflow-hidden bg-zinc-900 border border-zinc-800 mb-5">
+        {cameraStream && RTCView ? (
+          <RTCView
+            streamURL={cameraStream.toURL()}
+            style={StyleSheet.absoluteFillObject}
+            objectFit="cover"
+            mirror={facingMode === 'user'}
+          />
+        ) : (
+          <View className="flex-1 items-center justify-center">
+            <View className="w-20 h-20 rounded-full bg-zinc-800 items-center justify-center mb-4">
+              <Ionicons name="camera-outline" size={36} color="#52525b" />
+            </View>
+            <Text className="text-base text-zinc-600 font-medium">
+              {mediaDevices ? 'Starting camera…' : 'Camera preview'}
+            </Text>
+            {!mediaDevices && (
+              <Text className="text-xs text-zinc-700 mt-1">Available in dev build</Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Bottom controls */}
@@ -51,7 +118,7 @@ export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: B
               {venueTypeLabel[venue.type] ?? venue.type} · {venue.location}
             </Text>
           </View>
-          <Text className="text-xl text-zinc-600">›</Text>
+          <Ionicons name="chevron-forward" size={18} color="#52525b" />
         </View>
 
         {error && (
@@ -90,13 +157,13 @@ export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: B
         {/* Tips */}
         <View className="gap-3 px-1 pb-1">
           <View className="flex-row items-start gap-3">
-            <Text className="text-lg">📷</Text>
+            <Ionicons name="camera-outline" size={18} color="#71717a" style={{ marginTop: 1 }} />
             <Text className="text-sm text-zinc-500 flex-1 leading-relaxed">
               Hold your phone steady or use a tripod for best results
             </Text>
           </View>
           <View className="flex-row items-start gap-3">
-            <Text className="text-lg">🎙</Text>
+            <Ionicons name="mic-outline" size={18} color="#71717a" style={{ marginTop: 1 }} />
             <Text className="text-sm text-zinc-500 flex-1 leading-relaxed">
               Audio is captured — let viewers hear the vibe
             </Text>

@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Venue } from '@vibecheck/shared';
 
@@ -34,7 +35,7 @@ export function LiveHeader({
             <Text className="text-xs font-bold text-white">LIVE</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-md bg-black/50 px-2.5 py-1">
-            <Text className="text-xs text-white/80">👁</Text>
+            <Ionicons name="eye-outline" size={12} color="rgba(255,255,255,0.8)" />
             <Text className="text-xs font-semibold text-white">
               {compactNumber(viewerCount)}
             </Text>

@@ -1,20 +1,21 @@
 import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface AccountTypeSelectorProps {
   accountType: 'owner' | 'promoter' | null;
   onSelect: (type: 'owner' | 'promoter') => void;
 }
 
-const options = [
+const options: { type: 'owner' | 'promoter'; icon: string; label: string; subtitle: string }[] = [
   {
-    type: 'promoter' as const,
-    emoji: '👀',
+    type: 'promoter',
+    icon: 'eye-outline',
     label: 'Viewer',
     subtitle: 'Discover venues',
   },
   {
-    type: 'owner' as const,
-    emoji: '🏢',
+    type: 'owner',
+    icon: 'business-outline',
     label: 'Venue owner',
     subtitle: 'List & stream',
   },
@@ -33,7 +34,11 @@ export function AccountTypeSelector({ accountType, onSelect }: AccountTypeSelect
               active ? 'border-zinc-100 bg-zinc-100/10' : 'border-zinc-800 bg-zinc-900'
             }`}
           >
-            <Text className="text-4xl">{opt.emoji}</Text>
+            <Ionicons
+              name={opt.icon as any}
+              size={32}
+              color={active ? '#f4f4f5' : '#71717a'}
+            />
             <Text className={`text-[15px] font-semibold mt-1 ${active ? 'text-zinc-100' : 'text-zinc-200'}`}>
               {opt.label}
             </Text>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
 import { LiveStream, Venue, useAuthStore, useSocket, recordAttendanceIntent, recordAttendanceArrival } from '@vibecheck/shared';
 import { getDeviceId } from '../../lib/deviceId';
 
@@ -95,7 +96,12 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
             intentPressed ? 'bg-green-500' : 'bg-zinc-800 border border-zinc-700'
           }`}
         >
-          <Text className="text-lg mb-1">🙋</Text>
+          <Ionicons
+            name="calendar-outline"
+            size={22}
+            color={intentPressed ? '#fff' : '#a1a1aa'}
+            style={{ marginBottom: 6 }}
+          />
           <Text className={`text-[11px] text-center ${intentPressed ? 'text-white font-medium' : 'text-zinc-400'}`}>
             I'm thinking{'\n'}about it
           </Text>
@@ -111,9 +117,14 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
             arrivalPressed ? 'bg-zinc-700' : 'bg-zinc-800 border border-zinc-700'
           }`}
         >
-          <Text className="text-lg mb-1">🎉</Text>
+          <Ionicons
+            name="location-outline"
+            size={22}
+            color={arrivalPressed ? '#d4d4d8' : '#a1a1aa'}
+            style={{ marginBottom: 6 }}
+          />
           <Text className={`text-[11px] text-center ${arrivalPressed ? 'text-zinc-300 font-medium' : 'text-zinc-400'}`}>
-            {arrivalPressed ? "I've arrived!" : "I've arrived!"}
+            I've arrived!
           </Text>
           <Text className={`text-[11px] mt-1 ${arrivalPressed ? 'text-zinc-300' : 'text-zinc-500'}`}>
             {arrivalCount}
