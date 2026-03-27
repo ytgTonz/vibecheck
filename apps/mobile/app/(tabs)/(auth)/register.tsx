@@ -124,7 +124,7 @@ export default function MobileRegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         <View className="mb-8">
           <Text className="text-3xl font-semibold text-zinc-100">Create account</Text>

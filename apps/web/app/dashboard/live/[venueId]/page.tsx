@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,7 +10,6 @@ import {
   fetchViewerToken,
   fetchAttendanceCounts,
   endStream,
-  goLiveStream,
   useAuthStore,
   useBroadcastStore,
   useSocket,
@@ -20,227 +19,17 @@ import {
 } from "@vibecheck/shared";
 import {
   LiveKitRoom,
-  VideoTrack,
   RoomAudioRenderer,
-  useLocalParticipant,
-  useRemoteParticipants,
-  useTracks,
-  useChat,
-  useRoomContext,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Track } from "livekit-client";
+import { BroadcasterPreview } from "./components/BroadcasterPreview";
+import { GoLiveOnPublish } from "./components/GoLiveOnPublish";
+import { ViewerCount } from "./components/ViewerCount";
+import { BroadcastChat } from "./components/BroadcastChat";
+import { LiveControls } from "./components/LiveControls";
+import { RemoteVideo } from "./components/RemoteVideo";
 
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
-
-function BroadcasterPreview() {
-  const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
-  const localTrack = tracks.find(
-    (t) => t.participant.isLocal && t.source === Track.Source.Camera
-  );
-
-  if (!localTrack) {
-    return (
-      <div className="flex aspect-video items-center justify-center bg-zinc-900 rounded-xl">
-        <p className="text-sm text-zinc-400">Camera starting...</p>
-      </div>
-    );
-  }
-
-  return (
-    <VideoTrack
-      trackRef={localTrack}
-      className="h-full w-full rounded-xl object-cover"
-    />
-  );
-}
-
-/**
- * Invisible component that watches for the local camera track to appear
- * and calls /go-live to transition the stream from IDLE → LIVE.
- * This ensures viewers can only join once media is actually published.
- */
-function GoLiveOnPublish({
-  streamId,
-  authToken,
-}: {
-  streamId: string;
-  authToken: string;
-}) {
-  const tracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
-  const firedRef = useRef(false);
-
-  console.log('[GoLive] useTracks result:', tracks.length, tracks.map(t => ({ source: t.source, isLocal: t.participant.isLocal, sid: t.publication?.trackSid })));
-
-  const localTrack = tracks.find(
-    (t) => t.participant.isLocal && t.source === Track.Source.Camera
-  );
-
-  useEffect(() => {
-    if (localTrack && !firedRef.current) {
-      firedRef.current = true;
-      console.log('[GoLive] localTrack detected, firing go-live for stream:', streamId);
-      goLiveStream(streamId, authToken)
-        .then(() => console.log('[GoLive] go-live succeeded'))
-        .catch((err) => console.error("go-live failed:", err));
-    }
-  }, [localTrack, streamId, authToken]);
-
-  return null;
-}
-
-function ViewerCount() {
-  const participants = useRemoteParticipants();
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
-      </svg>
-      {participants.length} viewer{participants.length !== 1 ? "s" : ""}
-    </span>
-  );
-}
-
-function BroadcastChat() {
-  const { chatMessages, send } = useChat();
-  const [message, setMessage] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
-
-  const handleSend = () => {
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    send(trimmed);
-    setMessage("");
-  };
-
-  return (
-    <div className="flex h-full flex-col">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-3 space-y-2 [scrollbar-width:thin]"
-      >
-        {chatMessages.length === 0 && (
-          <p className="text-center text-xs text-zinc-500">
-            Chat messages from viewers will appear here
-          </p>
-        )}
-        {chatMessages.map((msg, i) => (
-          <div key={i} className="text-sm">
-            <span className="font-medium text-zinc-300">
-              {msg.from?.name || msg.from?.identity || "Viewer"}
-            </span>
-            <span className="ml-2 text-zinc-400">{msg.message}</span>
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-zinc-800 p-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Message viewers..."
-            className="flex-1 rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:ring-1 focus:ring-zinc-600"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!message.trim()}
-            className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20 disabled:opacity-40"
-          >
-            Send
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LiveControls({
-  stream,
-  onEnd,
-}: {
-  stream: LiveStream;
-  onEnd: () => void;
-}) {
-  const room = useRoomContext();
-  const { localParticipant } = useLocalParticipant();
-  const [cameraEnabled, setCameraEnabled] = useState(true);
-  const [micEnabled, setMicEnabled] = useState(true);
-
-  const toggleCamera = async () => {
-    await localParticipant.setCameraEnabled(!cameraEnabled);
-    setCameraEnabled(!cameraEnabled);
-  };
-
-  const toggleMic = async () => {
-    await localParticipant.setMicrophoneEnabled(!micEnabled);
-    setMicEnabled(!micEnabled);
-  };
-
-  return (
-    <div className="flex items-center gap-3">
-      <button
-        onClick={toggleCamera}
-        className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-          cameraEnabled
-            ? "bg-zinc-800 text-white hover:bg-zinc-700"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-        }`}
-      >
-        {cameraEnabled ? "Camera On" : "Camera Off"}
-      </button>
-      <button
-        onClick={toggleMic}
-        className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-          micEnabled
-            ? "bg-zinc-800 text-white hover:bg-zinc-700"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-        }`}
-      >
-        {micEnabled ? "Mic On" : "Mic Off"}
-      </button>
-      <button
-        onClick={onEnd}
-        className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
-      >
-        End Stream
-      </button>
-    </div>
-  );
-}
-
-function RemoteVideo() {
-  const tracks = useTracks(
-    [Track.Source.Camera, Track.Source.ScreenShare],
-    { onlySubscribed: true }
-  );
-
-  const videoTrack = tracks.find(
-    (t) => t.source === Track.Source.Camera || t.source === Track.Source.ScreenShare
-  );
-
-  if (!videoTrack) {
-    return (
-      <div className="flex aspect-video items-center justify-center bg-zinc-900 rounded-xl">
-        <p className="text-sm text-zinc-400">Waiting for broadcaster...</p>
-      </div>
-    );
-  }
-
-  return (
-    <VideoTrack
-      trackRef={videoTrack}
-      className="h-full w-full rounded-xl object-cover"
-    />
-  );
-}
 
 export default function BroadcastPage() {
   const { venueId } = useParams<{ venueId: string }>();
@@ -252,13 +41,10 @@ export default function BroadcastPage() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
-  const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "monitoring" | "ended">(
-    "idle"
-  );
+  const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "monitoring" | "ended">("idle");
   const [error, setError] = useState<string | null>(null);
   const [attendanceCounts, setAttendanceCounts] = useState({ intentCount: 0, arrivalCount: 0 });
 
-  // Fetch initial attendance counts once a stream is active
   useEffect(() => {
     if (!stream?.id || (phase !== "live" && phase !== "monitoring")) return;
     fetchAttendanceCounts(stream.id)
@@ -266,7 +52,6 @@ export default function BroadcastPage() {
       .catch(() => {});
   }, [stream?.id, phase]);
 
-  // Keep counts in sync via real-time socket updates
   const handleAttendanceUpdate = useCallback(
     (data: AttendanceUpdateEvent) => {
       if (data.streamId === stream?.id) {
@@ -283,7 +68,6 @@ export default function BroadcastPage() {
     setHydrated(true);
   }, [hydrate]);
 
-  // Restore broadcast state if returning to an active stream
   useEffect(() => {
     if (!hydrated || !venueId) return;
     const bs = useBroadcastStore.getState();
@@ -296,25 +80,15 @@ export default function BroadcastPage() {
 
   useEffect(() => {
     if (!hydrated) return;
-    if (!user || !authToken) {
-      router.replace("/login");
-      return;
-    }
+    if (!user || !authToken) { router.replace("/login"); return; }
     if (!venueId) return;
 
     fetchVenue(venueId)
       .then(async (v) => {
         setVenue(v);
-
-        // If the venue is live and the current user is the owner (not the broadcaster),
-        // enter monitoring mode with a viewer token.
         if (v.isLive && v.activeStreamId && v.ownerId === user.id) {
-          // Check if this user is already the broadcaster (via broadcast store)
           const bs = useBroadcastStore.getState();
-          if (bs.venueId === venueId && bs.streamId === v.activeStreamId) {
-            return; // Already broadcasting — the restore effect handles this
-          }
-
+          if (bs.venueId === venueId && bs.streamId === v.activeStreamId) return;
           try {
             const { token: viewerToken } = await fetchViewerToken(v.activeStreamId);
             setStream({ id: v.activeStreamId } as LiveStream);
@@ -330,44 +104,31 @@ export default function BroadcastPage() {
 
   const startStream = async () => {
     if (!authToken || !venueId) return;
-
     setPhase("connecting");
     setError(null);
-
     try {
       const newStream = await createStream(venueId, authToken);
       console.log('[Broadcast] stream created:', newStream.id, 'status:', newStream.status);
       setStream(newStream);
-
-      const { token: broadcasterToken } = await fetchStreamToken(
-        newStream.id,
-        authToken
-      );
+      const { token: broadcasterToken } = await fetchStreamToken(newStream.id, authToken);
       console.log('[Broadcast] broadcaster token received, joining room');
       setLivekitToken(broadcasterToken);
       setPhase("live");
-      if (venue) {
-        broadcastStore.setBroadcast(venueId!, newStream.id, venue.name, broadcasterToken);
-      }
+      if (venue) broadcastStore.setBroadcast(venueId!, newStream.id, venue.name, broadcasterToken);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to start stream"
-      );
+      setError(err instanceof Error ? err.message : "Failed to start stream");
       setPhase("idle");
     }
   };
 
   const handleEndStream = async () => {
     if (!stream || !authToken) return;
-
     try {
       await endStream(stream.id, authToken);
       broadcastStore.clearBroadcast();
       setPhase("ended");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to end stream"
-      );
+      setError(err instanceof Error ? err.message : "Failed to end stream");
     }
   };
 
@@ -383,18 +144,9 @@ export default function BroadcastPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center">
         <h1 className="text-2xl font-bold">Stream Ended</h1>
-        <p className="mt-2 text-zinc-400">
-          Your live stream for {venue.name} has ended.
-        </p>
-        {stream && (
-          <p className="mt-1 text-sm text-zinc-500">
-            Peak viewers: {stream.viewerPeak}
-          </p>
-        )}
-        <Link
-          href="/dashboard"
-          className="mt-6 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-medium text-zinc-900"
-        >
+        <p className="mt-2 text-zinc-400">Your live stream for {venue.name} has ended.</p>
+        {stream && <p className="mt-1 text-sm text-zinc-500">Peak viewers: {stream.viewerPeak}</p>}
+        <Link href="/dashboard" className="mt-6 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-medium text-zinc-900">
           Back to Dashboard
         </Link>
       </div>
@@ -404,25 +156,16 @@ export default function BroadcastPage() {
   if (phase === "idle" || phase === "connecting") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <Link
-          href="/dashboard"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200"
-        >
+        <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200">
           &larr; Dashboard
         </Link>
-
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
           <h1 className="text-2xl font-bold">{venue.name}</h1>
           <p className="mt-1 text-zinc-400">{venue.location}</p>
           <p className="mt-4 text-sm text-zinc-500">
-            Start a live stream to broadcast from this venue. Your camera and
-            microphone will be shared with viewers.
+            Start a live stream to broadcast from this venue. Your camera and microphone will be shared with viewers.
           </p>
-
-          {error && (
-            <p className="mt-4 text-sm text-red-400">{error}</p>
-          )}
-
+          {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
           <button
             onClick={startStream}
             disabled={phase === "connecting"}
@@ -435,19 +178,12 @@ export default function BroadcastPage() {
     );
   }
 
-  // phase === "monitoring" — VO watching a promoter's stream
   if (phase === "monitoring" && livekitToken && stream) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-4">
-        {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="text-sm text-zinc-400 hover:text-zinc-200"
-            >
-              &larr; Dashboard
-            </Link>
+            <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-200">&larr; Dashboard</Link>
             <h1 className="text-lg font-semibold">{venue.name}</h1>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
@@ -455,68 +191,38 @@ export default function BroadcastPage() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-              {attendanceCounts.intentCount} coming
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-              {attendanceCounts.arrivalCount} arrived
-            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.intentCount} coming</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.arrivalCount} arrived</span>
             <span className="text-xs text-zinc-500">Monitoring as owner</span>
           </div>
         </div>
-
         {error && (
           <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2">
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
-
-        <LiveKitRoom
-          serverUrl={LIVEKIT_URL}
-          token={livekitToken}
-          connect={true}
-          video={false}
-          audio={false}
-          className="flex flex-col gap-4 lg:flex-row"
-        >
+        <LiveKitRoom serverUrl={LIVEKIT_URL} token={livekitToken} connect={true} video={false} audio={false} className="flex flex-col gap-4 lg:flex-row">
           <RoomAudioRenderer />
-
-          {/* Video feed from broadcaster */}
           <div className="relative flex-1">
-            <div className="aspect-video overflow-hidden rounded-xl bg-black">
-              <RemoteVideo />
-            </div>
-            <div className="absolute left-4 top-4">
-              <ViewerCount />
-            </div>
+            <div className="aspect-video overflow-hidden rounded-xl bg-black"><RemoteVideo /></div>
+            <div className="absolute left-4 top-4"><ViewerCount /></div>
             <div className="mt-4">
-              <button
-                onClick={handleEndStream}
-                className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
-              >
+              <button onClick={handleEndStream} className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600">
                 End Stream
               </button>
             </div>
           </div>
-
-          {/* Chat */}
           <div className="flex h-[500px] w-full flex-col rounded-xl border border-zinc-800 bg-zinc-900 lg:h-auto lg:w-80">
-            <div className="border-b border-zinc-800 px-4 py-3">
-              <h3 className="text-sm font-semibold">Live Chat</h3>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <BroadcastChat />
-            </div>
+            <div className="border-b border-zinc-800 px-4 py-3"><h3 className="text-sm font-semibold">Live Chat</h3></div>
+            <div className="flex-1 overflow-hidden"><BroadcastChat /></div>
           </div>
         </LiveKitRoom>
       </div>
     );
   }
 
-  // phase === "live"
   return (
     <div className="mx-auto max-w-7xl px-4 py-4">
-      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold">{venue.name}</h1>
@@ -526,53 +232,25 @@ export default function BroadcastPage() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-            {attendanceCounts.intentCount} coming
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-            {attendanceCounts.arrivalCount} arrived
-          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.intentCount} coming</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">{attendanceCounts.arrivalCount} arrived</span>
         </div>
       </div>
-
       {error && (
         <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
-
-      <LiveKitRoom
-        serverUrl={LIVEKIT_URL}
-        token={livekitToken!}
-        connect={true}
-        video={true}
-        audio={true}
-        className="flex flex-col gap-4 lg:flex-row"
-      >
-        {/* Transition IDLE → LIVE once camera track is published */}
+      <LiveKitRoom serverUrl={LIVEKIT_URL} token={livekitToken!} connect={true} video={true} audio={true} className="flex flex-col gap-4 lg:flex-row">
         <GoLiveOnPublish streamId={stream!.id} authToken={authToken!} />
-
-        {/* Video preview */}
         <div className="relative flex-1">
-          <div className="aspect-video overflow-hidden rounded-xl bg-black">
-            <BroadcasterPreview />
-          </div>
-          <div className="absolute left-4 top-4">
-            <ViewerCount />
-          </div>
-          <div className="mt-4">
-            <LiveControls stream={stream!} onEnd={handleEndStream} />
-          </div>
+          <div className="aspect-video overflow-hidden rounded-xl bg-black"><BroadcasterPreview /></div>
+          <div className="absolute left-4 top-4"><ViewerCount /></div>
+          <div className="mt-4"><LiveControls stream={stream!} onEnd={handleEndStream} /></div>
         </div>
-
-        {/* Chat */}
         <div className="flex h-[500px] w-full flex-col rounded-xl border border-zinc-800 bg-zinc-900 lg:h-auto lg:w-80">
-          <div className="border-b border-zinc-800 px-4 py-3">
-            <h3 className="text-sm font-semibold">Live Chat</h3>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <BroadcastChat />
-          </div>
+          <div className="border-b border-zinc-800 px-4 py-3"><h3 className="text-sm font-semibold">Live Chat</h3></div>
+          <div className="flex-1 overflow-hidden"><BroadcastChat /></div>
         </div>
       </LiveKitRoom>
     </div>

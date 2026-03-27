@@ -38,7 +38,7 @@ export default function MobileLoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-zinc-950" edges={['top', 'bottom']}>
+    <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 20, justifyContent: 'center' }}>
         <View className="mb-8">
           <Text className="text-3xl font-semibold text-zinc-100">Sign in</Text>

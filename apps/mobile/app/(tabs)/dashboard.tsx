@@ -57,9 +57,6 @@ export default function DashboardScreen() {
       <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           <Text className="text-3xl font-semibold text-zinc-100">Dashboard</Text>
-          <Text className="mt-2 text-sm text-zinc-400">
-            Sign in to see the venues you own or help manage.
-          </Text>
           <View className="mt-6">
             <AuthPanel
               title="Sign in to your dashboard"
