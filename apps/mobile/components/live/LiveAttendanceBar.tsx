@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Animated, Pressable, Text, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LiveStream, Venue, useAuthStore, useSocket, recordAttendanceIntent, recordAttendanceArrival } from '@vibecheck/shared';
 import { getDeviceId } from '../../lib/deviceId';
@@ -25,7 +26,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
   const [intentCount, setIntentCount] = useState(venue.intentCount ?? 0);
   const [arrivalCount, setArrivalCount] = useState(venue.arrivalCount ?? 0);
   const [showThankYou, setShowThankYou] = useState(false);
-  const thankYouTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thankYouAnim = useRef(new Animated.Value(0)).current;
 
   // Restore pressed state from AsyncStorage on mount
   useEffect(() => {
@@ -35,9 +36,6 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
         if (results[1][1]) setArrivalPressed(true);
       },
     );
-    return () => {
-      if (thankYouTimer.current) clearTimeout(thankYouTimer.current);
-    };
   }, [stream.id]);
 
   // Real-time count updates via Socket.IO
@@ -69,7 +67,11 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
     setArrivalPressed(true);
     await AsyncStorage.setItem(arrivalKey(stream.id), '1');
     setShowThankYou(true);
-    thankYouTimer.current = setTimeout(() => setShowThankYou(false), 3000);
+    Animated.sequence([
+      Animated.timing(thankYouAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.delay(2400),
+      Animated.timing(thankYouAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(() => setShowThankYou(false));
     try {
       const deviceId = await getDeviceId();
       const result = await recordAttendanceArrival(stream.id, deviceId, token);
@@ -87,20 +89,25 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
     >
       {/* Live counters */}
       <View className="mb-2 items-center">
-        <View className="rounded-full bg-black/50 px-4 py-1">
-          <Text className="text-xs font-semibold text-white">
-            {intentCount} coming · {arrivalCount} here
-          </Text>
+        <View className="flex-row items-center gap-2 rounded-full bg-black/50 px-4 py-1">
+          <SymbolView name="calendar" size={11} tintColor="white" />
+          <Text className="text-xs font-semibold text-white">{intentCount}</Text>
+          <Text className="text-xs text-white/50">·</Text>
+          <SymbolView name="mappin" size={11} tintColor="white" />
+          <Text className="text-xs font-semibold text-white">{arrivalCount}</Text>
         </View>
       </View>
 
       {/* Thank you message */}
       {showThankYou && (
-        <View className="mb-2 items-center">
+        <Animated.View
+          className="mb-2 items-center"
+          style={{ opacity: thankYouAnim, transform: [{ translateY: thankYouAnim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }] }}
+        >
           <Text className="text-xs font-medium text-white/80">
             Thank you from VibeCheck!
           </Text>
-        </View>
+        </Animated.View>
       )}
 
       {/* Action buttons */}
@@ -109,7 +116,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
           onPress={handleIntent}
           disabled={intentPressed}
           className={`flex-1 items-center rounded-xl py-3 ${
-            intentPressed ? 'bg-white/20' : 'bg-white/90'
+            intentPressed ? 'bg-white/20' : 'border border-orange-100/70 bg-white/90'
           }`}
         >
           <Text
