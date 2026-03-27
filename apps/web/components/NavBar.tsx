@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore, useBroadcastStore } from "@vibecheck/shared";
-import FeedbackButton from "./FeedbackButton";
+import FeedbackButton from "@/components/FeedbackButton";
 
 export default function NavBar() {
   const { user, logout, hydrate } = useAuthStore();

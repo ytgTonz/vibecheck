@@ -18,7 +18,7 @@ import {
   StreamEvent,
   ViewerEvent,
 } from "@vibecheck/shared";
-import StreamFunnelCard from "../components/StreamFunnelCard";
+import StreamFunnelCard from "@/components/StreamFunnelCard";
 
 export default function DashboardPage() {
   const router = useRouter();

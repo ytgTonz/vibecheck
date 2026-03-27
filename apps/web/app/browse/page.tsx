@@ -12,9 +12,9 @@ import {
   pickFeaturedVenue,
   excludeFeaturedVenue,
 } from "@vibecheck/shared";
-import VenueCard from "../components/VenueCard";
-import FeaturedVenueCard from "../components/FeaturedVenueCard";
-import FilterBar from "../components/FilterBar";
+import VenueCard from "@/components/VenueCard";
+import FeaturedVenueCard from "@/components/FeaturedVenueCard";
+import FilterBar from "@/components/FilterBar";
 
 function VenueSection({
   title,
