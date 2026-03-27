@@ -1,0 +1,84 @@
+{
+  "project": "VibeCheck",
+  "generated": "2026-03-27",
+  "description": "Nightlife app for East London, SA — live venue streaming, promoter tools, foot traffic attribution",
+  "monorepo": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "apps": {
+    "api": {
+      "path": "apps/api",
+      "type": "express-typescript",
+      "entry": "apps/api/src/index.ts",
+      "port": 3001,
+      "deployment": "heroku",
+      "features": ["JWT auth", "Socket.IO", "LiveKit", "Prisma/PostgreSQL", "Expo push notifications", "Cloudinary"],
+      "routes": ["/auth", "/venues", "/streams", "/admin", "/feedback", "/notifications", "/attendance", "/webhooks"],
+      "models": ["Venue", "User", "VenuePromoter", "Invite", "LiveStream", "StreamAttendance", "PushToken", "Notification", "ScheduledNotification", "Feedback"]
+    },
+    "web": {
+      "path": "apps/web",
+      "type": "nextjs-14-app-router",
+      "entry": "apps/web/app/layout.tsx",
+      "deployment": "vercel",
+      "routes": {
+        "/": "Home",
+        "/login": "Auth",
+        "/browse": "Browse venues",
+        "/venues/[id]": "Venue detail",
+        "/venues/[id]/live": "Viewer stream",
+        "/dashboard": "Promoter dashboard",
+        "/dashboard/new": "Create venue",
+        "/dashboard/edit/[id]": "Edit venue",
+        "/dashboard/live/[venueId]": "Broadcast page",
+        "/admin": "Admin dashboard",
+        "/admin/venues": "Venue management",
+        "/admin/users": "User management",
+        "/admin/feedback": "Feedback review",
+        "/admin/notifications": "Push notification management"
+      }
+    },
+    "mobile": {
+      "path": "apps/mobile",
+      "type": "expo-react-native",
+      "entry": "apps/mobile/app/_layout.tsx",
+      "deployment": "expo-eas",
+      "screens": {
+        "index": "Home feed",
+        "venues/[id]": "Venue detail",
+        "venues/[id]/live": "Stream viewer",
+        "broadcast/[venueId]": "Promoter broadcast",
+        "dashboard": "Promoter dashboard",
+        "upload": "Clip upload",
+        "auth/login": "Login",
+        "auth/register": "Register"
+      }
+    },
+    "landing": {
+      "path": "apps/landing",
+      "type": "vite-react",
+      "entry": "apps/landing/src/main.jsx"
+    }
+  },
+  "packages": {
+    "shared": {
+      "path": "packages/shared",
+      "exports": ["api", "venues", "socket", "venueStore", "authStore", "broadcastStore", "useSocket", "StreamEvent", "ViewerEvent", "NotificationEvent", "AttendanceUpdateEvent"]
+    }
+  },
+  "database": {
+    "orm": "prisma",
+    "db": "postgresql",
+    "schemaPath": "apps/api/prisma/schema.prisma"
+  },
+  "streaming": {
+    "provider": "LiveKit",
+    "serverLib": "livekit-server-sdk",
+    "mobileLib": "@livekit/react-native"
+  },
+  "realtime": "socket.io",
+  "stateManagement": "zustand",
+  "styling": {
+    "web": "tailwindcss",
+    "mobile": "nativewind"
+  }
+}
