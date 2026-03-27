@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+const APK_DOWNLOAD_URL =
+  "https://github.com/ytgTonz/vibecheck/releases/latest/download/vibecheck-android-debug.apk";
+
 const pillars = [
   {
     eyebrow: "Live Discovery",
@@ -43,6 +46,12 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href={APK_DOWNLOAD_URL}
+                className="rounded-full bg-orange-300 px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-orange-200"
+              >
+                Download Android APK
+              </a>
               <Link
                 href="/browse"
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"

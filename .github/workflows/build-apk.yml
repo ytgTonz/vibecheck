@@ -11,6 +11,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    env:
+      APK_PATH: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      APK_ASSET_NAME: vibecheck-android-debug.apk
+      RELEASE_TAG: apk-latest
 
     steps:
       - name: Checkout repository
@@ -84,5 +91,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vibecheck-${{ github.run_number }}-debug
-          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: ${{ env.APK_PATH }}
           retention-days: 30
+
+      - name: Publish APK to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 \
+            && gh release edit "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest debug APK build from CI." \
+            || gh release create "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest debug APK build from CI."
+
+          gh release upload "$RELEASE_TAG" "$APK_PATH#$APK_ASSET_NAME" --clobber
