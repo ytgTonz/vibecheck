@@ -92,7 +92,7 @@ export default function VenueDetailScreen() {
     <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: 32, justifyContent: 'center' }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -103,7 +103,7 @@ export default function VenueDetailScreen() {
           />
         }
       >
-        <View className="px-4 pt-2">
+        <View>
           <Pressable onPress={() => router.back()} className="mb-5 self-start">
             <Text className="text-sm text-zinc-400">{'\u2190'} All venues</Text>
           </Pressable>
