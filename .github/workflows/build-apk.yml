@@ -95,6 +95,8 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          EXPO_PUBLIC_API_URL: https://vibecheck-api-xp8x.onrender.com
+          EXPO_PUBLIC_LIVEKIT_URL: wss://vibecheck-b5g9rh79.livekit.cloud
         run: |
           ./gradlew assembleRelease --no-daemon \
             -Pandroid.injected.signing.store.file="$(pwd)/app/vibecheck.keystore" \
