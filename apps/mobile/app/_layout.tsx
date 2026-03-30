@@ -79,22 +79,39 @@ function RootLayoutNav() {
   useNotifications();
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Hydrate auth from AsyncStorage immediately — don't wait for the timer.
+    const hydratePromise = useAuthStore.getState().hydrate();
+
     const timer = setTimeout(() => {
       Animated.timing(splashOpacity, {
         toValue: 0,
         duration: 400,
         useNativeDriver: true,
       }).start(async () => {
-        setSplashVisible(false);
+        if (cancelled) return;
+
+        // Ensure hydration is complete before reading user state.
+        await hydratePromise;
+
         const seen = await AsyncStorage.getItem('vc_onboarding_seen');
         const user = useAuthStore.getState().user;
+
         if (!seen && !user) {
           router.replace('/gate');
         }
+
+        // Hide splash only after the routing decision — prevents a flash of
+        // the browse screen while the async checks are in flight.
+        setSplashVisible(false);
       });
     }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [router, splashOpacity]);
 
   return (
