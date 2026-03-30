@@ -144,7 +144,7 @@ export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: B
           <Pressable
             onPress={onStart}
             disabled={isConnecting}
-            className="rounded-[20px] bg-red-600 py-5 flex-row items-center justify-center gap-3"
+            className="rounded-[20px] bg-brand-red py-5 flex-row items-center justify-center gap-3"
             style={{ opacity: isConnecting ? 0.7 : 1 }}
           >
             <View className="w-3 h-3 rounded-full bg-white" />

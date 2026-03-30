@@ -22,7 +22,7 @@ try {
   });
 } catch {
   // Native module unavailable (Expo Go) — push notifications disabled.
-  console.log('[Notifications] Native module not available — skipping push setup');
+  if (__DEV__) console.log('[Notifications] Native module not available — skipping push setup');
 }
 
 export function useNotifications() {
@@ -40,7 +40,7 @@ export function useNotifications() {
 
     (async () => {
       if (!Device!.isDevice) {
-        console.log('[Notifications] Must use physical device for push notifications');
+        if (__DEV__) console.log('[Notifications] Must use physical device for push notifications');
         return;
       }
 
@@ -53,7 +53,7 @@ export function useNotifications() {
       }
 
       if (finalStatus !== 'granted') {
-        console.log('[Notifications] Permission not granted');
+        if (__DEV__) console.log('[Notifications] Permission not granted');
         return;
       }
 
@@ -62,7 +62,7 @@ export function useNotifications() {
         projectId: Constants.expoConfig?.extra?.eas?.projectId,
       });
 
-      console.log('[Notifications] Push token:', pushToken.data);
+      if (__DEV__) console.log('[Notifications] Push token:', pushToken.data);
       pushTokenRef.current = pushToken.data;
 
       // Register token with our API — auth token optional.
@@ -71,7 +71,7 @@ export function useNotifications() {
       try {
         await registerPushToken(pushToken.data, Platform.OS, token ?? undefined);
       } catch (err) {
-        console.error('[Notifications] Failed to register push token:', err);
+        if (__DEV__) console.error('[Notifications] Failed to register push token:', err);
       }
 
       // Android notification channel
@@ -87,7 +87,7 @@ export function useNotifications() {
 
     // Foreground notification listener
     notificationListener.current = Notif.addNotificationReceivedListener((notification) => {
-      console.log('[Notifications] Received:', notification.request.content.title);
+      if (__DEV__) console.log('[Notifications] Received:', notification.request.content.title);
     });
 
     // Tap notification listener — navigate to relevant screen
@@ -111,7 +111,7 @@ export function useNotifications() {
     try {
       await unregisterPushToken(pushTokenRef.current, authToken);
     } catch (err) {
-      console.error('[Notifications] Failed to unregister push token:', err);
+      if (__DEV__) console.error('[Notifications] Failed to unregister push token:', err);
     }
   }
 

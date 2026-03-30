@@ -11,6 +11,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthStorage, useAuthStore } from '@vibecheck/shared';
 import { useFonts } from 'expo-font';
+import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
+import { SourceSerif4_400Regular, SourceSerif4_600SemiBold } from '@expo-google-fonts/source-serif-4';
+import { IBMPlexMono_400Regular } from '@expo-google-fonts/ibm-plex-mono';
 import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
@@ -44,6 +47,10 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    BebasNeue_400Regular,
+    SourceSerif4_400Regular,
+    SourceSerif4_600SemiBold,
+    IBMPlexMono_400Regular,
   });
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
@@ -102,8 +109,10 @@ function RootLayoutNav() {
           <Animated.View style={[styles.splash, { opacity: splashOpacity }]}>
             <View style={styles.splashInner}>
               <VibecheckIcon size={80} />
-              <Text style={styles.splashTitle}>VibeCheck</Text>
-              <Text style={styles.splashTagline}>See the vibe before you arrive.</Text>
+              <Text style={styles.splashTitle}>
+                {'VIBE'}<Text style={{ color: '#FF2D55' }}>{'CHECK'}</Text>
+              </Text>
+              <Text style={styles.splashTagline}>Feel the night.</Text>
             </View>
           </Animated.View>
         )}
@@ -124,10 +133,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   splashTitle: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 48,
+    fontFamily: 'BebasNeue_400Regular',
     color: '#f4f4f5',
-    letterSpacing: -0.5,
+    letterSpacing: 2,
   },
   splashTagline: {
     fontSize: 15,

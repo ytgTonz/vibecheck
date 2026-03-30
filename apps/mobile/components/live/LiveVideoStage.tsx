@@ -24,7 +24,7 @@ export function LiveVideoStage({
     <View className="flex-1 items-center justify-center bg-zinc-950 px-8">
       <View className="w-full max-w-[280px] items-center">
         <View className="mb-5 h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5">
-          <ActivityIndicator size="small" color="#ef4444" />
+          <ActivityIndicator size="small" color="#FF2D55" />
         </View>
         <Text className="text-center text-lg font-semibold text-white">
           Waiting for broadcaster

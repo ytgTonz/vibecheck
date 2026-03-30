@@ -28,10 +28,10 @@ export function PulseDot({ live }: { live: boolean }) {
   return (
     <View className="h-2.5 w-2.5 items-center justify-center">
       <Animated.View
-        className="absolute h-2.5 w-2.5 rounded-full bg-red-500"
+        className="absolute h-2.5 w-2.5 rounded-full bg-brand-red"
         style={{ transform: [{ scale }], opacity }}
       />
-      <View className="h-2.5 w-2.5 rounded-full bg-red-500" />
+      <View className="h-2.5 w-2.5 rounded-full bg-brand-red" />
     </View>
   );
 }

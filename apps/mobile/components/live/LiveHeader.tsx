@@ -31,7 +31,7 @@ export function LiveHeader({
       <View className="flex-row items-center justify-between px-4">
         {/* Left: LIVE badge + viewer count */}
         <View className="flex-row items-center gap-2">
-          <View className="rounded-md bg-red-500 px-2.5 py-1">
+          <View className="rounded-md bg-brand-red px-2.5 py-1">
             <Text className="text-xs font-bold text-white">LIVE</Text>
           </View>
           <View className="flex-row items-center gap-1.5 rounded-md bg-black/50 px-2.5 py-1">

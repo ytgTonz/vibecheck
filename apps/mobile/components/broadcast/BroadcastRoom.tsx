@@ -86,7 +86,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
         setFacingMode(next);
       }
     } catch (err) {
-      console.error('[MobileBroadcast] flip camera failed:', err);
+      if (__DEV__) console.error('[MobileBroadcast] flip camera failed:', err);
     }
   };
 
@@ -96,7 +96,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
       await endStream(stream.id, authToken);
       onEnded();
     } catch (err) {
-      console.error('[MobileBroadcast] end stream failed:', err);
+      if (__DEV__) console.error('[MobileBroadcast] end stream failed:', err);
       setEnding(false);
     }
   };
@@ -108,7 +108,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
       <View className="flex-1 px-4 pt-3 pb-4 gap-3">
         {/* Status bar: LIVE badge + timer */}
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2 rounded-xl bg-red-600 px-4 py-2">
+          <View className="flex-row items-center gap-2 rounded-xl bg-brand-red px-4 py-2">
             <View className="w-2.5 h-2.5 rounded-full bg-white" />
             <Text className="text-sm font-semibold text-white">LIVE</Text>
           </View>
@@ -133,7 +133,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
               <View className="flex-row gap-2">
                 <Pressable
                   onPress={handleToggleCamera}
-                  className={`h-9 w-9 items-center justify-center rounded-full ${cameraEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
+                  className={`h-9 w-9 items-center justify-center rounded-full ${cameraEnabled ? 'bg-black/50' : 'bg-brand-red/80'}`}
                 >
                   <Ionicons
                     name={cameraEnabled ? 'camera-outline' : 'camera-off-outline'}
@@ -143,7 +143,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
                 </Pressable>
                 <Pressable
                   onPress={handleToggleMic}
-                  className={`h-9 w-9 items-center justify-center rounded-full ${micEnabled ? 'bg-black/50' : 'bg-red-500/80'}`}
+                  className={`h-9 w-9 items-center justify-center rounded-full ${micEnabled ? 'bg-black/50' : 'bg-brand-red/80'}`}
                 >
                   <Ionicons
                     name={micEnabled ? 'mic-outline' : 'mic-off-outline'}

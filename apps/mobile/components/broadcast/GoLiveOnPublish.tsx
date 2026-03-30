@@ -22,7 +22,7 @@ export function GoLiveOnPublish({ streamId, authToken }: GoLiveOnPublishProps) {
     if (localTrack && !firedRef.current) {
       firedRef.current = true;
       goLiveStream(streamId, authToken).catch((err) => {
-        console.error('[MobileBroadcast] go-live failed:', err);
+        if (__DEV__) console.error('[MobileBroadcast] go-live failed:', err);
       });
     }
   }, [authToken, localTrack, streamId]);
