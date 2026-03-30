@@ -198,7 +198,6 @@ export default function TabLayout() {
       <Tabs.Screen name="(auth)" options={{ href: null }} />
       <Tabs.Screen name="broadcast/[venueId]" options={{ href: null }} />
       <Tabs.Screen name="venues/[id]" options={{ href: null }} />
-      <Tabs.Screen name="venues/[id]/live" options={{ href: null }} />
     </Tabs>
     </SafeAreaView>
   );
