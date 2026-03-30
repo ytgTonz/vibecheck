@@ -9,9 +9,9 @@ interface AccountTypeSelectorProps {
 const options: { type: 'owner' | 'promoter'; icon: string; label: string; subtitle: string }[] = [
   {
     type: 'promoter',
-    icon: 'eye-outline',
-    label: 'Viewer',
-    subtitle: 'Discover venues',
+    icon: 'radio-outline',
+    label: 'Promoter',
+    subtitle: 'Broadcast for venues',
   },
   {
     type: 'owner',

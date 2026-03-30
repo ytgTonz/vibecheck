@@ -50,7 +50,7 @@ export function ErrorState({
           {onRetry && (
             <Pressable
               onPress={onRetry}
-              className="mt-6 w-full rounded-full bg-red-500 py-3"
+              className="mt-6 w-full rounded-full bg-brand-red py-3"
             >
               <Text className="text-center text-sm font-semibold text-white">
                 Try again

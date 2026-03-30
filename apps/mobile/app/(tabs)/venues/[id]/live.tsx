@@ -72,19 +72,14 @@ export default function MobileLiveWatchScreen() {
           if (cancelled) return;
           try {
             streamData = await fetchStream(venueData.activeStreamId);
-            console.log(
-              `[Mobile] stream fetched (attempt ${attempt + 1}):`,
-              streamData.id,
-              'status:',
-              streamData.status,
-            );
+            if (__DEV__) console.log(`[Mobile] stream fetched (attempt ${attempt + 1}):`, streamData.id, 'status:', streamData.status);
             if (streamData.status === 'LIVE') break;
             streamData = null;
             if (attempt < MAX_RETRIES - 1) {
               await new Promise((r) => setTimeout(r, RETRY_DELAY));
             }
           } catch (fetchErr) {
-            console.log(`[Mobile] stream fetch attempt ${attempt + 1} failed:`, fetchErr);
+            if (__DEV__) console.log(`[Mobile] stream fetch attempt ${attempt + 1} failed:`, fetchErr);
             streamData = null;
             if (attempt < MAX_RETRIES - 1) {
               await new Promise((r) => setTimeout(r, RETRY_DELAY));
@@ -109,7 +104,7 @@ export default function MobileLiveWatchScreen() {
             viewerToken = result.token;
             break;
           } catch (tokenErr) {
-            console.log(`[Mobile] viewer token attempt ${attempt + 1} failed:`, tokenErr);
+            if (__DEV__) console.log(`[Mobile] viewer token attempt ${attempt + 1} failed:`, tokenErr);
             if (attempt < 2) {
               await new Promise((r) => setTimeout(r, RETRY_DELAY));
             }
@@ -123,11 +118,11 @@ export default function MobileLiveWatchScreen() {
           return;
         }
 
-        console.log('[Mobile] viewer token received for stream:', streamData.id);
+        if (__DEV__) console.log('[Mobile] viewer token received for stream:', streamData.id);
         setToken(viewerToken);
       } catch (err) {
         if (!cancelled) {
-          console.log('[Mobile] live screen error:', err);
+          if (__DEV__) console.log('[Mobile] live screen error:', err);
           setError(err instanceof Error ? err.message : 'Failed to load stream.');
         }
       } finally {
