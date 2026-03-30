@@ -34,11 +34,11 @@ export default function LandingPage() {
       <section className="border-b border-zinc-800">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,440px)] lg:items-end">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/80">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-red/80">
               East London Nightlife, In Real Time
             </p>
-            <h1 className="mt-4 max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-              Know the vibe before you arrive.
+            <h1 className="mt-4 max-w-4xl font-bebas text-6xl tracking-widest sm:text-7xl lg:text-8xl">
+              <span className="text-zinc-100">FEEL </span><span className="text-brand-red">THE NIGHT.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
               VibeCheck helps people answer one question quickly: where should I go tonight?
@@ -48,7 +48,7 @@ export default function LandingPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href={APK_DOWNLOAD_URL}
-                className="rounded-full bg-orange-300 px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-orange-200"
+                className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90"
               >
                 Download Android APK
               </a>
@@ -81,7 +81,7 @@ export default function LandingPage() {
             </div>
 
             <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-200/80">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-red/80">
                 What Browse Gives You
               </p>
               <h2 className="mt-4 text-2xl font-semibold">
@@ -127,7 +127,7 @@ export default function LandingPage() {
               key={pillar.title}
               className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/70 p-6"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-200/70">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand-red/70">
                 {pillar.eyebrow}
               </p>
               <h3 className="mt-4 text-2xl font-semibold tracking-tight">

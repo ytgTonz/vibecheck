@@ -150,8 +150,8 @@ export default function AdminOverviewPage() {
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Active Streams</h2>
             {activeStreams.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
                 {activeStreams.length} live
               </span>
             )}
@@ -160,7 +160,7 @@ export default function AdminOverviewPage() {
             <button
               onClick={handleEndAll}
               disabled={endingAll}
-              className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              className="rounded-lg bg-brand-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-red/90 disabled:opacity-50"
             >
               {endingAll ? "Ending..." : "End All Streams"}
             </button>
@@ -190,7 +190,7 @@ export default function AdminOverviewPage() {
                 <button
                   onClick={() => handleEndOne(stream.id)}
                   disabled={endingId === stream.id}
-                  className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                  className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand-red disabled:opacity-50"
                 >
                   {endingId === stream.id ? "Ending..." : "End"}
                 </button>

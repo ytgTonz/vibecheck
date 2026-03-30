@@ -32,19 +32,19 @@ export function VenueStreamCard({
             <p className="text-sm text-zinc-400">{venue.location}</p>
           </div>
           {venue.isLive && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-1 text-xs font-semibold text-red-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
               LIVE · {venue.currentViewerCount} viewers
             </span>
           )}
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0 sm:gap-3">
           {venue.isLive ? (
-            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30">
+            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-brand-red/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30">
               View Stream
             </Link>
           ) : (
-            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600">
+            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-red/90">
               Go Live
             </Link>
           )}
@@ -62,9 +62,9 @@ export function VenueStreamCard({
       {!venue.isLive && (
         <Link
           href={`/dashboard/live/${venue.id}`}
-          className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-3 transition-colors hover:border-red-500/30 hover:bg-red-500/10"
+          className="mb-6 flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-3 transition-colors hover:border-brand-red/30 hover:bg-brand-red/10"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/20">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-red/20">
             <svg className="ml-0.5 h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>

@@ -1,23 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bebas_Neue, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import NotificationToast from "@/components/NotificationToast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  variable: "--font-bebas",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sourceSerif4 = Source_Serif_4({
+  weight: ["400", "600"],
+  variable: "--font-serif",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "600"],
+  variable: "--font-mono-brand",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "VibeCheck — See the vibe before you arrive",
+  title: "VibeCheck — Feel the night",
   description:
-    "Watch live streams from East London venues and decide where to go tonight.",
+    "Watch live streams from East London venues and feel the vibe before you arrive.",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({
@@ -28,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100`}
+        className={`${bebasNeue.variable} ${sourceSerif4.variable} ${ibmPlexMono.variable} antialiased bg-zinc-950 text-zinc-100`}
       >
         <NavBar />
         <NotificationToast />

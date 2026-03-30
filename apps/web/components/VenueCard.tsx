@@ -12,7 +12,7 @@ export default function VenueCard({ venue }: { venue: Venue }) {
   return (
     <Link
       href={href}
-      className={`group relative block overflow-hidden rounded-[1.75rem] border bg-zinc-950 p-5 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)] ${venue.isLive ? "border-red-500/40 hover:border-red-500/60" : "border-zinc-800 hover:border-zinc-700"}`}
+      className={`group relative block overflow-hidden rounded-[1.75rem] border bg-zinc-950 p-5 text-white shadow-[0_18px_48px_rgba(0,0,0,0.16)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(0,0,0,0.2)] ${venue.isLive ? "border-brand-red/40 hover:border-brand-red/60" : "border-zinc-800 hover:border-zinc-700"}`}
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,10,12,0.12),rgba(10,10,12,0.92))]" />
       <div className="absolute inset-x-0 top-0 h-px bg-white/8" />
@@ -23,7 +23,7 @@ export default function VenueCard({ venue }: { venue: Venue }) {
             <div className="flex items-center gap-2">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${
-                  venue.isLive ? "animate-pulse bg-red-500" : "bg-zinc-500"
+                  venue.isLive ? "animate-pulse bg-brand-red" : "bg-zinc-500"
                 }`}
               />
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-300">

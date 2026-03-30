@@ -169,7 +169,7 @@ export default function BroadcastPage() {
           <button
             onClick={startStream}
             disabled={phase === "connecting"}
-            className="mt-6 rounded-full bg-red-500 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+            className="mt-6 rounded-full bg-brand-red px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90 disabled:opacity-50"
           >
             {phase === "connecting" ? "Connecting..." : "Start Stream"}
           </button>
@@ -185,8 +185,8 @@ export default function BroadcastPage() {
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-200">&larr; Dashboard</Link>
             <h1 className="text-lg font-semibold">{venue.name}</h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
               LIVE
             </span>
           </div>
@@ -197,7 +197,7 @@ export default function BroadcastPage() {
           </div>
         </div>
         {error && (
-          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2">
+          <div className="mb-4 rounded-lg bg-brand-red/10 border border-brand-red/20 px-4 py-2">
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
@@ -207,7 +207,7 @@ export default function BroadcastPage() {
             <div className="aspect-video overflow-hidden rounded-xl bg-black"><RemoteVideo /></div>
             <div className="absolute left-4 top-4"><ViewerCount /></div>
             <div className="mt-4">
-              <button onClick={handleEndStream} className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600">
+              <button onClick={handleEndStream} className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90">
                 End Stream
               </button>
             </div>
@@ -226,8 +226,8 @@ export default function BroadcastPage() {
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-lg font-semibold">{venue.name}</h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-0.5 text-xs font-semibold text-red-400">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
             YOU ARE LIVE
           </span>
         </div>
@@ -237,7 +237,7 @@ export default function BroadcastPage() {
         </div>
       </div>
       {error && (
-        <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2">
+        <div className="mb-4 rounded-lg bg-brand-red/10 border border-brand-red/20 px-4 py-2">
           <p className="text-sm text-red-400">{error}</p>
         </div>
       )}

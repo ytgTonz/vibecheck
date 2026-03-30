@@ -31,7 +31,7 @@ export function LiveControls({ stream: _stream, onEnd }: LiveControlsProps) {
         className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
           cameraEnabled
             ? "bg-zinc-800 text-white hover:bg-zinc-700"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+            : "bg-brand-red/20 text-red-400 hover:bg-red-500/30"
         }`}
       >
         {cameraEnabled ? "Camera On" : "Camera Off"}
@@ -41,14 +41,14 @@ export function LiveControls({ stream: _stream, onEnd }: LiveControlsProps) {
         className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
           micEnabled
             ? "bg-zinc-800 text-white hover:bg-zinc-700"
-            : "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+            : "bg-brand-red/20 text-red-400 hover:bg-red-500/30"
         }`}
       >
         {micEnabled ? "Mic On" : "Mic Off"}
       </button>
       <button
         onClick={onEnd}
-        className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600"
+        className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90"
       >
         End Stream
       </button>

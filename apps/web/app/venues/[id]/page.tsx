@@ -88,9 +88,9 @@ export default function VenueDetailPage() {
       {venue.isLive && venue.activeStreamId ? (
         <Link
           href={`/venues/${venue.id}/live`}
-          className="mb-8 flex flex-wrap items-center gap-4 rounded-[2rem] border border-red-500/30 bg-red-500/10 px-6 py-6 transition-colors hover:bg-red-500/15"
+          className="mb-8 flex flex-wrap items-center gap-4 rounded-[2rem] border border-brand-red/30 bg-brand-red/10 px-6 py-6 transition-colors hover:bg-brand-red/15"
         >
-          <span className="h-4 w-4 shrink-0 animate-pulse rounded-full bg-red-500" />
+          <span className="h-4 w-4 shrink-0 animate-pulse rounded-full bg-brand-red" />
           <div className="flex-1">
             <p className="text-lg font-semibold text-red-400">
               This venue is streaming live right now
@@ -116,7 +116,7 @@ export default function VenueDetailPage() {
       <section className="mb-8 overflow-hidden rounded-[2rem] border border-zinc-200/70 bg-[linear-gradient(135deg,#120a07_0%,#2c170d_36%,#0b0c10_100%)] text-white shadow-[0_28px_80px_rgba(17,12,10,0.18)] dark:border-zinc-800">
         <div className="px-5 py-6 sm:px-7 sm:py-8">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-white/15 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-100/85">
+            <span className="rounded-full border border-white/15 bg-white/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-brand-red/80">
               Venue
             </span>
             <span className="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-zinc-200">

@@ -1,3 +1,14 @@
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand accent colors */
+  --color-brand-red: #FF2D55;
+  --color-brand-lime: #BFFF00;
+
+  /* Brand fonts */
+  --font-bebas: 'Bebas Neue', sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-mono-brand: 'IBM Plex Mono', monospace;
+}

@@ -99,8 +99,8 @@ export default function LiveWatchPage() {
             <Link href="/browse" className="rounded-full bg-black/50 px-3 py-1.5 text-sm text-white/80 backdrop-blur-sm hover:bg-black/70">
               &larr; Back
             </Link>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-semibold text-red-400 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-1 text-xs font-semibold text-red-400 backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
               LIVE
             </span>
             <h1 className="text-sm font-semibold text-white drop-shadow-lg">{venue.name}</h1>

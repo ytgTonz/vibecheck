@@ -29,15 +29,15 @@ export default function NavBar() {
       {venueId && !isOnBroadcastPage && (
         <Link
           href={`/dashboard/live/${venueId}`}
-          className="flex items-center justify-center gap-2 bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600"
+          className="flex items-center justify-center gap-2 bg-brand-red px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-red/90"
         >
           <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
           You are live at {venueName} — tap to return to stream
         </Link>
       )}
       <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-        <Link href="/" className="text-lg font-bold tracking-tight">
-          VibeCheck
+        <Link href="/" className="font-bebas text-2xl tracking-widest">
+          <span className="text-zinc-100">VIBE</span><span className="text-brand-red">CHECK</span>
         </Link>
 
         {hydrated && (
@@ -69,7 +69,7 @@ export default function NavBar() {
                       </Link>
                       <Link
                         href="/dashboard"
-                        className="rounded-lg bg-red-500 px-3 py-1.5 font-medium text-white transition-colors hover:bg-red-600"
+                        className="rounded-lg bg-brand-red px-3 py-1.5 font-medium text-white transition-colors hover:bg-brand-red/90"
                       >
                         Go Live
                       </Link>
@@ -147,7 +147,7 @@ export default function NavBar() {
                     <Link
                       href="/dashboard"
                       onClick={() => setMenuOpen(false)}
-                      className="rounded-lg bg-red-500 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600"
+                      className="rounded-lg bg-brand-red px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-red/90"
                     >
                       Go Live
                     </Link>
