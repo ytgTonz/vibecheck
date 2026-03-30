@@ -27,14 +27,11 @@ router.post('/livekit', async (req: Request, res: Response) => {
     return;
   }
 
-  console.log('[Webhook]', event.event, 'room:', roomName);
-
   try {
     switch (event.event) {
       case 'room_started': {
         // Room created — stream stays IDLE until media is actually published.
         // The go-live endpoint or track_published webhook handles the transition.
-        console.log('[Webhook] room_started — stream stays IDLE');
         break;
       }
 
@@ -43,7 +40,6 @@ router.post('/livekit', async (req: Request, res: Response) => {
         // transition IDLE → LIVE when the broadcaster publishes camera video.
         const pub = event.participant;
         const track = event.track;
-        console.log('[Webhook] track_published participant:', pub?.identity, 'canPublish:', pub?.permission?.canPublish, 'trackSource:', track?.source);
         if (
           pub?.permission?.canPublish &&
           track?.source === TrackSource.CAMERA
@@ -65,7 +61,6 @@ router.post('/livekit', async (req: Request, res: Response) => {
               data: { venueId: transitioned.venueId, streamId: transitioned.id },
             });
           }
-          console.log('[Webhook] IDLE→LIVE transition triggered for room:', roomName);
         }
         break;
       }
@@ -126,8 +121,8 @@ router.post('/livekit', async (req: Request, res: Response) => {
         break;
       }
     }
-  } catch (err) {
-    console.error('Webhook processing error:', err);
+  } catch {
+    // webhook processing errors are non-fatal — always respond 200
   }
 
   res.status(200).send('ok');

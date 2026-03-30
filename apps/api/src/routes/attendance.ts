@@ -1,21 +1,16 @@
-import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { Router } from 'express';
+import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { optionalAuth } from '../middleware/auth';
 import { emitAttendanceUpdate } from '../lib/socket';
-import { AuthPayload } from '../middleware/auth';
+import { validateBody, asyncHandler } from '../middleware/validate';
 
 const router = Router();
 
-/** Optionally parse a Bearer token and attach user to req. */
-function tryAuth(req: Request): AuthPayload | null {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ') || !process.env.JWT_SECRET) return null;
-  try {
-    return jwt.verify(header.slice(7), process.env.JWT_SECRET) as AuthPayload;
-  } catch {
-    return null;
-  }
-}
+const AttendanceBodySchema = z.object({
+  streamId: z.string().min(1, 'streamId is required'),
+  deviceId: z.string().min(1, 'deviceId is required'),
+});
 
 async function getAttendanceCounts(streamId: string) {
   const [intentCount, arrivalCount] = await Promise.all([
@@ -26,13 +21,8 @@ async function getAttendanceCounts(streamId: string) {
 }
 
 /** POST /attendance/intent — record "I'm Coming" */
-router.post('/intent', async (req: Request, res: Response) => {
-  const { streamId, deviceId } = req.body as { streamId?: string; deviceId?: string };
-
-  if (!streamId || !deviceId) {
-    res.status(400).json({ error: 'streamId and deviceId are required' });
-    return;
-  }
+router.post('/intent', optionalAuth, validateBody(AttendanceBodySchema), asyncHandler(async (req, res) => {
+  const { streamId, deviceId } = req.body as z.infer<typeof AttendanceBodySchema>;
 
   const stream = await prisma.liveStream.findUnique({
     where: { id: streamId },
@@ -44,9 +34,8 @@ router.post('/intent', async (req: Request, res: Response) => {
     return;
   }
 
-  const user = tryAuth(req);
+  const userId = req.user?.userId ?? null;
 
-  // Upsert — idempotent, no error on duplicate
   const existing = await prisma.streamAttendance.findUnique({
     where: { deviceId_streamId_type: { deviceId, streamId, type: 'INTENT' } },
   });
@@ -57,18 +46,17 @@ router.post('/intent', async (req: Request, res: Response) => {
         streamId,
         venueId: stream.venueId,
         deviceId,
-        userId: user?.userId ?? null,
+        userId,
         type: 'INTENT',
       },
     });
 
-    // Schedule reminder push notification for authenticated users
-    if (user?.userId) {
+    if (userId) {
       const delayMinutes = 30 + Math.floor(Math.random() * 31); // 30–60 mins
       const scheduledFor = new Date(Date.now() + delayMinutes * 60 * 1000);
       await prisma.scheduledNotification.create({
         data: {
-          targetUserId: user.userId,
+          targetUserId: userId,
           title: `Don't forget — ${stream.venue.name} is live!`,
           body: 'Are you heading out?',
           data: { venueId: stream.venueId, streamId },
@@ -82,16 +70,11 @@ router.post('/intent', async (req: Request, res: Response) => {
   emitAttendanceUpdate({ venueId: stream.venueId, streamId, ...counts });
 
   res.json({ ...counts, alreadyPressed: !!existing });
-});
+}));
 
 /** POST /attendance/arrival — record "I'm Here" */
-router.post('/arrival', async (req: Request, res: Response) => {
-  const { streamId, deviceId } = req.body as { streamId?: string; deviceId?: string };
-
-  if (!streamId || !deviceId) {
-    res.status(400).json({ error: 'streamId and deviceId are required' });
-    return;
-  }
+router.post('/arrival', optionalAuth, validateBody(AttendanceBodySchema), asyncHandler(async (req, res) => {
+  const { streamId, deviceId } = req.body as z.infer<typeof AttendanceBodySchema>;
 
   const stream = await prisma.liveStream.findUnique({
     where: { id: streamId },
@@ -103,7 +86,7 @@ router.post('/arrival', async (req: Request, res: Response) => {
     return;
   }
 
-  const user = tryAuth(req);
+  const userId = req.user?.userId ?? null;
 
   const existing = await prisma.streamAttendance.findUnique({
     where: { deviceId_streamId_type: { deviceId, streamId, type: 'ARRIVAL' } },
@@ -115,7 +98,7 @@ router.post('/arrival', async (req: Request, res: Response) => {
         streamId,
         venueId: stream.venueId,
         deviceId,
-        userId: user?.userId ?? null,
+        userId,
         type: 'ARRIVAL',
       },
     });
@@ -125,13 +108,13 @@ router.post('/arrival', async (req: Request, res: Response) => {
   emitAttendanceUpdate({ venueId: stream.venueId, streamId, ...counts });
 
   res.json({ ...counts, alreadyPressed: !!existing });
-});
+}));
 
 /** GET /attendance/:streamId/counts */
-router.get('/:streamId/counts', async (req: Request, res: Response) => {
+router.get('/:streamId/counts', asyncHandler(async (req, res) => {
   const { streamId } = req.params;
   const counts = await getAttendanceCounts(streamId);
   res.json(counts);
-});
+}));
 
 export default router;

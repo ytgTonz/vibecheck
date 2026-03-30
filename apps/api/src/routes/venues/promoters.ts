@@ -1,15 +1,16 @@
 import crypto from 'crypto';
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../../lib/prisma';
 import { requireAuth } from '../../middleware/auth';
 import { isVenueOwner } from '../../lib/venueAuth';
+import { asyncHandler } from '../../middleware/validate';
 
 const INVITE_EXPIRY_DAYS = 7;
 
 const router = Router();
 
 // POST /venues/:id/invite — generate an invite code (owner only)
-router.post('/:id/invite', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/invite', requireAuth, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.userId;
 
@@ -31,10 +32,10 @@ router.post('/:id/invite', requireAuth, async (req: Request, res: Response) => {
   });
 
   res.status(201).json(invite);
-});
+}));
 
 // GET /venues/:id/promoters — list promoters for a venue (owner only)
-router.get('/:id/promoters', requireAuth, async (req: Request, res: Response) => {
+router.get('/:id/promoters', requireAuth, asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user!.userId;
 
@@ -52,10 +53,10 @@ router.get('/:id/promoters', requireAuth, async (req: Request, res: Response) =>
   });
 
   res.json(promoters);
-});
+}));
 
 // DELETE /venues/:id/promoters/:userId — remove a promoter (owner only)
-router.delete('/:id/promoters/:userId', requireAuth, async (req: Request, res: Response) => {
+router.delete('/:id/promoters/:userId', requireAuth, asyncHandler(async (req, res) => {
   const { id, userId: promoterUserId } = req.params;
   const userId = req.user!.userId;
 
@@ -74,6 +75,6 @@ router.delete('/:id/promoters/:userId', requireAuth, async (req: Request, res: R
   }
 
   res.status(204).end();
-});
+}));
 
 export default router;

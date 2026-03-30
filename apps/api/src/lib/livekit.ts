@@ -1,8 +1,9 @@
 import { AccessToken, RoomServiceClient, WebhookReceiver } from 'livekit-server-sdk';
+import { config } from '../config/env';
 
-const LIVEKIT_API_URL = process.env.LIVEKIT_API_URL || '';
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY || '';
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET || '';
+const LIVEKIT_API_URL = config.LIVEKIT_API_URL;
+const LIVEKIT_API_KEY = config.LIVEKIT_API_KEY;
+const LIVEKIT_API_SECRET = config.LIVEKIT_API_SECRET;
 
 /** Create a LiveKit JWT token for room access. */
 export async function createToken(

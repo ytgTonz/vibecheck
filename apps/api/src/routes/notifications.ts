@@ -1,23 +1,26 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { requireAuth, optionalAuth } from '../middleware/auth';
+import { validateBody, asyncHandler } from '../middleware/validate';
 
 const router = Router();
 
 const PAGE_SIZE = 20;
 
-// POST /notifications/push-token — register a mobile push token (auth optional)
-// Unauthenticated users get a token stored without a userId so they still receive
-// broadcast notifications (e.g. "venue just went live"). When the same token is
-// registered again after login, we link it to the user.
-router.post('/push-token', optionalAuth, async (req: Request, res: Response) => {
-  const userId = req.user?.userId ?? undefined;
-  const { token, platform } = req.body;
+const RegisterPushTokenSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  platform: z.string().min(1, 'Platform is required'),
+});
 
-  if (!token || !platform) {
-    res.status(400).json({ error: 'Token and platform are required' });
-    return;
-  }
+const UnregisterPushTokenSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+});
+
+// POST /notifications/push-token — register a mobile push token (auth optional)
+router.post('/push-token', optionalAuth, validateBody(RegisterPushTokenSchema), asyncHandler(async (req, res) => {
+  const userId = req.user?.userId ?? undefined;
+  const { token, platform } = req.body as z.infer<typeof RegisterPushTokenSchema>;
 
   await prisma.pushToken.upsert({
     where: { token },
@@ -26,23 +29,18 @@ router.post('/push-token', optionalAuth, async (req: Request, res: Response) => 
   });
 
   res.status(201).json({ ok: true });
-});
+}));
 
 // DELETE /notifications/push-token — unregister a push token (on logout)
-router.delete('/push-token', requireAuth, async (req: Request, res: Response) => {
-  const { token } = req.body;
-
-  if (!token) {
-    res.status(400).json({ error: 'Token is required' });
-    return;
-  }
+router.delete('/push-token', requireAuth, validateBody(UnregisterPushTokenSchema), asyncHandler(async (req, res) => {
+  const { token } = req.body as z.infer<typeof UnregisterPushTokenSchema>;
 
   await prisma.pushToken.deleteMany({ where: { token } });
   res.status(204).end();
-});
+}));
 
 // GET /notifications — fetch notifications for the current user
-router.get('/', requireAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, asyncHandler(async (req, res) => {
   const userId = req.user!.userId;
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const unreadOnly = req.query.unreadOnly === 'true';
@@ -72,10 +70,10 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
     pageSize: PAGE_SIZE,
     totalPages: Math.ceil(total / PAGE_SIZE),
   });
-});
+}));
 
 // PATCH /notifications/:id/read — mark a notification as read
-router.patch('/:id/read', requireAuth, async (req: Request, res: Response) => {
+router.patch('/:id/read', requireAuth, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const notification = await prisma.notification.findUnique({ where: { id } });
@@ -90,6 +88,6 @@ router.patch('/:id/read', requireAuth, async (req: Request, res: Response) => {
   });
 
   res.json({ ok: true });
-});
+}));
 
 export default router;

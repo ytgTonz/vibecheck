@@ -1,3 +1,4 @@
+import './config/env'; // validate env vars before anything else
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
@@ -12,12 +13,13 @@ import webhookRoutes from './routes/webhooks';
 import attendanceRoutes from './routes/attendance';
 import { initSocket } from './lib/socket';
 import { startNotificationPoller, startReceiptPoller } from './lib/scheduledNotifications';
+import { errorHandler } from './middleware/errorHandler';
+import { config } from './config/env';
 
 dotenv.config();
 
 const app = express();
 const httpServer = createServer(app);
-const PORT = process.env.PORT || 3001;
 
 // Initialise Socket.IO
 initSocket(httpServer);
@@ -50,6 +52,9 @@ app.use('/streams', streamRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/attendance', attendanceRoutes);
 
-httpServer.listen(PORT, () => {
-  console.log(`VibeCheck API running on port ${PORT}`);
+// Global error handler — must be last
+app.use(errorHandler);
+
+httpServer.listen(config.PORT, () => {
+  // Server started
 });

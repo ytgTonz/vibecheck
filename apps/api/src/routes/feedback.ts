@@ -1,42 +1,36 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { validateBody, asyncHandler } from '../middleware/validate';
 
 const router = Router();
 
-const VALID_CATEGORIES = ['BUG', 'SUGGESTION', 'GENERAL'] as const;
-const VALID_RATINGS = ['BAD', 'NEUTRAL', 'GOOD'] as const;
+const FeedbackSchema = z.object({
+  category: z.enum(['BUG', 'SUGGESTION', 'GENERAL'], {
+    message: 'category must be one of: BUG, SUGGESTION, GENERAL',
+  }),
+  rating: z.enum(['BAD', 'NEUTRAL', 'GOOD'], {
+    message: 'rating must be one of: BAD, NEUTRAL, GOOD',
+  }),
+  message: z.string().optional(),
+});
 
 /** POST /feedback — Submit feedback (authenticated). */
-router.post('/', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const { category, rating, message } = req.body;
-    const userId = req.user!.userId;
+router.post('/', requireAuth, validateBody(FeedbackSchema), asyncHandler(async (req, res) => {
+  const { category, rating, message } = req.body as z.infer<typeof FeedbackSchema>;
+  const userId = req.user!.userId;
 
-    if (!category || !VALID_CATEGORIES.includes(category)) {
-      res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(', ')}` });
-      return;
-    }
+  const feedback = await prisma.feedback.create({
+    data: {
+      category,
+      rating,
+      message: message?.trim() || null,
+      userId,
+    },
+  });
 
-    if (!rating || !VALID_RATINGS.includes(rating)) {
-      res.status(400).json({ error: `rating must be one of: ${VALID_RATINGS.join(', ')}` });
-      return;
-    }
-
-    const feedback = await prisma.feedback.create({
-      data: {
-        category,
-        rating,
-        message: message?.trim() || null,
-        userId,
-      },
-    });
-
-    res.status(201).json(feedback);
-  } catch (err) {
-    console.error('Failed to submit feedback:', err);
-    res.status(500).json({ error: 'Failed to submit feedback' });
-  }
-});
+  res.status(201).json(feedback);
+}));
 
 export default router;

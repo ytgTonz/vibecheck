@@ -1,24 +1,25 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { z } from 'zod';
 import prisma from '../../lib/prisma';
 import { requireAuth } from '../../middleware/auth';
 import { isVenueMember, isVenueOwner } from '../../lib/venueAuth';
 import { createToken, roomService } from '../../lib/livekit';
 import { emitStreamStarted, emitStreamLive, emitStreamEnded } from '../../lib/socket';
 import { sendNotification } from '../../lib/notifications';
+import { validateBody, asyncHandler } from '../../middleware/validate';
 
 const STALE_IDLE_STREAM_MS = 60 * 60 * 1000;
 
 const router = Router();
 
-// POST /streams — create a new stream for a venue
-router.post('/', requireAuth, async (req: Request, res: Response) => {
-  const userId = req.user!.userId;
-  const { venueId } = req.body;
+const CreateStreamSchema = z.object({
+  venueId: z.string().min(1, 'venueId is required'),
+});
 
-  if (!venueId) {
-    res.status(400).json({ error: 'venueId is required' });
-    return;
-  }
+// POST /streams — create a new stream for a venue
+router.post('/', requireAuth, validateBody(CreateStreamSchema), asyncHandler(async (req, res) => {
+  const userId = req.user!.userId;
+  const { venueId } = req.body as z.infer<typeof CreateStreamSchema>;
 
   if (!(await isVenueMember(userId, venueId))) {
     res.status(403).json({ error: 'Not authorized for this venue' });
@@ -27,7 +28,6 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
   const staleBefore = new Date(Date.now() - STALE_IDLE_STREAM_MS);
 
-  // Expire abandoned setup sessions before checking for an active stream.
   await prisma.liveStream.updateMany({
     where: {
       venueId,
@@ -40,7 +40,6 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     },
   });
 
-  // Check for existing active stream
   const existing = await prisma.liveStream.findFirst({
     where: { venueId, status: { in: ['IDLE', 'LIVE'] } },
   });
@@ -65,11 +64,9 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
       },
     });
 
-    console.log('[Streams] created stream:', stream.id, 'status:', stream.status, 'room:', stream.livekitRoom);
     emitStreamStarted({ venueId, streamId: stream.id });
     res.status(201).json(stream);
   } catch (err: unknown) {
-    // Partial unique index violation — concurrent request created a stream
     if (
       typeof err === 'object' &&
       err !== null &&
@@ -81,10 +78,10 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     }
     throw err;
   }
-});
+}));
 
 // POST /streams/:id/token — broadcaster token (creator only)
-router.post('/:id/token', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/token', requireAuth, asyncHandler(async (req, res) => {
   const userId = req.user!.userId;
 
   const stream = await prisma.liveStream.findUnique({
@@ -107,14 +104,11 @@ router.post('/:id/token', requireAuth, async (req: Request, res: Response) => {
   });
 
   res.json({ token });
-});
+}));
 
 // POST /streams/:id/go-live — broadcaster confirms media is published
-// Called by the broadcaster client once its local track is active.
-// Also triggered by the track_published webhook as a backup.
-router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/go-live', requireAuth, asyncHandler(async (req, res) => {
   const userId = req.user!.userId;
-  console.log('[Streams] go-live request for stream:', req.params.id, 'by user:', userId);
 
   const stream = await prisma.liveStream.findUnique({
     where: { id: req.params.id },
@@ -130,9 +124,7 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
     return;
   }
 
-  // Already live or ended — no-op / error
   if (stream.status === 'LIVE') {
-    console.log('[Streams] go-live no-op — already LIVE');
     res.json(stream);
     return;
   }
@@ -150,17 +142,14 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
     },
   });
 
-  console.log('[Streams] go-live success — IDLE→LIVE, stream:', updated.id);
   emitStreamLive({ venueId: stream.venueId, streamId: stream.id });
 
-  // Broadcast notification to all users
   sendNotification({
     type: 'STREAM_LIVE',
     title: `${updated.venue!.name} just went live`,
     body: 'Tune in now to see the vibe!',
     data: { venueId: stream.venueId, streamId: stream.id },
   });
-  // Targeted notification to venue owner
   if (updated.venue!.ownerId !== userId) {
     sendNotification({
       type: 'STREAM_LIVE',
@@ -172,10 +161,10 @@ router.post('/:id/go-live', requireAuth, async (req: Request, res: Response) => 
   }
 
   res.json(updated);
-});
+}));
 
 // POST /streams/:id/end — end a stream (creator or venue owner)
-router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
+router.post('/:id/end', requireAuth, asyncHandler(async (req, res) => {
   const userId = req.user!.userId;
 
   const stream = await prisma.liveStream.findUnique({
@@ -201,7 +190,6 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
     return;
   }
 
-  // Delete the LiveKit room (best-effort)
   try {
     await roomService.deleteRoom(stream.livekitRoom);
   } catch {
@@ -225,6 +213,6 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
     targetRole: 'ADMIN',
   });
   res.json(updated);
-});
+}));
 
 export default router;

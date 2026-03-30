@@ -1,13 +1,14 @@
 import crypto from 'crypto';
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../../lib/prisma';
 import { createToken } from '../../lib/livekit';
+import { asyncHandler } from '../../middleware/validate';
 
 const router = Router();
 
 // GET /streams/active — all LIVE streams with venue info
 // Must be registered before /:id to prevent 'active' matching as an id
-router.get('/active', async (_req: Request, res: Response) => {
+router.get('/active', asyncHandler(async (_req, res) => {
   const streams = await prisma.liveStream.findMany({
     where: { status: 'LIVE' },
     include: {
@@ -17,10 +18,10 @@ router.get('/active', async (_req: Request, res: Response) => {
   });
 
   res.json(streams);
-});
+}));
 
 // GET /streams/venue/:venueId/recent — recent ended streams with attendance funnel counts
-router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
+router.get('/venue/:venueId/recent', asyncHandler(async (req, res) => {
   const streams = await prisma.liveStream.findMany({
     where: { venueId: req.params.venueId, status: 'ENDED' },
     orderBy: { endedAt: 'desc' },
@@ -35,7 +36,6 @@ router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
     return;
   }
 
-  // Fetch attendance counts (INTENT + ARRIVAL) for all returned streams in one query
   const streamIds = streams.map((s) => s.id);
   const attendanceCounts = await prisma.streamAttendance.groupBy({
     by: ['streamId', 'type'],
@@ -43,7 +43,6 @@ router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
     _count: { _all: true },
   });
 
-  // Build a lookup: streamId → { intentCount, arrivalCount }
   const countMap: Record<string, { intentCount: number; arrivalCount: number }> = {};
   for (const row of attendanceCounts) {
     if (!countMap[row.streamId]) countMap[row.streamId] = { intentCount: 0, arrivalCount: 0 };
@@ -58,10 +57,10 @@ router.get('/venue/:venueId/recent', async (req: Request, res: Response) => {
   }));
 
   res.json(result);
-});
+}));
 
 // GET /streams/:id — stream details
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const stream = await prisma.liveStream.findUnique({
     where: { id: req.params.id },
     include: {
@@ -75,10 +74,10 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 
   res.json(stream);
-});
+}));
 
 // GET /streams/:id/viewer-token — anonymous viewer token
-router.get('/:id/viewer-token', async (req: Request, res: Response) => {
+router.get('/:id/viewer-token', asyncHandler(async (req, res) => {
   const stream = await prisma.liveStream.findUnique({
     where: { id: req.params.id },
   });
@@ -100,6 +99,6 @@ router.get('/:id/viewer-token', async (req: Request, res: Response) => {
   });
 
   res.json({ token });
-});
+}));
 
 export default router;

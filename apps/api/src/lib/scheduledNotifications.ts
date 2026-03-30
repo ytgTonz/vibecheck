@@ -32,11 +32,10 @@ export function startReceiptPoller() {
 
         if (deadTokens.length > 0) {
           await prisma.pushToken.deleteMany({ where: { token: { in: deadTokens } } });
-          console.log(`[Receipts] Pruned ${deadTokens.length} dead push token(s)`);
         }
       }
-    } catch (err) {
-      console.error('[Receipts] poller error:', err);
+    } catch {
+      // poller errors are non-fatal
     }
   }, 15 * 60 * 1000);
 }
@@ -64,8 +63,8 @@ export function startNotificationPoller() {
           targetUserId: scheduled.targetUserId ?? undefined,
         });
       }
-    } catch (err) {
-      console.error('[ScheduledNotifications] poller error:', err);
+    } catch {
+      // poller errors are non-fatal
     }
   }, 60_000);
 }

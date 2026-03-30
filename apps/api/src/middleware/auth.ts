@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { config } from '../config/env';
 
 export interface AuthPayload {
   userId: string;
@@ -15,15 +16,8 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 /** Middleware that verifies the JWT and attaches `req.user`. */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!JWT_SECRET) {
-    res.status(500).json({ error: 'Server auth not configured' });
-    return;
-  }
-
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Authentication required' });
@@ -33,7 +27,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const token = header.slice(7);
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as AuthPayload;
+    const payload = jwt.verify(token, config.JWT_SECRET) as AuthPayload;
     req.user = payload;
     next();
   } catch {
@@ -44,9 +38,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 /** Middleware that attaches `req.user` if a valid token is present, but never rejects. */
 export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
-  if (JWT_SECRET && header?.startsWith('Bearer ')) {
+  if (header?.startsWith('Bearer ')) {
     try {
-      req.user = jwt.verify(header.slice(7), JWT_SECRET) as AuthPayload;
+      req.user = jwt.verify(header.slice(7), config.JWT_SECRET) as AuthPayload;
     } catch {
       // Invalid token — proceed as unauthenticated
     }

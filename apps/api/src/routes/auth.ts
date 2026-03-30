@@ -1,24 +1,54 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import prisma from '../lib/prisma';
+import { config } from '../config/env';
 import { sendNotification } from '../lib/notifications';
+import { validateBody, asyncHandler } from '../middleware/validate';
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not set in environment variables');
-}
-
 const SALT_ROUNDS = 10;
 const INVITE_EXPIRY_DAYS = 7;
+
+const RegisterOwnerSchema = z.object({
+  accountType: z.literal('owner'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(1, 'Name is required'),
+  venue: z.object({
+    name: z.string().min(1, 'Venue name is required'),
+    type: z.string().min(1, 'Venue type is required'),
+    location: z.string().min(1, 'Venue location is required'),
+    hours: z.string().optional(),
+    musicGenre: z.array(z.string()).optional(),
+  }),
+});
+
+const RegisterPromoterSchema = z.object({
+  accountType: z.literal('promoter'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(1, 'Name is required'),
+  inviteCode: z.string().min(1, 'Invite code is required'),
+});
+
+const RegisterSchema = z.discriminatedUnion('accountType', [
+  RegisterOwnerSchema,
+  RegisterPromoterSchema,
+]);
+
+const LoginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
 
 /** Build a JWT and user response object. */
 function buildAuthResponse(user: { id: string; email: string; name: string; role: string; createdAt: Date }) {
   const token = jwt.sign(
     { userId: user.id, role: user.role },
-    JWT_SECRET!,
+    config.JWT_SECRET,
     { expiresIn: '7d' }
   );
 
@@ -35,26 +65,10 @@ function buildAuthResponse(user: { id: string; email: string; name: string; role
 }
 
 // POST /auth/register
-router.post('/register', async (req: Request, res: Response) => {
-  const { accountType, email, password, name } = req.body;
+router.post('/register', validateBody(RegisterSchema), asyncHandler(async (req, res) => {
+  const body = req.body as z.infer<typeof RegisterSchema>;
+  const { email, password, name } = body;
 
-  // Common validation
-  if (!accountType || !email || !password || !name) {
-    res.status(400).json({ error: 'accountType, email, password, and name are required' });
-    return;
-  }
-
-  if (accountType !== 'owner' && accountType !== 'promoter') {
-    res.status(400).json({ error: 'accountType must be "owner" or "promoter"' });
-    return;
-  }
-
-  if (password.length < 8) {
-    res.status(400).json({ error: 'Password must be at least 8 characters' });
-    return;
-  }
-
-  // Check if email already taken
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     res.status(409).json({ error: 'Email already registered' });
@@ -64,13 +78,8 @@ router.post('/register', async (req: Request, res: Response) => {
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
   // ─── Owner registration ──────────────────────────────────────────────
-  if (accountType === 'owner') {
-    const { venue } = req.body;
-
-    if (!venue?.name || !venue?.type || !venue?.location) {
-      res.status(400).json({ error: 'Venue name, type, and location are required' });
-      return;
-    }
+  if (body.accountType === 'owner') {
+    const { venue } = body;
 
     const [user] = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -108,12 +117,7 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   // ─── Promoter registration (with invite code) ────────────────────────
-  const { inviteCode } = req.body;
-
-  if (!inviteCode) {
-    res.status(400).json({ error: 'Invite code is required for promoter registration' });
-    return;
-  }
+  const { inviteCode } = body;
 
   const invite = await prisma.invite.findUnique({
     where: { code: inviteCode.toUpperCase() },
@@ -171,16 +175,11 @@ router.post('/register', async (req: Request, res: Response) => {
     targetRole: 'ADMIN',
   });
   res.status(201).json(buildAuthResponse(user));
-});
+}));
 
 // POST /auth/login
-router.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    res.status(400).json({ error: 'email and password are required' });
-    return;
-  }
+router.post('/login', validateBody(LoginSchema), asyncHandler(async (req, res) => {
+  const { email, password } = req.body as z.infer<typeof LoginSchema>;
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -195,6 +194,6 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   res.json(buildAuthResponse(user));
-});
+}));
 
 export default router;

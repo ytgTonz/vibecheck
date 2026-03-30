@@ -1,12 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import prisma from '../../lib/prisma';
 import { requireAuth, requireRole } from '../../middleware/auth';
 import { roomService } from '../../lib/livekit';
+import { asyncHandler } from '../../middleware/validate';
 
 const router = Router();
 
 // POST /streams/end-all — admin force-end all IDLE/LIVE streams
-router.post('/end-all', requireAuth, requireRole('ADMIN'), async (_req: Request, res: Response) => {
+router.post('/end-all', requireAuth, requireRole('ADMIN'), asyncHandler(async (_req, res) => {
   const active = await prisma.liveStream.findMany({
     where: { status: { in: ['IDLE', 'LIVE'] } },
   });
@@ -24,8 +25,7 @@ router.post('/end-all', requireAuth, requireRole('ADMIN'), async (_req: Request,
     data: { status: 'ENDED', endedAt: new Date() },
   });
 
-  console.log(`[Streams] admin force-ended ${result.count} stream(s)`);
   res.json({ ended: result.count });
-});
+}));
 
 export default router;
