@@ -4,6 +4,7 @@ import { ActivityIndicator, Animated, Pressable, RefreshControl, ScrollView, Sty
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useVenueStore,
+  useSocket,
   Venue,
   filterVenues,
   groupBrowseVenues,
@@ -77,17 +78,26 @@ export default function BrowseScreen() {
   const venueTypeFilter = useVenueStore((s) => s.venueTypeFilter);
   const musicGenreFilter = useVenueStore((s) => s.musicGenreFilter);
   const clearFilters = useVenueStore((s) => s.clearFilters);
+  const setVenueLive = useVenueStore((s) => s.setVenueLive);
+  const setVenueOffline = useVenueStore((s) => s.setVenueOffline);
+  const setViewerCount = useVenueStore((s) => s.setViewerCount);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadVenues();
-
-    const interval = setInterval(() => {
-      loadVenues();
-    }, 15_000);
-
-    return () => clearInterval(interval);
+    void loadVenues();
   }, [loadVenues]);
+
+  useSocket({
+    'stream:live': ({ venueId, streamId }) => {
+      setVenueLive(venueId, streamId);
+    },
+    'stream:ended': ({ venueId }) => {
+      setVenueOffline(venueId);
+    },
+    'stream:viewers': ({ venueId, currentViewerCount }) => {
+      setViewerCount(venueId, currentViewerCount);
+    },
+  });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
