@@ -15,8 +15,8 @@ jobs:
       contents: write
 
     env:
-      APK_PATH: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
-      APK_ASSET_NAME: vibecheck-android-debug.apk
+      APK_PATH: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+      APK_ASSET_NAME: vibecheck-android.apk
       RELEASE_TAG: apk-latest
 
     steps:
@@ -83,14 +83,29 @@ jobs:
           key: gradle-${{ hashFiles('apps/mobile/android/**/*.gradle*', 'apps/mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-
 
-      - name: Build debug APK
+      - name: Write keystore
         working-directory: apps/mobile/android
-        run: ./gradlew assembleDebug --no-daemon
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > app/vibecheck.keystore
+
+      - name: Build release APK
+        working-directory: apps/mobile/android
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$(pwd)/app/vibecheck.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: vibecheck-${{ github.run_number }}-debug
+          name: vibecheck-${{ github.run_number }}
           path: ${{ env.APK_PATH }}
           retention-days: 30
 
@@ -99,7 +114,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 \
-            && gh release edit "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest debug APK build from CI." \
-            || gh release create "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest debug APK build from CI."
+            && gh release edit "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest release APK build from CI." \
+            || gh release create "$RELEASE_TAG" --title "Latest Android APK" --notes "Latest release APK build from CI."
 
           gh release upload "$RELEASE_TAG" "$APK_PATH#$APK_ASSET_NAME" --clobber
