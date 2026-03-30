@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mindspyr.vibecheck"
+      "bundleIdentifier": "com.ytgtonz.vibecheck"
     },
     "android": {
-      "package": "com.mindspyr.vibecheck",
+      "package": "com.ytgtonz.vibecheck",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
