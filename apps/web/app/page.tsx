@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const APK_DOWNLOAD_URL =
-  "https://github.com/ytgTonz/vibecheck/releases/latest/download/vibecheck-android.apk";
+  "https://github.com/ytgTonz/vibecheck/releases/download/apk-latest/app-release.apk";
 
 const pillars = [
   {
