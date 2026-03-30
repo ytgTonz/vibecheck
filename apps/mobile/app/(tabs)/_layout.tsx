@@ -41,7 +41,7 @@ function LiveBanner() {
     <Pressable
       onPress={() => router.push(`/broadcast/${venueId}` as any)}
       style={{
-        backgroundColor: '#dc2626',
+        backgroundColor: '#FF2D55',
         paddingVertical: 10,
         paddingHorizontal: 16,
         flexDirection: 'row',
@@ -143,12 +143,12 @@ export default function TabLayout() {
                       height: 54,
                       width: 54,
                       borderRadius: 27,
-                      backgroundColor: focused ? '#ef4444' : '#dc2626',
+                      backgroundColor: focused ? '#ff4d6d' : '#FF2D55',
                       alignItems: 'center',
                       justifyContent: 'center',
                       borderWidth: broadcastVenueId ? 2 : 3,
-                      borderColor: broadcastVenueId ? '#4ade80' : '#18181b',
-                      shadowColor: broadcastVenueId ? '#22c55e' : '#ef4444',
+                      borderColor: broadcastVenueId ? '#BFFF00' : '#18181b',
+                      shadowColor: broadcastVenueId ? '#BFFF00' : '#FF2D55',
                       shadowOpacity: broadcastVenueId ? 0.6 : 0.35,
                       shadowRadius: broadcastVenueId ? 18 : 14,
                       shadowOffset: { width: 0, height: 8 },
@@ -169,10 +169,10 @@ export default function TabLayout() {
                       fontSize: 11,
                       fontWeight: '700',
                       color: broadcastVenueId
-                        ? '#4ade80'
+                        ? '#BFFF00'
                         : focused
-                          ? '#fca5a5'
-                          : '#f87171',
+                          ? '#ff8fa3'
+                          : '#FF2D55',
                     }}
                   >
                     {broadcastVenueId ? 'LIVE' : 'Go Live'}

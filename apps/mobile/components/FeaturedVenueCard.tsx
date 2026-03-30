@@ -37,7 +37,7 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
 
         {/* LIVE badge — absolute top right */}
         {isLive && (
-          <View className="absolute right-5 top-5 flex-row items-center gap-1.5 rounded-xl bg-red-600 px-3 py-1.5">
+          <View className="absolute right-5 top-5 flex-row items-center gap-1.5 rounded-xl bg-brand-red px-3 py-1.5">
             <PulseDot size={7} color="white" />
             <Text className="text-[11px] font-semibold text-white">LIVE</Text>
           </View>

@@ -47,8 +47,10 @@ export default function GateScreen() {
 
       <View style={styles.top}>
         <VibecheckIcon size={80} />
-        <Text style={styles.title}>VibeCheck</Text>
-        <Text style={styles.tagline}>See the vibe before you arrive.</Text>
+        <Text style={styles.title}>
+          {'VIBE'}<Text style={{ color: '#FF2D55' }}>{'CHECK'}</Text>
+        </Text>
+        <Text style={styles.tagline}>Feel the night.</Text>
       </View>
 
       <View style={styles.bottom}>
@@ -91,10 +93,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
+    fontSize: 52,
+    fontFamily: 'BebasNeue_400Regular',
     color: '#f4f4f5',
-    letterSpacing: -0.5,
+    letterSpacing: 2,
   },
   tagline: {
     fontSize: 15,

@@ -19,7 +19,7 @@ export function LiveStreamBanner({ activeStream, onPress }: LiveStreamBannerProp
   return (
     <Pressable
       onPress={onPress}
-      className="mb-5 rounded-[24px] bg-red-600 p-4 flex-row justify-between items-center active:opacity-90"
+      className="mb-5 rounded-[24px] bg-brand-red p-4 flex-row justify-between items-center active:opacity-90"
     >
       <View>
         <View className="flex-row items-center gap-1.5">
@@ -32,7 +32,7 @@ export function LiveStreamBanner({ activeStream, onPress }: LiveStreamBannerProp
       </View>
 
       <View className="bg-white rounded-2xl px-4 py-2">
-        <Text className="text-xs font-semibold text-red-600">Watch →</Text>
+        <Text className="text-xs font-semibold text-brand-red">Watch →</Text>
       </View>
     </Pressable>
   );

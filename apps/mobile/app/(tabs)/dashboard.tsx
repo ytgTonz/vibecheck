@@ -138,7 +138,7 @@ export default function DashboardScreen() {
                 <Text className="mt-1.5 text-sm text-zinc-400">{venue.location}</Text>
               </View>
               {venue.isLive && (
-                <View className="flex-row items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5">
+                <View className="flex-row items-center gap-1.5 rounded-lg bg-brand-red px-3 py-1.5">
                   <Text className="text-xs font-semibold text-white">
                     LIVE · {venue.currentViewerCount}
                   </Text>
@@ -156,7 +156,7 @@ export default function DashboardScreen() {
                     })
                   }
                   className={`flex-1 rounded-2xl px-4 py-3.5 ${
-                    venue.isLive ? 'bg-zinc-100' : 'bg-red-600'
+                    venue.isLive ? 'bg-zinc-100' : 'bg-brand-red'
                   }`}
                 >
                   <Text

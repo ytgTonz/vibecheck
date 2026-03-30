@@ -108,7 +108,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
       <View className="flex-1 px-4 pt-3 pb-4 gap-3">
         {/* Status bar: LIVE badge + timer */}
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2 rounded-xl bg-red-600 px-4 py-2">
+          <View className="flex-row items-center gap-2 rounded-xl bg-brand-red px-4 py-2">
             <View className="w-2.5 h-2.5 rounded-full bg-white" />
             <Text className="text-sm font-semibold text-white">LIVE</Text>
           </View>
