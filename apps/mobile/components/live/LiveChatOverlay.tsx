@@ -75,6 +75,7 @@ export function LiveChatOverlay({
 
   return (
     <Animated.View
+      pointerEvents="box-none"
       style={[
         {
           position: 'absolute',
