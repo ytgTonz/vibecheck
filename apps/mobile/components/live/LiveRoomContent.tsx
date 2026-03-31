@@ -67,18 +67,21 @@ export function LiveRoomContent({
           ? Math.max(20, Math.min(width - size - 20, width - size - 28))
           : Math.max(20, Math.min(safeWidth, 20 + Math.random() * (safeWidth - 20)));
 
-      setFloatingReactions((current) => [
-        ...current,
-        {
-          id: nextReactionIdRef.current++,
-          emoji,
-          left,
-          bottom: 148,
-          size,
-          drift: Math.random() * 56 - 28,
-          duration: 1500 + Math.round(Math.random() * 500),
-        },
-      ]);
+      setFloatingReactions((current) => {
+        if (current.length >= 12) return current;
+        return [
+          ...current,
+          {
+            id: nextReactionIdRef.current++,
+            emoji,
+            left,
+            bottom: 148,
+            size,
+            drift: Math.random() * 56 - 28,
+            duration: 1500 + Math.round(Math.random() * 500),
+          },
+        ];
+      });
     },
     [width],
   );
