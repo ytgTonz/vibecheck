@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import VibecheckIcon from '@/components/VibecheckIcon';
 
 interface Props {
   onSignIn: () => void;
@@ -13,8 +14,8 @@ export function LiveAuthGate({ onSignIn, onCreateAccount }: Props) {
       <Stack.Screen options={{ headerShown: false }} />
       <View className="flex-1 items-center justify-center px-8">
         <View className="w-full max-w-[280px] items-center">
-          <View className="mb-5 h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
-            <Text className="text-2xl">🎥</Text>
+          <View className="mb-5">
+            <VibecheckIcon size={34} />
           </View>
           <Text className="text-center text-xl font-semibold text-white">
             Sign in to watch live
