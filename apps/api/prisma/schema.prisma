@@ -27,23 +27,33 @@ model Venue {
   promoters VenuePromoter[]
   invites   Invite[]
   streams   LiveStream[]
+  incentives VenueIncentive[]
+  visits     VenueVisit[]
+  qrTokens   AttendanceQRToken[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      UserRole @default(VENUE_PROMOTER)
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  email            String   @unique
+  password         String
+  name             String
+  role             UserRole @default(VENUE_PROMOTER)
+  phone            String?
+  emailVerified    Boolean  @default(false)
+  phoneVerified    Boolean  @default(false)
+  emailVerifyToken String?  @unique
+  phoneOtp         String?  // TODO: hash before v2
+  createdAt        DateTime @default(now())
 
-  ownedVenues    Venue[]         @relation("OwnedVenues")
+  ownedVenues    Venue[]             @relation("OwnedVenues")
   venueLinks     VenuePromoter[]
   createdInvites Invite[]
   feedback       Feedback[]
-  createdStreams  LiveStream[]    @relation("CreatedStreams")
+  createdStreams  LiveStream[]        @relation("CreatedStreams")
   pushTokens     PushToken[]
   notifications  Notification[]
+  venueVisits    VenueVisit[]
+  qrTokens       AttendanceQRToken[]
 }
 
 model VenuePromoter {
@@ -100,6 +110,7 @@ enum UserRole {
   VENUE_PROMOTER
   VENUE_OWNER
   ADMIN
+  VIEWER
 }
 
 enum FeedbackCategory {
@@ -214,4 +225,62 @@ model ScheduledNotification {
   createdAt    DateTime @default(now())
 
   @@index([sent, scheduledFor])
+}
+
+// ─── Venue Visit / QR Check-in ───────────────────────────────────────────────
+
+model VenueIncentive {
+  id          String    @id @default(cuid())
+  venueId     String
+  title       String
+  description String
+  expiresAt   DateTime?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  venue  Venue             @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  visits VenueVisit[]
+  tokens AttendanceQRToken[]
+
+  @@index([venueId, active])
+}
+
+model VenueVisit {
+  id          String    @id @default(cuid())
+  userId      String
+  venueId     String
+  streamId    String?
+  intentAt    DateTime?
+  arrivedAt   DateTime?
+  incentiveId String?
+  createdAt   DateTime  @default(now())
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue     Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  incentive VenueIncentive? @relation(fields: [incentiveId], references: [id])
+  qrToken   AttendanceQRToken?
+
+  // Advisory only — Postgres does NOT enforce uniqueness for null streamId values.
+  // Always use findFirst({ where: { userId, venueId, streamId: streamId ?? null } }) — never findUnique.
+  @@unique([userId, venueId, streamId])
+  @@index([venueId])
+}
+
+model AttendanceQRToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  userId      String
+  venueId     String
+  visitId     String    @unique
+  incentiveId String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue     Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  visit     VenueVisit      @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  incentive VenueIncentive? @relation(fields: [incentiveId], references: [id])
+
+  @@index([venueId, usedAt])
 }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { fetchStream, fetchVenue, fetchViewerToken, LiveStream, Venue } from '@vibecheck/shared';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { fetchStream, fetchVenue, fetchViewerToken, LiveStream, useAuthStore, Venue } from '@vibecheck/shared';
 import { ErrorState, LoadingState } from '@/components/live/LiveStates';
+import { LiveAuthGate } from '@/components/live/LiveAuthGate';
 import { LiveRoomContent } from '@/components/live/LiveRoomContent';
 import {
   AndroidAudioTypePresets,
@@ -14,6 +15,8 @@ const LIVEKIT_URL = process.env.EXPO_PUBLIC_LIVEKIT_URL || '';
 
 export default function MobileLiveWatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { user, hydrated } = useAuthStore();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -136,6 +139,16 @@ export default function MobileLiveWatchScreen() {
       cancelled = true;
     };
   }, [id, retryCount]);
+
+  // Gate: guests cannot watch live streams
+  if (hydrated && !user) {
+    return (
+      <LiveAuthGate
+        onSignIn={() => router.push('/login')}
+        onCreateAccount={() => router.push('/(tabs)/(auth)/viewer-register' as never)}
+      />
+    );
+  }
 
   if (loading) {
     return <LoadingState venueName={venue?.name} />;

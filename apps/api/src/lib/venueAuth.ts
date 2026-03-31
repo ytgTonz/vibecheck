@@ -2,12 +2,15 @@ import prisma from './prisma';
 
 /**
  * Check whether a user is authorized to act on a venue.
- * Returns true if the user is the venue owner or a linked promoter.
+ * Returns true if the user is the venue owner, a linked promoter, or ADMIN.
  */
 export async function isVenueMember(
   userId: string,
-  venueId: string
+  venueId: string,
+  userRole?: string
 ): Promise<boolean> {
+  if (userRole === 'ADMIN') return true;
+
   const venue = await prisma.venue.findUnique({
     where: { id: venueId },
     select: { ownerId: true },

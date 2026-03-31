@@ -92,4 +92,30 @@ router.get('/:id/attendance-summary', requireAuth, async (req: Request, res: Res
   res.json({ venueId: id, from, to, days, totals });
 });
 
+// GET /venues/:id/visit-stats — coming / arrived / claimed counts for dashboard
+router.get('/:id/visit-stats', requireAuth, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user!.userId;
+  const userRole = req.user!.role;
+
+  if (!(await isVenueMember(userId, id, userRole))) {
+    res.status(403).json({ error: 'Only venue members can access visit stats' });
+    return;
+  }
+
+  const venue = await prisma.venue.findUnique({ where: { id }, select: { id: true } });
+  if (!venue) {
+    res.status(404).json({ error: 'Venue not found' });
+    return;
+  }
+
+  const [comingCount, arrivedCount, claimedCount] = await Promise.all([
+    prisma.venueVisit.count({ where: { venueId: id, intentAt: { not: null } } }),
+    prisma.venueVisit.count({ where: { venueId: id, arrivedAt: { not: null } } }),
+    prisma.attendanceQRToken.count({ where: { venueId: id, usedAt: { not: null } } }),
+  ]);
+
+  res.json({ venueId: id, comingCount, arrivedCount, claimedCount });
+});
+
 export default router;

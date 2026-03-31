@@ -1,11 +1,16 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { VenueWithStats, VenuePromoter, Invite, LiveStream, User } from "@vibecheck/shared";
+import { VenueWithStats, VenuePromoter, Invite, LiveStream, User, fetchVenueVisitStats, VisitStatsResponse } from "@vibecheck/shared";
 import StreamFunnelCard from "@/components/StreamFunnelCard";
 import { PromoterPanel } from "./PromoterPanel";
+import { IncentivePanel } from "./IncentivePanel";
 
 interface VenueStreamCardProps {
   venue: VenueWithStats;
   user: User | null;
+  token: string;
   isOwner: boolean;
   recentStreams: LiveStream[];
   loadingStreams: boolean;
@@ -18,11 +23,19 @@ interface VenueStreamCardProps {
 }
 
 export function VenueStreamCard({
-  venue, user, isOwner,
+  venue, user, token, isOwner,
   recentStreams, loadingStreams,
   promoters, invite, loadingPromoters,
   onLoadPromoters, onGenerateInvite, onRemovePromoter,
 }: VenueStreamCardProps) {
+  const [stats, setStats] = useState<VisitStatsResponse | null>(null);
+
+  useEffect(() => {
+    fetchVenueVisitStats(venue.id, token)
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, [venue.id, token]);
+
   return (
     <div className="mb-8 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -48,6 +61,9 @@ export function VenueStreamCard({
               Go Live
             </Link>
           )}
+          <Link href={`/dashboard/scan/${venue.id}`} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700">
+            Scan QR
+          </Link>
           {venue.ownerId === user?.id && (
             <Link href={`/dashboard/edit/${venue.id}`} className="text-sm text-zinc-400 hover:text-white">
               Edit
@@ -58,6 +74,26 @@ export function VenueStreamCard({
           </Link>
         </div>
       </div>
+
+      {/* Visit stats */}
+      {stats && (
+        <div className="mb-4 flex gap-4 rounded-lg bg-zinc-800/40 px-4 py-3">
+          <div className="text-center">
+            <p className="text-lg font-bold text-zinc-100">{stats.comingCount}</p>
+            <p className="text-xs text-zinc-500">Coming</p>
+          </div>
+          <div className="w-px bg-zinc-700" />
+          <div className="text-center">
+            <p className="text-lg font-bold text-zinc-100">{stats.arrivedCount}</p>
+            <p className="text-xs text-zinc-500">Arrived</p>
+          </div>
+          <div className="w-px bg-zinc-700" />
+          <div className="text-center">
+            <p className="text-lg font-bold text-zinc-100">{stats.claimedCount}</p>
+            <p className="text-xs text-zinc-500">Claimed</p>
+          </div>
+        </div>
+      )}
 
       {!venue.isLive && (
         <Link
@@ -88,6 +124,10 @@ export function VenueStreamCard({
           onGenerateInvite={onGenerateInvite}
           onRemovePromoter={onRemovePromoter}
         />
+      )}
+
+      {isOwner && venue.ownerId === user?.id && (
+        <IncentivePanel venueId={venue.id} token={token} />
       )}
     </div>
   );

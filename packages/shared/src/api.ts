@@ -2,6 +2,7 @@ import {
   Venue, AuthResponse, Invite, VenuePromoter, Feedback, LiveStream,
   PaginatedResponse, AdminStats, AdminFeedback, AdminUser, AdminVenue,
   AppNotification,
+  VenueIncentive, VisitIntentResponse, VisitArrivalResponse, QRTokenPreview, VisitStatsResponse,
 } from './types/models';
 import { FeedbackCategory, FeedbackRating } from './types/enums';
 
@@ -103,7 +104,15 @@ export interface RegisterAsPromoterPayload {
   inviteCode: string;
 }
 
-export type RegisterPayload = RegisterAsOwnerPayload | RegisterAsPromoterPayload;
+export interface RegisterAsViewerPayload {
+  accountType: 'viewer';
+  email: string;
+  password: string;
+  displayName: string;
+  phone: string;
+}
+
+export type RegisterPayload = RegisterAsOwnerPayload | RegisterAsPromoterPayload | RegisterAsViewerPayload;
 
 /** Register a new user account (owner with venue details, or promoter with invite code). */
 export async function register(payload: RegisterPayload): Promise<AuthResponse> {
@@ -650,3 +659,154 @@ export async function recordAttendanceArrival(
   return body as AttendanceResponse;
 }
 
+// ─── Viewer auth verification ─────────────────────────────────────────────────
+
+/** Verify a viewer's email via the token from the verification link. */
+export async function verifyEmail(
+  token: string,
+): Promise<{ message: string; user: AuthResponse['user'] }> {
+  const res = await baseFetch(`${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`);
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Email verification failed: ${res.status}`);
+  return body;
+}
+
+/** Verify a viewer's phone number with the OTP code. Requires auth token. */
+export async function verifyPhone(
+  otp: string,
+  authToken: string,
+): Promise<{ message: string; user: AuthResponse['user'] }> {
+  const res = await baseFetch(`${baseUrl}/auth/verify-phone`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify({ otp }),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Phone verification failed: ${res.status}`);
+  return body;
+}
+
+// ─── Venue visits ─────────────────────────────────────────────────────────────
+
+/** Record "I'm Coming" intent for a venue visit. Idempotent. */
+export async function recordVisitIntent(
+  payload: { venueId: string; streamId?: string },
+  authToken: string,
+): Promise<VisitIntentResponse> {
+  const res = await baseFetch(`${baseUrl}/visits/intent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to record visit intent: ${res.status}`);
+  return body as VisitIntentResponse;
+}
+
+/** Record "I'm Here" arrival and generate a QR token. Requires both email + phone verified. */
+export async function recordVisitArrival(
+  payload: { venueId: string; streamId?: string },
+  authToken: string,
+): Promise<VisitArrivalResponse> {
+  const res = await baseFetch(`${baseUrl}/visits/arrival`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to record visit arrival: ${res.status}`);
+  return body as VisitArrivalResponse;
+}
+
+/** Preview a QR token (public — no auth required). */
+export async function fetchQRToken(token: string): Promise<QRTokenPreview> {
+  const res = await baseFetch(`${baseUrl}/visits/qr/${encodeURIComponent(token)}`);
+  const body = await res.json();
+  if (res.status === 410) return body as QRTokenPreview;
+  if (!res.ok) throw new Error(body.error || `Failed to fetch QR token: ${res.status}`);
+  return body as QRTokenPreview;
+}
+
+/** Redeem a QR token (venue staff only). Single-use. */
+export async function redeemQRToken(
+  token: string,
+  authToken: string,
+): Promise<{ message: string; incentive: { title: string; description: string } | null; claimedAt: string }> {
+  const res = await baseFetch(`${baseUrl}/visits/qr/${encodeURIComponent(token)}/redeem`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || body.reason || `Failed to redeem QR token: ${res.status}`);
+  return body;
+}
+
+/** Fetch visit stats (coming / arrived / claimed) for a venue. */
+export async function fetchVenueVisitStats(
+  venueId: string,
+  authToken: string,
+): Promise<VisitStatsResponse> {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}/visit-stats`, {
+    headers: { Authorization: `Bearer ${authToken}` },
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch visit stats: ${res.status}`);
+  return body as VisitStatsResponse;
+}
+
+// ─── Incentive management ─────────────────────────────────────────────────────
+
+/** Fetch the active incentive for a venue (public). Returns null if none. */
+export async function fetchActiveIncentive(venueId: string): Promise<VenueIncentive | null> {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}/incentive`);
+  if (res.status === 404) return null;
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to fetch incentive: ${res.status}`);
+  return body as VenueIncentive;
+}
+
+/** Create a new active incentive for a venue (owner only). Deactivates any existing one. */
+export async function createIncentive(
+  payload: { venueId: string; title: string; description: string; expiresAt?: string },
+  authToken: string,
+): Promise<VenueIncentive> {
+  const res = await baseFetch(`${baseUrl}/incentives`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to create incentive: ${res.status}`);
+  return body as VenueIncentive;
+}
+
+/** Update an existing incentive (owner only). */
+export async function updateIncentive(
+  id: string,
+  data: Partial<{ title: string; description: string; expiresAt: string | null; active: boolean }>,
+  authToken: string,
+): Promise<VenueIncentive> {
+  const res = await baseFetch(`${baseUrl}/incentives/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error || `Failed to update incentive: ${res.status}`);
+  return body as VenueIncentive;
+}

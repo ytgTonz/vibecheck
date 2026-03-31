@@ -11,6 +11,8 @@ import streamRoutes from './routes/streams';
 import notificationRoutes from './routes/notifications';
 import webhookRoutes from './routes/webhooks';
 import attendanceRoutes from './routes/attendance';
+import visitsRoutes from './routes/visits';
+import incentivesRoutes from './routes/incentives';
 import { initSocket } from './lib/socket';
 import { startNotificationPoller, startReceiptPoller } from './lib/scheduledNotifications';
 
@@ -53,6 +55,8 @@ app.use('/admin', adminRoutes);
 app.use('/streams', streamRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/attendance', attendanceRoutes);
+app.use('/visits', visitsRoutes);
+app.use('/incentives', incentivesRoutes);
 
 httpServer.listen(PORT, () => {
   console.log(`VibeCheck API running on port ${PORT}`);

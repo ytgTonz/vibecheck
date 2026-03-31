@@ -12,6 +12,7 @@ export enum UserRole {
   VENUE_PROMOTER = 'VENUE_PROMOTER',
   VENUE_OWNER = 'VENUE_OWNER',
   ADMIN = 'ADMIN',
+  VIEWER = 'VIEWER',
 }
 
 export enum FeedbackCategory {

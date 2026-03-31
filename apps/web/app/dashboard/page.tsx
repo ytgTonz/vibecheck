@@ -164,6 +164,7 @@ export default function DashboardPage() {
           key={venue.id}
           venue={venue}
           user={user}
+          token={token ?? ""}
           isOwner={isOwner}
           recentStreams={recentStreams[venue.id] ?? []}
           loadingStreams={loadingStreams[venue.id] ?? true}

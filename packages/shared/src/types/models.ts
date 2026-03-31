@@ -25,12 +25,73 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  phone?: string | null;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
   createdAt: string;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
+  /** Stub only — present on viewer registration, remove when real SMS provider is wired */
+  otpDebug?: { phoneOtp: string };
+  /** Stub only — present on viewer registration, remove when real email provider is wired */
+  verificationLinks?: { emailVerifyUrl: string };
+}
+
+// ─── Venue visit / QR check-in types ─────────────────────────────────────────
+
+export interface VenueIncentive {
+  id: string;
+  venueId: string;
+  title: string;
+  description: string;
+  expiresAt: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface VenueVisit {
+  id: string;
+  userId: string;
+  venueId: string;
+  streamId: string | null;
+  intentAt: string | null;
+  arrivedAt: string | null;
+  incentiveId: string | null;
+  createdAt: string;
+}
+
+export interface VisitIntentResponse {
+  visitId: string;
+  intentAt: string | null;
+  alreadyRecorded: boolean;
+}
+
+export interface VisitArrivalResponse {
+  visitId: string;
+  qrToken: string;
+  expiresAt: string;
+  incentive: { title: string; description: string } | null;
+}
+
+export interface QRTokenPreview {
+  valid: boolean;
+  reason?: 'already_used' | 'expired';
+  venueId?: string;
+  venueName?: string;
+  expiresAt?: string;
+  used?: boolean;
+  claimedAt?: string;
+  incentive: { title: string; description: string } | null;
+}
+
+export interface VisitStatsResponse {
+  venueId: string;
+  comingCount: number;
+  arrivedCount: number;
+  claimedCount: number;
 }
 
 export interface VenuePromoter {

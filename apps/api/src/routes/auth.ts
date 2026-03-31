@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import prisma from '../lib/prisma';
 import { sendNotification } from '../lib/notifications';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -12,10 +14,18 @@ if (!JWT_SECRET) {
 }
 
 const SALT_ROUNDS = 10;
-const INVITE_EXPIRY_DAYS = 7;
 
 /** Build a JWT and user response object. */
-function buildAuthResponse(user: { id: string; email: string; name: string; role: string; createdAt: Date }) {
+function buildAuthResponse(user: {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: Date;
+  phone?: string | null;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+}) {
   const token = jwt.sign(
     { userId: user.id, role: user.role },
     JWT_SECRET!,
@@ -29,6 +39,9 @@ function buildAuthResponse(user: { id: string; email: string; name: string; role
       email: user.email,
       name: user.name,
       role: user.role,
+      phone: user.phone ?? null,
+      emailVerified: user.emailVerified ?? false,
+      phoneVerified: user.phoneVerified ?? false,
       createdAt: user.createdAt.toISOString(),
     },
   };
@@ -39,13 +52,8 @@ router.post('/register', async (req: Request, res: Response) => {
   const { accountType, email, password, name } = req.body;
 
   // Common validation
-  if (!accountType || !email || !password || !name) {
-    res.status(400).json({ error: 'accountType, email, password, and name are required' });
-    return;
-  }
-
-  if (accountType !== 'owner' && accountType !== 'promoter') {
-    res.status(400).json({ error: 'accountType must be "owner" or "promoter"' });
+  if (!accountType || !email || !password) {
+    res.status(400).json({ error: 'accountType, email, and password are required' });
     return;
   }
 
@@ -54,7 +62,7 @@ router.post('/register', async (req: Request, res: Response) => {
     return;
   }
 
-  // Check if email already taken
+  // Check email availability upfront for all account types
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     res.status(409).json({ error: 'Email already registered' });
@@ -65,6 +73,11 @@ router.post('/register', async (req: Request, res: Response) => {
 
   // ─── Owner registration ──────────────────────────────────────────────
   if (accountType === 'owner') {
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
+
     const { venue } = req.body;
 
     if (!venue?.name || !venue?.type || !venue?.location) {
@@ -108,69 +121,176 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 
   // ─── Promoter registration (with invite code) ────────────────────────
-  const { inviteCode } = req.body;
+  if (accountType === 'promoter') {
+    if (!name) {
+      res.status(400).json({ error: 'name is required' });
+      return;
+    }
 
-  if (!inviteCode) {
-    res.status(400).json({ error: 'Invite code is required for promoter registration' });
+    const { inviteCode } = req.body;
+
+    if (!inviteCode) {
+      res.status(400).json({ error: 'Invite code is required for promoter registration' });
+      return;
+    }
+
+    const invite = await prisma.invite.findUnique({
+      where: { code: inviteCode.toUpperCase() },
+    });
+
+    if (!invite) {
+      res.status(404).json({ error: 'Invalid invite code' });
+      return;
+    }
+
+    if (invite.used) {
+      res.status(410).json({ error: 'This invite code has already been used' });
+      return;
+    }
+
+    if (invite.expiresAt < new Date()) {
+      res.status(410).json({ error: 'This invite code has expired' });
+      return;
+    }
+
+    const [user] = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          role: 'VENUE_PROMOTER',
+        },
+      });
+
+      await tx.venuePromoter.create({
+        data: {
+          userId: user.id,
+          venueId: invite.venueId,
+        },
+      });
+
+      await tx.invite.update({
+        where: { id: invite.id },
+        data: {
+          used: true,
+          usedBy: user.id,
+          usedAt: new Date(),
+        },
+      });
+
+      return [user];
+    });
+
+    sendNotification({
+      type: 'USER_REGISTERED',
+      title: `New user: ${user.name}`,
+      body: `Registered as venue promoter`,
+      data: { userId: user.id },
+      targetRole: 'ADMIN',
+    });
+    res.status(201).json(buildAuthResponse(user));
     return;
   }
 
-  const invite = await prisma.invite.findUnique({
-    where: { code: inviteCode.toUpperCase() },
-  });
+  // ─── Viewer registration ─────────────────────────────────────────────
+  if (accountType === 'viewer') {
+    const { displayName, phone } = req.body;
 
-  if (!invite) {
-    res.status(404).json({ error: 'Invalid invite code' });
-    return;
-  }
+    if (!displayName || !phone) {
+      res.status(400).json({ error: 'displayName and phone are required for viewer registration' });
+      return;
+    }
 
-  if (invite.used) {
-    res.status(410).json({ error: 'This invite code has already been used' });
-    return;
-  }
+    const emailVerifyToken = randomUUID();
+    // 6-digit OTP — stored as plaintext for stub; TODO: hash before v2
+    const phoneOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  if (invite.expiresAt < new Date()) {
-    res.status(410).json({ error: 'This invite code has expired' });
-    return;
-  }
-
-  const [user] = await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        name,
-        role: 'VENUE_PROMOTER',
+        name: displayName,
+        role: 'VIEWER',
+        phone,
+        emailVerified: false,
+        phoneVerified: false,
+        emailVerifyToken,
+        phoneOtp,
       },
     });
 
-    await tx.venuePromoter.create({
-      data: {
-        userId: user.id,
-        venueId: invite.venueId,
-      },
-    });
+    const authResponse = buildAuthResponse(user);
 
-    await tx.invite.update({
-      where: { id: invite.id },
-      data: {
-        used: true,
-        usedBy: user.id,
-        usedAt: new Date(),
-      },
+    // Stub: return verification tokens in response body.
+    // Remove otpDebug and verificationLinks when real providers are wired.
+    res.status(201).json({
+      ...authResponse,
+      otpDebug: { phoneOtp },
+      verificationLinks: { emailVerifyUrl: `/auth/verify-email?token=${emailVerifyToken}` },
     });
+    return;
+  }
 
-    return [user];
+  res.status(400).json({ error: 'accountType must be "owner", "promoter", or "viewer"' });
+});
+
+// GET /auth/verify-email?token=
+router.get('/verify-email', async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== 'string') {
+    res.status(400).json({ error: 'token is required' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { emailVerifyToken: token },
   });
 
-  sendNotification({
-    type: 'USER_REGISTERED',
-    title: `New user: ${user.name}`,
-    body: `Registered as venue promoter`,
-    data: { userId: user.id },
-    targetRole: 'ADMIN',
+  if (!user) {
+    res.status(400).json({ error: 'Invalid or expired verification token' });
+    return;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerified: true, emailVerifyToken: null },
   });
-  res.status(201).json(buildAuthResponse(user));
+
+  res.json({ message: 'Email verified', user: buildAuthResponse(updated).user });
+});
+
+// POST /auth/verify-phone
+router.post('/verify-phone', requireAuth, async (req: Request, res: Response) => {
+  const { otp } = req.body;
+
+  if (!otp) {
+    res.status(400).json({ error: 'otp is required' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+  });
+
+  if (!user || !user.phoneOtp) {
+    res.status(400).json({ error: 'No pending phone verification' });
+    return;
+  }
+
+  if (user.phoneOtp !== otp) {
+    res.status(400).json({ error: 'Invalid OTP' });
+    return;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: { phoneVerified: true, phoneOtp: null },
+  });
+
+  // Return a refreshed user object so the client store can update verification state
+  res.json({ message: 'Phone verified', user: buildAuthResponse(updated).user });
 });
 
 // POST /auth/login

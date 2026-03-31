@@ -95,4 +95,19 @@ router.get('/:id', async (req: Request, res: Response) => {
   });
 });
 
+// GET /venues/:id/incentive — return the active incentive for a venue (public)
+router.get('/:id/incentive', async (req: Request, res: Response) => {
+  const incentive = await prisma.venueIncentive.findFirst({
+    where: { venueId: req.params.id, active: true },
+    select: { id: true, venueId: true, title: true, description: true, expiresAt: true, active: true, createdAt: true },
+  });
+
+  if (!incentive) {
+    res.status(404).json({ error: 'No active incentive for this venue' });
+    return;
+  }
+
+  res.json(incentive);
+});
+
 export default router;

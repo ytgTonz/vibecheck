@@ -111,6 +111,12 @@ interface AuthState {
 
   /** Restore auth from localStorage (call on app load). */
   hydrate: () => Promise<void>;
+
+  /** Update the stored user object (e.g. after phone/email verification). */
+  setUser: (user: User) => void;
+
+  /** Manually set auth state from a token + user pair (e.g. after viewer registration). */
+  setAuth: (token: string, user: User) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -149,6 +155,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     await clearAuth();
     set({ token: null, user: null, error: null, hydrated: true });
+  },
+
+  setUser: (user) => {
+    set({ user });
+    // Persist the updated user to storage
+    const storage = getStorage();
+    Promise.resolve(storage.setItem(USER_KEY, JSON.stringify(user)));
+  },
+
+  setAuth: async (token, user) => {
+    await saveAuth(token, user);
+    set({ token, user, hydrated: true });
   },
 
   hydrate: async () => {
