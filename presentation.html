@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeCheck — Product Demo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" />
+  <style>
+    :root {
+      --bg-primary: #09090b;
+      --bg-card: #18181b;
+      --bg-elevated: #27272a;
+      --border: #3f3f46;
+      --text-primary: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+      --live-red: #dc2626;
+      --live-red-glow: rgba(220, 38, 38, 0.25);
+      --success-green: #22c55e;
+      --amber: #fbbf24;
+    }
+
+    .reveal-viewport { background: var(--bg-primary); }
+    .reveal { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 18px; }
+    .reveal .slides section { height: 100%; }
+
+    /* ── Typography ── */
+    .reveal h1 { font-size: 2.4em; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+    .reveal h2 { font-size: 1.6em; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5em; }
+    .reveal h3 { font-size: 1.1em; font-weight: 600; color: var(--text-primary); margin-bottom: 0.3em; }
+    .reveal p, .reveal li { color: var(--text-secondary); font-size: 0.85em; line-height: 1.6; }
+    .reveal ul { list-style: none; padding: 0; margin: 0; }
+    .reveal ul li::before { content: "→ "; color: var(--live-red); font-weight: 600; }
+
+    /* ── Slide layouts ── */
+    .slide-full { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 40px; text-align: center; box-sizing: border-box; }
+    .slide-split { display: flex; flex-direction: row; align-items: center; gap: 40px; height: 100%; padding: 40px; box-sizing: border-box; }
+    .slide-split .left { flex: 1; text-align: left; min-width: 0; }
+    .slide-split .right { flex: 1; display: flex; justify-content: center; align-items: center; min-width: 0; }
+    .slide-content { padding: 40px 50px; text-align: left; height: 100%; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
+
+    /* ── Logo / Brand ── */
+    .logo-mark {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 12px 24px; margin-bottom: 24px;
+    }
+    .logo-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--live-red);
+      box-shadow: 0 0 12px var(--live-red);
+    }
+    .logo-text { font-size: 1em; font-weight: 700; color: var(--text-primary); letter-spacing: 0.05em; }
+
+    /* ── Pill / Badge ── */
+    .pill {
+      display: inline-block; padding: 4px 12px; border-radius: 9999px;
+      font-size: 0.55em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .pill-red { background: var(--live-red-glow); color: var(--live-red); border: 1px solid var(--live-red); }
+    .pill-green { background: rgba(34,197,94,0.15); color: var(--success-green); border: 1px solid rgba(34,197,94,0.3); }
+    .pill-amber { background: rgba(251,191,36,0.15); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+    .pill-zinc { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 22px;
+    }
+    .card-grid { display: grid; gap: 12px; }
+    .card-grid-2 { grid-template-columns: 1fr 1fr; }
+    .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ── Role cards ── */
+    .role-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .role-icon { font-size: 1.6em; margin-bottom: 4px; }
+    .role-title { font-size: 0.85em; font-weight: 600; color: var(--text-primary); }
+    .role-desc { font-size: 0.7em; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Screenshot frame ── */
+    .phone-frame {
+      border-radius: 32px; overflow: hidden;
+      border: 2px solid var(--border);
+      box-shadow: 0 0 60px rgba(0,0,0,0.8);
+      max-height: 500px;
+    }
+    .phone-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+    .screen-frame {
+      border-radius: 16px; overflow: hidden;
+      border: 2px solid var(--border);
+      box-shadow: 0 0 60px rgba(0,0,0,0.6);
+      max-width: 100%;
+    }
+    .screen-frame img { display: block; width: 100%; }
+
+    /* ── Step list ── */
+    .step-list { display: flex; flex-direction: column; gap: 16px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 20px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: var(--live-red); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7em; font-weight: 700;
+    }
+    .step-body { flex: 1; }
+    .step-title { font-size: 0.8em; font-weight: 600; color: var(--text-primary); }
+    .step-detail { font-size: 0.7em; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── Stat blocks ── */
+    .stat { text-align: center; }
+    .stat-num { font-size: 2em; font-weight: 700; color: var(--text-primary); line-height: 1; }
+    .stat-label { font-size: 0.65em; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ── Divider ── */
+    .divider { width: 48px; height: 3px; background: var(--live-red); border-radius: 2px; margin: 16px 0; }
+
+    /* ── Section label ── */
+    .section-label { font-size: 0.55em; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* ── Quote ── */
+    .quote-block {
+      border-left: 3px solid var(--live-red); padding-left: 20px; margin: 20px 0;
+    }
+    .quote-block p { font-size: 0.9em; font-style: italic; color: var(--text-primary); }
+
+    /* ── Live indicator ── */
+    .live-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--live-red); margin-right: 6px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ── Flow diagram ── */
+    .flow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .flow-node {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 16px;
+      font-size: 0.7em; color: var(--text-primary); font-weight: 500;
+      white-space: nowrap;
+    }
+    .flow-arrow { color: var(--text-muted); font-size: 1em; }
+
+    /* ── Override reveal defaults ── */
+    .reveal .slides { text-align: left; }
+    .reveal section { padding: 0 !important; }
+    .reveal .progress { color: var(--live-red); }
+    .reveal .controls { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div class="slides">
+
+    <!-- ─── SLIDE 1: TITLE ─── -->
+    <section>
+      <div class="slide-full">
+        <div class="logo-mark">
+          <div class="logo-dot"></div>
+          <span class="logo-text">VIBECHECK</span>
+        </div>
+        <h1 style="max-width:700px;">Know the vibe<br/>before you walk in.</h1>
+        <p style="max-width:500px; margin-top: 16px;">A live venue discovery platform for East London nightlife — connecting promoters, venues, and the going-out crowd in real time.</p>
+        <div style="margin-top: 36px; display: flex; gap: 12px;">
+          <span class="pill pill-red"><span class="live-dot"></span>Product Demo</span>
+          <span class="pill pill-zinc">March 2026</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 2: THE PROBLEM ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">The Problem</div>
+        <h2>Deciding where to go out is a gamble.</h2>
+        <div class="divider"></div>
+        <div class="card-grid card-grid-3" style="margin-top: 24px;">
+          <div class="card">
+            <div style="font-size:1.8em; margin-bottom: 12px;">📸</div>
+            <h3>Stale Photos</h3>
+            <p>Venue profiles show their best Friday night — not what it looks like right now at 9pm.</p>
+          </div>
+          <div class="card">
+            <div style="font-size:1.8em; margin-bottom: 12px;">📋</div>
+            <h3>Old Reviews</h3>
+            <p>A 3-star Google review from 6 months ago tells you nothing about tonight's atmosphere.</p>
+          </div>
+          <div class="card">
+            <div style="font-size:1.8em; margin-bottom: 12px;">🤷</div>
+            <h3>No Real Signal</h3>
+            <p>You only find out a venue was dead when you're already standing in it.</p>
+          </div>
+        </div>
+        <div class="quote-block" style="margin-top: 28px;">
+          <p>"Instagram Live is retention — keeping your existing followers engaged. VibeCheck is acquisition — converting undecided people into walk-ins tonight."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 3: THE SOLUTION ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">The Solution</div>
+        <h2>Real-time venue discovery,<br/>powered by the people inside.</h2>
+        <div class="divider"></div>
+        <div class="step-list" style="margin-top: 24px;">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Promoters live stream from inside the venue</div>
+              <div class="step-detail">Shot on mobile, broadcast directly through the app — shows what's actually happening right now.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Streams appear on the venue's story feed, ranked by freshness</div>
+              <div class="step-detail">Live now → Fresh tonight → More venues. Activity-based ranking surfaces the hottest spots first.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Viewers browse, watch, and decide — no account needed</div>
+              <div class="step-detail">Open the app, see what's popping nearby, make a decision with real confidence.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 4: USER ROLES ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">Who It's For</div>
+        <h2>Three roles, one platform.</h2>
+        <div class="divider"></div>
+        <div class="card-grid card-grid-3" style="margin-top: 24px;">
+          <div class="role-card">
+            <div class="role-icon">🏢</div>
+            <span class="pill pill-amber" style="width: fit-content; margin-bottom: 8px;">Venue Owner</span>
+            <div class="role-title">Registers & manages the venue</div>
+            <div class="role-desc">Creates the venue profile, invites promoters via code, views stats and stream performance from the web dashboard.</div>
+          </div>
+          <div class="role-card">
+            <div class="role-icon">📱</div>
+            <span class="pill pill-zinc" style="width: fit-content; margin-bottom: 8px;">Promoter</span>
+            <div class="role-title">Broadcasts the scene</div>
+            <div class="role-desc">Joins via invite code, broadcasts  from mobile or web. Multiple promoters can cover different areas of the same venue simultaneously.</div>
+          </div>
+          <div class="role-card">
+            <div class="role-icon">👀</div>
+            <span class="pill pill-green" style="width: fit-content; margin-bottom: 8px;">Viewer</span>
+            <div class="role-title">Discovers and decides</div>
+            <div class="role-desc">Browses venue streams on mobile or web with no account required. Filters by venue type and music genre to find the right vibe.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 5: BROWSE SCREEN ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Viewer Experience</div>
+          <h2>Browse & Discover</h2>
+          <div class="divider"></div>
+          <div class="step-list" style="margin-top: 20px;">
+            <div class="step">
+              <div class="step-num">🔴</div>
+              <div class="step-body">
+                <div class="step-title">Live Now</div>
+                <div class="step-detail">Venues with a stream uploaded in the last 2 hours surface at the top.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">✨</div>
+              <div class="step-body">
+                <div class="step-title">Fresh Tonight</div>
+                <div class="step-detail">streams from the last 24 hours — still relevant, still worth checking out.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">📍</div>
+              <div class="step-body">
+                <div class="step-title">More Venues</div>
+                <div class="step-detail">Full directory — all registered venues, even if quiet tonight.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/Browse-Screen.png" alt="Browse screen" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 6: FILTERS ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Viewer Experience</div>
+          <h2>Filter by Vibe</h2>
+          <div class="divider"></div>
+          <p style="margin-bottom: 20px;">Viewers can narrow down exactly what they're in the mood for.</p>
+          <ul style="margin-bottom: 20px;">
+            <li style="margin-bottom: 10px;"><strong style="color: var(--text-primary);">Venue type</strong> — Nightclub, Bar, Lounge, Rooftop, Shisa Nyama, Restaurant & Bar</li>
+            <li style="margin-bottom: 10px;"><strong style="color: var(--text-primary);">Music genre</strong> — Afrobeats, Amapiano, Hip-Hop, House, R&B, and more</li>
+          </ul>
+          <p>Filters are applied client-side for instant feedback — no extra network round trips.</p>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/filters-expanded.png" alt="Filters expanded" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 7: VENUE DETAIL ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Viewer Experience</div>
+          <h2>Venue Detail</h2>
+          <div class="divider"></div>
+          <ul>
+            <li style="margin-bottom: 12px;">Full venue profile — type, location, hours, cover charge, drink prices, music genres</li>
+            <li style="margin-bottom: 12px;">View count tracked per stream — feeds the activity ranking</li>
+            <li style="margin-bottom: 12px;">Featured stream displayed as the hero — most recent first</li>
+          </ul>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/venue-detail.png" alt="Venue detail" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 8: AUTH ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Authentication</div>
+          <h2>Simple, Role-Based Sign-In</h2>
+          <div class="divider"></div>
+          <p style="margin-bottom: 20px;">Viewers browse with no account. Owners and promoters sign in to access their respective dashboards.</p>
+          <div class="card-grid" style="gap: 12px;">
+            <div class="card" style="padding: 16px 20px;">
+              <span class="pill pill-amber" style="margin-bottom: 8px;">Venue Owner</span>
+              <p style="font-size: 0.75em; margin: 0;">Registers the venue, manages promoters, views analytics.</p>
+            </div>
+            <div class="card" style="padding: 16px 20px;">
+              <span class="pill pill-red" style="margin-bottom: 8px;">Promoter</span>
+              <p style="font-size: 0.75em; margin: 0;">Joins via invite code. Can be linked to multiple venues.</p>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/register.png" alt="Login screen" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 9: OWNER DASHBOARD ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Venue Owner</div>
+          <h2>Owner Dashboard</h2>
+          <div class="divider"></div>
+          <ul>
+            <li style="margin-bottom: 12px;">At-a-glance stats — total views, total streams, streams this week</li>
+            <li style="margin-bottom: 12px;">All owned venues in one view with stream activity indicators</li>
+            <li style="margin-bottom: 12px;">Generate invite codes for promoters (7-day expiry, single-use)</li>
+            <li style="margin-bottom: 12px;">Manage existing promoters — view linked team, remove access</li>
+            <li style="margin-bottom: 12px;">Full venue editing — hours, prices, genres, cover charge</li>
+          </ul>
+        </div>
+        <div class="right">
+          <div class="screen-frame">
+            <img src="docs/designs/owner-dashboard.png" alt="Owner dashboard" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 10: BROADCAST SETUP ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Promoter Experience</div>
+          <h2>Going Live</h2>
+          <div class="divider"></div>
+          <div class="step-list">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-body">
+                <div class="step-title">Select your venue & open broadcast</div>
+                <div class="step-detail">From the dashboard, tap Go Live on the venue you're broadcasting for.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-body">
+                <div class="step-title">Preview your camera feed</div>
+                <div class="step-detail">See your live preview before going public — confirm framing and audio before the stream starts.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-body">
+                <div class="step-title">Hit Go Live — stream starts instantly</div>
+                <div class="step-detail">LiveKit opens a real-time room. Viewers can join within seconds.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/broadcast-setup.png" alt="Broadcast setup" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 11: LIVE BROADCASTING ─── -->
+    <section>
+      <div class="slide-split">
+        <div class="left">
+          <div class="section-label">Promoter Experience</div>
+          <h2>While Live</h2>
+          <div class="divider"></div>
+          <p style="margin-bottom: 20px;">Once the stream starts, viewers can join immediately — no buffering delay, no upload wait.</p>
+          <ul>
+            <li style="margin-bottom: 12px;">Real-time viewer count visible to the broadcaster</li>
+            <li style="margin-bottom: 12px;">Live chat and emoji reactions from viewers during the stream</li>
+            <li style="margin-bottom: 12px;">Venue jumps to "Live Now" in the discovery feed instantly</li>
+            <li style="margin-bottom: 12px;">Multiple promoters can broadcast different scenes of the same venue simultaneously</li>
+            <li style="margin-bottom: 12px;">Venue Owner can watch, chat, and end the stream via privileged viewer mode</li>
+          </ul>
+          <div style="margin-top: 20px;">
+            <span class="pill pill-red"><span class="live-dot"></span>Powered by LiveKit</span>
+          </div>
+        </div>
+        <div class="right">
+          <div class="phone-frame" style="max-height: 480px;">
+            <img src="docs/designs/live-broadcasting.png" alt="Live broadcasting" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 12: PLATFORM ARCHITECTURE ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">Under the Hood</div>
+        <h2>Built to Scale</h2>
+        <div class="divider"></div>
+        <div class="card-grid card-grid-2" style="margin-top: 24px; gap: 16px;">
+          <div class="card">
+            <h3 style="margin-bottom: 12px;">📱 Mobile App</h3>
+            <p>Expo + React Native. Viewers watch live streams. Promoters broadcast directly from their phone camera using the LiveKit SDK.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom: 12px;">🌐 Web App</h3>
+            <p>Next.js 15. Full venue management — create, edit, manage promoters. Promoters can also broadcast live from the web broadcast page.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom: 12px;">⚡ API</h3>
+            <p>Express.js on Node. REST endpoints with JWT auth. PostgreSQL via Prisma ORM. Manages LiveKit room lifecycle and issues access tokens per broadcast.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom: 12px;">📡 Live Streaming</h3>
+            <p>LiveKit handles real-time room creation, WebRTC media transport, and viewer delivery — ultra-low latency with no custom media infrastructure.</p>
+          </div>
+        </div>
+        <div class="flow" style="margin-top: 24px; justify-content: center;">
+          <div class="flow-node">Mobile / Web</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">Express API</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">PostgreSQL</div>
+          <div class="flow-arrow">+</div>
+          <div class="flow-node">LiveKit (WebRTC)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 13: BUSINESS MODEL ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">Business Model</div>
+        <h2>Revenue tied directly to results.</h2>
+        <div class="divider"></div>
+        <div class="card-grid card-grid-3" style="margin-top: 24px;">
+          <div class="card" style="border-color: var(--live-red);">
+            <span class="pill pill-red" style="margin-bottom: 12px;">Core</span>
+            <h3>Per-Venue Invoicing</h3>
+            <p>Venues are billed based on foot traffic attribution — how many viewers indicated intent to visit, then arrived.</p>
+          </div>
+          <div class="card">
+            <span class="pill pill-amber" style="margin-bottom: 12px;">Growth</span>
+            <h3>Aggregated Analytics</h3>
+            <p>Premium upsell: venue owners get aggregated data on attendance trends, stream performance, and peak activity windows.</p>
+          </div>
+          <div class="card">
+            <span class="pill pill-zinc" style="margin-bottom: 12px;">Pipeline</span>
+            <h3>Vibe Score</h3>
+            <p>A rolling aggregate vibe score, fed by viewer reactions. High-scoring venues surface higher in discovery — incentivising quality content.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 20px; display: flex; align-items: center; gap: 40px; flex-direction: row;">
+          <div class="stat">
+            <div class="stat-num" style="color: var(--live-red);">2-sided</div>
+            <div class="stat-label">Marketplace</div>
+          </div>
+          <div style="flex: 1; border-left: 1px solid var(--border); padding-left: 28px;">
+            <p style="font-size: 0.78em;">Venues are incentivised to only post when it's actually good — a dead room after a promising stream destroys trust. The platform self-regulates for quality.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 14: CURRENT STATE ─── -->
+    <section>
+      <div class="slide-content">
+        <div class="section-label">Where We Are</div>
+        <h2>Fully functional product, ready for pilot.</h2>
+        <div class="divider"></div>
+        <div class="card-grid card-grid-2" style="margin-top: 24px; gap: 16px;">
+          <div class="card">
+            <span class="pill pill-green" style="margin-bottom: 12px;">Complete</span>
+            <ul style="margin-top: 8px;">
+              <li style="margin-bottom: 8px;">Public browse & venue discovery</li>
+              <li style="margin-bottom: 8px;">Venue type & music genre filtering</li>
+              <li style="margin-bottom: 8px;">Live streaming via LiveKit (mobile + web)</li>
+              <li style="margin-bottom: 8px;">Owner & promoter dashboards</li>
+              <li style="margin-bottom: 8px;">Invite-based promoter onboarding</li>
+              <li style="margin-bottom: 8px;">Activity-based venue ranking</li>
+              <li style="margin-bottom: 8px;">Admin panel for moderation</li>
+              <li style="margin-bottom: 8px;">Push notifications</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="pill pill-amber" style="margin-bottom: 12px;">Roadmap</span>
+            <ul style="margin-top: 8px;">
+              <li style="margin-bottom: 8px;">Vibe Meter — live reaction scoring</li>
+              <li style="margin-bottom: 8px;">Proximity / map-based discovery</li>
+              <li style="margin-bottom: 8px;">Foot traffic attribution tracking</li>
+              <li style="margin-bottom: 8px;">Premium analytics for owners</li>
+              <li style="margin-bottom: 8px;">Event listings & ticketing integration</li>
+              <li style="margin-bottom: 8px;">Venue-to-viewer direct messaging</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── SLIDE 15: CLOSING ─── -->
+    <section>
+      <div class="slide-full">
+        <div class="logo-mark">
+          <div class="logo-dot"></div>
+          <span class="logo-text">VIBECHECK</span>
+        </div>
+        <h2 style="font-size: 2em; max-width: 600px;">East London's nightlife,<br/>in real time.</h2>
+        <p style="max-width: 480px; margin-top: 16px;">Built for the venues that are worth finding, and the crowd that's deciding right now.</p>
+        <div style="margin-top: 40px; display: flex; gap: 32px;">
+          <div class="stat">
+            <div class="stat-num">2</div>
+            <div class="stat-label">Platforms</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">3</div>
+            <div class="stat-label">User Roles</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">7</div>
+            <div class="stat-label">Venue Types</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">0</div>
+            <div class="stat-label">Accounts to browse</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    progress: true,
+    controls: true,
+    center: false,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'none',
+    width: 1200,
+    height: 700,
+    margin: 0,
+    minScale: 0.5,
+    maxScale: 1.5,
+  });
+</script>
+</body>
+</html>
