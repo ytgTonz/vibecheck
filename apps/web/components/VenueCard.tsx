@@ -47,11 +47,6 @@ export default function VenueCard({ venue }: { venue: Venue }) {
           <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-medium text-zinc-100/90">
             {status.detail}
           </span>
-          {venue.hours && !venue.isLive && (
-            <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-medium text-zinc-100/90">
-              {venue.hours}
-            </span>
-          )}
         </div>
 
         {venue.musicGenre.length > 0 && (
