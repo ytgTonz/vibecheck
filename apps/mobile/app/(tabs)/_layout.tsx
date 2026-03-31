@@ -69,14 +69,12 @@ function LiveBanner() {
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
-  const { user, hydrate } = useAuthStore();
+  const { user } = useAuthStore();
   const broadcastVenueId = useBroadcastStore((s) => s.venueId);
   const isFullscreenRoute =
-    segments.includes('broadcast' as never) || segments.includes('live' as never);
-
-  useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+    segments.includes('broadcast' as never) ||
+    segments.includes('live' as never) ||
+    segments.includes('(auth)' as never);
 
   const canBroadcast = useMemo(
     () => user?.role === 'VENUE_OWNER' || user?.role === 'VENUE_PROMOTER',
