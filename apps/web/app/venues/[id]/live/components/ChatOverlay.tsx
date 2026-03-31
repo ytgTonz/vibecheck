@@ -22,10 +22,10 @@ export function ChatOverlay() {
   };
 
   return (
-    <div className="absolute bottom-0 left-0 z-10 w-1/2 max-w-md pb-4 pl-4 pr-4">
+    <div className="absolute bottom-0 left-0 z-10 w-full px-4 pb-4 sm:w-1/2 sm:max-w-md">
       <div
         ref={scrollRef}
-        className="mb-3 max-h-48 space-y-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="mb-3 max-h-24 space-y-1 overflow-y-auto sm:max-h-48 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {chatMessages.slice(-20).map((msg, i) => (
           <p key={i} className="text-sm drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">

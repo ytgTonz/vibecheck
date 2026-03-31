@@ -38,12 +38,12 @@ export function EmojiReactions() {
           </span>
         ))}
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-row flex-wrap gap-1.5 sm:flex-col sm:gap-2">
         {EMOJIS.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="h-10 w-10 rounded-full bg-black/30 text-lg transition-transform hover:scale-110 hover:bg-black/50"
+            className="h-8 w-8 rounded-full bg-black/30 text-base transition-transform hover:scale-110 hover:bg-black/50 sm:h-10 sm:w-10 sm:text-lg"
           >
             {emoji}
           </button>

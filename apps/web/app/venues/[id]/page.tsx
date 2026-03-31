@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { fetchVenue, Venue, useAuthStore } from "@vibecheck/shared";
+import { AttendanceCard } from "./components/AttendanceCard";
 
 /** Human-readable labels for venue types. */
 const venueTypeLabel: Record<string, string> = {
@@ -153,6 +154,17 @@ export default function VenueDetailPage() {
           )}
         </div>
       </section>
+
+      {/* Attendance — only when a live stream is active */}
+      {venue.isLive && venue.activeStreamId && (
+        <div className="mb-8">
+          <AttendanceCard
+            streamId={venue.activeStreamId}
+            initialIntentCount={venue.intentCount}
+            initialArrivalCount={venue.arrivalCount}
+          />
+        </div>
+      )}
 
       {/* Venue details */}
       <section className="rounded-[1.75rem] border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">

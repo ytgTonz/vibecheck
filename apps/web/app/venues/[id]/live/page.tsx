@@ -11,6 +11,7 @@ import { EmojiReactions } from "./components/EmojiReactions";
 import { ChatOverlay } from "./components/ChatOverlay";
 import { BroadcasterVideo } from "./components/BroadcasterVideo";
 import { StreamEndedOverlay } from "./components/StreamEndedOverlay";
+import { AttendanceBar } from "./components/AttendanceBar";
 
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
 
@@ -103,11 +104,16 @@ export default function LiveWatchPage() {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
               LIVE
             </span>
-            <h1 className="text-sm font-semibold text-white drop-shadow-lg">{venue.name}</h1>
+            <h1 className="min-w-0 truncate text-sm font-semibold text-white drop-shadow-lg">{venue.name}</h1>
           </div>
           <ViewerCount />
         </div>
-        <div className="absolute bottom-4 right-4 z-10"><EmojiReactions /></div>
+        <AttendanceBar
+          streamId={stream.id}
+          initialIntentCount={venue.intentCount}
+          initialArrivalCount={venue.arrivalCount}
+        />
+        <div className="absolute bottom-16 right-2 z-10 sm:bottom-4 sm:right-4"><EmojiReactions /></div>
         <ChatOverlay />
       </LiveKitRoom>
     </div>
