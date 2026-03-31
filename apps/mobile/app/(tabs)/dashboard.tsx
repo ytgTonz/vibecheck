@@ -23,6 +23,7 @@ export default function DashboardScreen() {
     () => user?.role === 'VENUE_OWNER' || user?.role === 'VENUE_PROMOTER',
     [user?.role],
   );
+  const isViewer = user?.role === 'VIEWER';
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -60,6 +61,77 @@ export default function DashboardScreen() {
           title="Dashboard"
           body="Your linked venues and live stream controls live here."
         />
+      </SafeAreaView>
+    );
+  }
+
+  if (isViewer) {
+    return (
+      <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+          <View className="mb-6 flex-row items-start justify-between">
+            <View className="flex-1 pr-4">
+              <Text className="text-3xl font-bold text-zinc-100">Account</Text>
+              <Text className="mt-1 text-sm text-zinc-400">Your viewer profile and verification status.</Text>
+            </View>
+            <Pressable
+              onPress={async () => {
+                if (token) await unregisterToken(token);
+                await logout();
+              }}
+              className="rounded-full border border-zinc-700 px-4 py-2"
+            >
+              <Text className="text-xs font-medium text-zinc-300">Log out</Text>
+            </Pressable>
+          </View>
+
+          <View className="mb-5 rounded-[20px] border border-zinc-800 bg-zinc-900 px-4 py-4">
+            <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500">
+              Signed in as
+            </Text>
+            <Text className="mt-2 text-base font-semibold text-zinc-100">{user.name}</Text>
+            <Text className="mt-0.5 text-sm text-zinc-400">{user.email}</Text>
+            {user.phone ? (
+              <Text className="mt-0.5 text-sm text-zinc-500">{user.phone}</Text>
+            ) : null}
+          </View>
+
+          <View className="mb-5 rounded-[20px] border border-zinc-800 bg-zinc-900 px-4 py-4">
+            <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500">
+              Verification
+            </Text>
+            <View className="mt-3 gap-3">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm text-zinc-300">Email</Text>
+                <Text className={`text-sm font-medium ${user.emailVerified ? 'text-lime-400' : 'text-amber-400'}`}>
+                  {user.emailVerified ? 'Verified' : 'Pending'}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-sm text-zinc-300">Phone</Text>
+                <Text className={`text-sm font-medium ${user.phoneVerified ? 'text-lime-400' : 'text-amber-400'}`}>
+                  {user.phoneVerified ? 'Verified' : 'Pending'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View className="rounded-[24px] border border-zinc-800 bg-zinc-900 p-8 items-center">
+            <View className="w-14 h-14 rounded-full bg-zinc-800 items-center justify-center mb-4">
+              <Ionicons name="sparkles-outline" size={28} color="#a1a1aa" />
+            </View>
+            <Text className="text-base font-semibold text-zinc-100 mb-2">Ready to explore</Text>
+            <Text className="text-sm text-zinc-500 text-center leading-relaxed max-w-[240px]">
+              Browse live venues, track your visits, and claim perks when you arrive.
+            </Text>
+            <Pressable
+              onPress={() => router.push('/')}
+              className="mt-5 rounded-2xl bg-zinc-100 px-5 py-3"
+            >
+              <Text className="text-sm font-semibold text-zinc-950">Back to browse</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }

@@ -183,10 +183,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
+          title: user?.role === 'VIEWER' ? 'Account' : 'Dashboard',
           tabBarIcon: ({ color }) => (
             <SymbolView
-              name={{ ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }}
+              name={
+                user?.role === 'VIEWER'
+                  ? { ios: 'person.crop.circle', android: 'person', web: 'person' }
+                  : { ios: 'chart.bar', android: 'bar_chart', web: 'bar_chart' }
+              }
               tintColor={color}
               size={24}
             />
