@@ -32,7 +32,7 @@ export function BroadcastChat() {
             Chat messages from viewers will appear here
           </p>
         )}
-        {chatMessages.map((msg, i) => (
+        {chatMessages.slice(-20).map((msg, i) => (
           <div key={i} className="text-sm">
             <span className="font-medium text-zinc-300">
               {msg.from?.name || msg.from?.identity || "Viewer"}
