@@ -25,8 +25,8 @@ function resolveBaseUrl() {
 }
 
 function resolveClientType(): 'web' | 'mobile' | 'unknown' {
-  if (process.env.NEXT_PUBLIC_API_URL !== undefined) return 'web';
-  if (process.env.EXPO_PUBLIC_API_URL !== undefined) return 'mobile';
+  if (process.env.NEXT_PUBLIC_CLIENT_TYPE === 'web') return 'web';
+  if (process.env.EXPO_PUBLIC_CLIENT_TYPE === 'mobile') return 'mobile';
   return 'unknown';
 }
 
