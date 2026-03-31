@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { fetchStream, fetchVenue } from '@vibecheck/shared';
+import { useSocket } from '@vibecheck/shared';
 
 export function StreamEndedOverlay({
   venueId,
@@ -17,39 +17,24 @@ export function StreamEndedOverlay({
   const router = useRouter();
   const [ended, setEnded] = useState(false);
   const [newStreamAvailable, setNewStreamAvailable] = useState(false);
-  const notLiveCountRef = useRef(0);
-  const REQUIRED_CONFIRMATIONS = 2;
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const streamData = await fetchStream(streamId);
-        if (streamData.status === 'LIVE') {
-          notLiveCountRef.current = 0;
-          setEnded(false);
-          setNewStreamAvailable(false);
-        } else {
-          notLiveCountRef.current += 1;
-          if (notLiveCountRef.current >= REQUIRED_CONFIRMATIONS) {
-            setEnded(true);
-
-            try {
-              const venueData = await fetchVenue(venueId);
-              if (venueData.activeStreamId && venueData.activeStreamId !== streamId) {
-                setNewStreamAvailable(true);
-              }
-            } catch {
-              // ignore
-            }
-          }
+  useSocket({
+    'stream:ended': useCallback(
+      (data) => {
+        if (data.venueId === venueId) setEnded(true);
+      },
+      [venueId],
+    ),
+    'stream:live': useCallback(
+      (data) => {
+        if (data.venueId === venueId && data.streamId !== streamId) {
+          setEnded(true);
+          setNewStreamAvailable(true);
         }
-      } catch {
-        // Network error — don't count as ended
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [streamId, venueId]);
+      },
+      [venueId, streamId],
+    ),
+  });
 
   if (!ended) {
     return null;
