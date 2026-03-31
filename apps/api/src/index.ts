@@ -32,7 +32,7 @@ startReceiptPoller();
 // Middleware
 app.use(cors());
 
-morgan.token('client', (req) => (req.headers['x-client'] as string) ?? 'unknown');
+morgan.token('client', (req: express.Request) => (req.headers['x-client'] as string) ?? 'unknown');
 app.use(morgan('[:date[iso]] :method :url :status :response-time ms — client=:client ip=:remote-addr'));
 
 // Webhook routes need raw body — register BEFORE express.json()
