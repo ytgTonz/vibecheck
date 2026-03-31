@@ -1,13 +1,17 @@
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Venue, venueTypeLabel } from '@vibecheck/shared';
+import { Venue, useVenueStore, venueTypeLabel } from '@vibecheck/shared';
 import { PulseDot } from './PulseDot';
 
 export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
   const router = useRouter();
-  const isLive = Boolean(venue.isLive);
-  const viewerCount = isLive ? ((venue as any).currentViewerCount ?? 0) : null;
+  const liveVenue = useVenueStore((s) =>
+    s.venues.find((candidate) => candidate.id === venue.id) as (Venue & { currentViewerCount?: number }) | undefined,
+  );
+  const resolvedVenue = liveVenue ?? (venue as Venue & { currentViewerCount?: number });
+  const isLive = Boolean(resolvedVenue.isLive);
+  const viewerCount = isLive ? (resolvedVenue.currentViewerCount ?? 0) : 0;
 
   return (
     <Pressable
@@ -38,27 +42,27 @@ export default function FeaturedVenueCard({ venue }: { venue: Venue }) {
         {/* LIVE badge — absolute top right */}
         {isLive && (
           <View className="absolute right-5 top-5 flex-row items-center gap-1.5 rounded-xl bg-brand-red px-3 py-1.5">
-            <PulseDot size={7} color="white" />
+            <PulseDot live />
             <Text className="text-[11px] font-semibold text-white">LIVE</Text>
           </View>
         )}
 
-        <Text className="text-[26px] font-semibold text-zinc-100 leading-tight">{venue.name}</Text>
+            <Text className="text-[26px] font-semibold text-zinc-100 leading-tight">{resolvedVenue.name}</Text>
         <Text className="mt-1.5 text-sm text-zinc-400">
-          {venueTypeLabel[venue.type] ?? venue.type} · {venue.location}
+          {venueTypeLabel[resolvedVenue.type] ?? resolvedVenue.type} · {resolvedVenue.location}
         </Text>
 
         <View className="mt-4 flex-row gap-5">
-          {isLive && viewerCount != null && (
+          {isLive && (
             <View className="flex-row items-center gap-1.5">
               <Ionicons name="eye-outline" size={14} color="#fbbf24" />
               <Text className="text-sm font-semibold text-amber-400">{viewerCount} watching</Text>
             </View>
           )}
-          {venue.musicGenre.length > 0 && (
+          {resolvedVenue.musicGenre.length > 0 && (
             <View className="flex-row items-center gap-1.5">
               <Ionicons name="musical-notes-outline" size={14} color="#71717a" />
-              <Text className="text-sm text-zinc-500">{venue.musicGenre[0]}</Text>
+              <Text className="text-sm text-zinc-500">{resolvedVenue.musicGenre[0]}</Text>
             </View>
           )}
         </View>
