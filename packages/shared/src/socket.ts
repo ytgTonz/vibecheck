@@ -50,7 +50,10 @@ function resolveWsUrl(): string {
 /** Get (or create) the shared Socket.IO client. Optionally pass an auth token for targeted notifications. */
 export function getSocket(authToken?: string): Socket {
   if (!socket) {
-    socket = io(resolveWsUrl(), {
+    const wsUrl = resolveWsUrl();
+    console.log('[Socket] creating client', { url: wsUrl });
+
+    socket = io(wsUrl, {
       path: '/ws',
       transports: ['websocket', 'polling'],
       autoConnect: true,
@@ -59,6 +62,21 @@ export function getSocket(authToken?: string): Socket {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       ...(authToken ? { auth: { token: authToken } } : {}),
+    });
+
+    socket.on('connect', () => {
+      console.log('[Socket] connected', { id: socket?.id, url: wsUrl });
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('[Socket] disconnected', { reason });
+    });
+
+    socket.on('connect_error', (error) => {
+      console.log('[Socket] connect_error', {
+        message: error.message,
+        url: wsUrl,
+      });
     });
   }
   return socket;
