@@ -24,7 +24,25 @@ function resolveBaseUrl() {
   return normalizeBaseUrl(envBaseUrl);
 }
 
+function resolveClientType(): 'web' | 'mobile' | 'unknown' {
+  if (process.env.NEXT_PUBLIC_API_URL !== undefined) return 'web';
+  if (process.env.EXPO_PUBLIC_API_URL !== undefined) return 'mobile';
+  return 'unknown';
+}
+
 let baseUrl = resolveBaseUrl();
+const clientType = resolveClientType();
+
+/** Fetch wrapper that injects the X-Client header on every request. */
+function baseFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  return fetch(url, {
+    ...options,
+    headers: {
+      'X-Client': clientType,
+      ...options.headers,
+    },
+  });
+}
 
 /** Optional override for tests or environments that need to swap the API server at runtime. */
 export function setBaseUrl(url: string) {
@@ -37,7 +55,7 @@ export function getBaseUrl(): string {
 
 /** Thin wrapper around fetch that throws on non-OK responses. */
 async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${baseUrl}${path}`);
+  const res = await baseFetch(`${baseUrl}${path}`);
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -89,7 +107,7 @@ export type RegisterPayload = RegisterAsOwnerPayload | RegisterAsPromoterPayload
 
 /** Register a new user account (owner with venue details, or promoter with invite code). */
 export async function register(payload: RegisterPayload): Promise<AuthResponse> {
-  const res = await fetch(`${baseUrl}/auth/register`, {
+  const res = await baseFetch(`${baseUrl}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -109,7 +127,7 @@ export async function login(
   email: string,
   password: string
 ): Promise<AuthResponse> {
-  const res = await fetch(`${baseUrl}/auth/login`, {
+  const res = await baseFetch(`${baseUrl}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -147,7 +165,7 @@ export interface VenueWithStats {
 
 /** Fetch venues the current user owns or is a promoter for, with stats. */
 export async function fetchMyVenues(token: string): Promise<VenueWithStats[]> {
-  const res = await fetch(`${baseUrl}/venues/my/venues`, {
+  const res = await baseFetch(`${baseUrl}/venues/my/venues`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -166,7 +184,7 @@ export async function updateVenue(
   data: Partial<Pick<Venue, 'name' | 'type' | 'location' | 'hours' | 'musicGenre' | 'coverCharge' | 'drinkPrices'>>,
   token: string
 ): Promise<Venue> {
-  const res = await fetch(`${baseUrl}/venues/${venueId}`, {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -200,7 +218,7 @@ export async function createVenue(
   data: CreateVenuePayload,
   token: string
 ): Promise<Venue> {
-  const res = await fetch(`${baseUrl}/venues`, {
+  const res = await baseFetch(`${baseUrl}/venues`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -225,7 +243,7 @@ export async function generateInvite(
   venueId: string,
   token: string
 ): Promise<Invite> {
-  const res = await fetch(`${baseUrl}/venues/${venueId}/invite`, {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}/invite`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -244,7 +262,7 @@ export async function fetchVenuePromoters(
   venueId: string,
   token: string
 ): Promise<VenuePromoter[]> {
-  const res = await fetch(`${baseUrl}/venues/${venueId}/promoters`, {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}/promoters`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -263,7 +281,7 @@ export async function removePromoter(
   userId: string,
   token: string
 ): Promise<void> {
-  const res = await fetch(`${baseUrl}/venues/${venueId}/promoters/${userId}`, {
+  const res = await baseFetch(`${baseUrl}/venues/${venueId}/promoters/${userId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -281,7 +299,7 @@ export async function createStream(
   venueId: string,
   token: string,
 ): Promise<LiveStream> {
-  const res = await fetch(`${baseUrl}/streams`, {
+  const res = await baseFetch(`${baseUrl}/streams`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -314,7 +332,7 @@ export async function fetchStreamToken(
   streamId: string,
   token: string,
 ): Promise<{ token: string }> {
-  const res = await fetch(`${baseUrl}/streams/${streamId}/token`, {
+  const res = await baseFetch(`${baseUrl}/streams/${streamId}/token`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -340,7 +358,7 @@ export async function endStream(
   streamId: string,
   token: string,
 ): Promise<void> {
-  const res = await fetch(`${baseUrl}/streams/${streamId}/end`, {
+  const res = await baseFetch(`${baseUrl}/streams/${streamId}/end`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -356,7 +374,7 @@ export async function goLiveStream(
   streamId: string,
   token: string,
 ): Promise<LiveStream> {
-  const res = await fetch(`${baseUrl}/streams/${streamId}/go-live`, {
+  const res = await baseFetch(`${baseUrl}/streams/${streamId}/go-live`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -377,7 +395,7 @@ export function fetchVenueRecentStreams(venueId: string): Promise<LiveStream[]> 
 
 /** Admin: force-end all active (IDLE/LIVE) streams. */
 export async function endAllStreams(token: string): Promise<{ ended: number }> {
-  const res = await fetch(`${baseUrl}/streams/end-all`, {
+  const res = await baseFetch(`${baseUrl}/streams/end-all`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -396,7 +414,7 @@ export async function registerPushToken(
 ): Promise<void> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-  const res = await fetch(`${baseUrl}/notifications/push-token`, {
+  const res = await baseFetch(`${baseUrl}/notifications/push-token`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ token: pushToken, platform }),
@@ -412,7 +430,7 @@ export async function unregisterPushToken(
   pushToken: string,
   authToken: string,
 ): Promise<void> {
-  const res = await fetch(`${baseUrl}/notifications/push-token`, {
+  const res = await baseFetch(`${baseUrl}/notifications/push-token`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -436,7 +454,7 @@ export async function fetchNotifications(
   if (filters?.page) params.set('page', String(filters.page));
   const qs = params.toString();
 
-  const res = await fetch(`${baseUrl}/notifications${qs ? `?${qs}` : ''}`, {
+  const res = await baseFetch(`${baseUrl}/notifications${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${authToken}` },
   });
   const body = await res.json();
@@ -449,7 +467,7 @@ export async function markNotificationRead(
   id: string,
   authToken: string,
 ): Promise<void> {
-  const res = await fetch(`${baseUrl}/notifications/${id}/read`, {
+  const res = await baseFetch(`${baseUrl}/notifications/${id}/read`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${authToken}` },
   });
@@ -466,7 +484,7 @@ export async function submitFeedback(
   data: { category: FeedbackCategory; rating: FeedbackRating; message?: string },
   token: string
 ): Promise<Feedback> {
-  const res = await fetch(`${baseUrl}/feedback`, {
+  const res = await baseFetch(`${baseUrl}/feedback`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -488,7 +506,7 @@ export async function submitFeedback(
 
 /** Fetch platform-wide admin stats. */
 export async function fetchAdminStats(token: string): Promise<AdminStats> {
-  const res = await fetch(`${baseUrl}/admin/stats`, {
+  const res = await baseFetch(`${baseUrl}/admin/stats`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -509,7 +527,7 @@ export async function fetchAdminFeedback(
   if (filters?.limit) params.set('limit', String(filters.limit));
   const qs = params.toString();
 
-  const res = await fetch(`${baseUrl}/admin/feedback${qs ? `?${qs}` : ''}`, {
+  const res = await baseFetch(`${baseUrl}/admin/feedback${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -527,7 +545,7 @@ export async function fetchAdminUsers(
   if (filters?.query) params.set('query', filters.query);
   if (filters?.role) params.set('role', filters.role);
   const qs = params.toString();
-  const res = await fetch(`${baseUrl}/admin/users${qs ? `?${qs}` : ''}`, {
+  const res = await baseFetch(`${baseUrl}/admin/users${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -537,7 +555,7 @@ export async function fetchAdminUsers(
 
 /** Delete a user by ID (admin only). */
 export async function deleteAdminUser(id: string, token: string): Promise<void> {
-  const res = await fetch(`${baseUrl}/admin/users/${id}`, {
+  const res = await baseFetch(`${baseUrl}/admin/users/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -557,7 +575,7 @@ export async function fetchAdminVenues(
   if (filters?.query) params.set('query', filters.query);
   if (filters?.type) params.set('type', filters.type);
   const qs = params.toString();
-  const res = await fetch(`${baseUrl}/admin/venues${qs ? `?${qs}` : ''}`, {
+  const res = await baseFetch(`${baseUrl}/admin/venues${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await res.json();
@@ -567,7 +585,7 @@ export async function fetchAdminVenues(
 
 /** Delete a venue by ID (admin only). */
 export async function deleteAdminVenue(id: string, token: string): Promise<void> {
-  const res = await fetch(`${baseUrl}/admin/venues/${id}`, {
+  const res = await baseFetch(`${baseUrl}/admin/venues/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -601,7 +619,7 @@ export async function recordAttendanceIntent(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${baseUrl}/attendance/intent`, {
+  const res = await baseFetch(`${baseUrl}/attendance/intent`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ streamId, deviceId }),
@@ -621,7 +639,7 @@ export async function recordAttendanceArrival(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${baseUrl}/attendance/arrival`, {
+  const res = await baseFetch(`${baseUrl}/attendance/arrival`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ streamId, deviceId }),

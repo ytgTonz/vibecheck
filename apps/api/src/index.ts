@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
 import venueRoutes from './routes/venues';
 import authRoutes from './routes/auth';
 import feedbackRoutes from './routes/feedback';
@@ -30,6 +31,9 @@ startReceiptPoller();
 
 // Middleware
 app.use(cors());
+
+morgan.token('client', (req) => (req.headers['x-client'] as string) ?? 'unknown');
+app.use(morgan('[:date[iso]] :method :url :status :response-time ms — client=:client ip=:remote-addr'));
 
 // Webhook routes need raw body — register BEFORE express.json()
 app.use('/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
