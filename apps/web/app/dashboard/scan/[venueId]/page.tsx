@@ -4,21 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuthStore, fetchMyVenues, fetchQRToken, redeemQRToken, QRTokenPreview } from "@vibecheck/shared";
 import Link from "next/link";
+import { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "idle" | "previewing" | "redeeming" | "success" | "error";
+
+const SCANNER_DIV_ID = "qr-reader";
 
 export default function QRScannerPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
   const { user, token, hydrated } = useAuthStore();
 
-  const [inputValue, setInputValue] = useState("");
   const [scanState, setScanState] = useState<ScanState>("idle");
+  const [scannedToken, setScannedToken] = useState("");
   const [preview, setPreview] = useState<QRTokenPreview | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState<boolean | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
+  const [manualValue, setManualValue] = useState("");
+
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -27,35 +34,65 @@ export default function QRScannerPage() {
     }
   }, [hydrated, user, router]);
 
+  // Check venue membership
   useEffect(() => {
     if (!hydrated || !user || !token) return;
-
     let cancelled = false;
     fetchMyVenues(token)
       .then((venues) => {
         if (cancelled) return;
-        setAuthorized(venues.some((venue) => venue.id === venueId));
+        setAuthorized(venues.some((v) => v.id === venueId));
       })
-      .catch(() => {
-        if (!cancelled) setAuthorized(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+      .catch(() => { if (!cancelled) setAuthorized(false); });
+    return () => { cancelled = true; };
   }, [hydrated, token, user, venueId]);
 
-  // Auto-focus input on mount and after each redemption
-  useEffect(() => {
-    if (scanState === "idle") {
-      inputRef.current?.focus();
+  const stopCamera = async () => {
+    if (scannerRef.current?.isScanning) {
+      await scannerRef.current.stop().catch(() => null);
     }
-  }, [scanState]);
+  };
+
+  const startCamera = async () => {
+    setCameraError(null);
+    const scanner = new Html5Qrcode(SCANNER_DIV_ID);
+    scannerRef.current = scanner;
+    try {
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (decoded) => {
+          // Stop immediately so we don't fire again while processing
+          stopCamera();
+          handleTokenInput(decoded);
+        },
+        () => { /* ignore per-frame decode failures */ },
+      );
+    } catch {
+      setCameraError("Camera access denied. Use the manual input below.");
+      setShowManual(true);
+    }
+  };
+
+  // Start camera when idle; stop it when we move to any other state
+  useEffect(() => {
+    if (!hydrated || !user || authorized !== true) return;
+
+    if (scanState === "idle") {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => { stopCamera(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanState, hydrated, user, authorized]);
 
   const handleTokenInput = async (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
 
+    setScannedToken(trimmed);
     setScanState("previewing");
     setErrorMessage(null);
     setPreview(null);
@@ -75,12 +112,10 @@ export default function QRScannerPage() {
   };
 
   const handleRedeem = async () => {
-    if (!preview || !token) return;
-    const qrToken = inputValue.trim();
-
+    if (!preview || !token || !scannedToken) return;
     setScanState("redeeming");
     try {
-      const result = await redeemQRToken(qrToken, token);
+      const result = await redeemQRToken(scannedToken, token);
       setSuccessMessage(result.incentive ? `Redeemed — ${result.incentive.title}` : "Arrival confirmed");
       setScanState("success");
     } catch (err) {
@@ -90,10 +125,11 @@ export default function QRScannerPage() {
   };
 
   const reset = () => {
-    setInputValue("");
+    setScannedToken("");
     setPreview(null);
     setSuccessMessage(null);
     setErrorMessage(null);
+    setManualValue("");
     setScanState("idle");
   };
 
@@ -128,36 +164,49 @@ export default function QRScannerPage() {
         </div>
 
         <h1 className="text-2xl font-bold mb-1">QR Check-in Scanner</h1>
-        <p className="text-sm text-zinc-400 mb-8">
-          Scan a guest&apos;s QR code with a barcode scanner, or paste the token below.
+        <p className="text-sm text-zinc-400 mb-6">
+          Point your camera at a guest&apos;s QR code to check them in.
         </p>
 
-        {/* Scanner input — auto-focused, optimised for repeated scans */}
-        <div className="mb-6">
-          <label className="block text-xs font-medium text-zinc-400 mb-2">
-            QR Token
-          </label>
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleTokenInput(inputValue);
-              }}
-              placeholder="Scan or paste token here…"
-              disabled={scanState === "redeeming"}
-              className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50"
+        {/* Camera viewfinder — visible only when idle */}
+        {scanState === "idle" && (
+          <div className="mb-6">
+            <div
+              id={SCANNER_DIV_ID}
+              className="overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900"
             />
+            {cameraError && (
+              <p className="mt-2 text-xs text-red-400">{cameraError}</p>
+            )}
+
             <button
-              onClick={() => handleTokenInput(inputValue)}
-              disabled={!inputValue.trim() || scanState === "redeeming" || scanState === "previewing"}
-              className="rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-200 disabled:opacity-40"
+              onClick={() => setShowManual((v) => !v)}
+              className="mt-3 text-xs text-zinc-500 hover:text-zinc-300"
             >
-              Look up
+              {showManual ? "Hide manual input" : "Enter token manually instead"}
             </button>
+
+            {showManual && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  autoFocus
+                  value={manualValue}
+                  onChange={(e) => setManualValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleTokenInput(manualValue); }}
+                  placeholder="Paste or type token…"
+                  className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none"
+                />
+                <button
+                  onClick={() => handleTokenInput(manualValue)}
+                  disabled={!manualValue.trim()}
+                  className="rounded-lg bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-200 disabled:opacity-40"
+                >
+                  Look up
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Preview state */}
         {scanState === "previewing" && preview && (
@@ -169,7 +218,9 @@ export default function QRScannerPage() {
                   <span className="text-sm font-semibold text-green-400">Valid QR code</span>
                 </div>
                 {preview.venueName && (
-                  <p className="text-sm text-zinc-300">Venue: <span className="font-medium text-zinc-100">{preview.venueName}</span></p>
+                  <p className="text-sm text-zinc-300">
+                    Venue: <span className="font-medium text-zinc-100">{preview.venueName}</span>
+                  </p>
                 )}
                 {preview.incentive && (
                   <div className="rounded-lg bg-zinc-800 px-4 py-3">
