@@ -26,6 +26,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
   const [arrivalCount, setArrivalCount] = useState(venue.arrivalCount ?? 0);
   const [showThankYou, setShowThankYou] = useState(false);
   const [qrData, setQrData] = useState<VisitArrivalResponse | null>(null);
+  const [qrVisible, setQrVisible] = useState(false);
   const [intentSubmitting, setIntentSubmitting] = useState(false);
   const [arrivalSubmitting, setArrivalSubmitting] = useState(false);
   const thankYouAnim = useRef(new Animated.Value(0)).current;
@@ -70,6 +71,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
       setArrivalPressed(true);
       setArrivalCount((c) => c + 1);
       setQrData(result);
+      setQrVisible(true);
       setShowThankYou(true);
       Animated.sequence([
         Animated.timing(thankYouAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
@@ -131,31 +133,31 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
           </Pressable>
 
           <Pressable
-            onPress={handleArrival}
-            disabled={arrivalPressed || arrivalSubmitting || !token}
+            onPress={arrivalPressed ? () => setQrVisible(true) : handleArrival}
+            disabled={arrivalSubmitting || (!arrivalPressed && !token)}
             className={`flex-1 items-center rounded-xl py-3 ${
               arrivalPressed ? 'bg-purple-500/40' : 'bg-purple-500'
             }`}
           >
             <Text
               className={`text-sm font-semibold ${
-                arrivalPressed ? 'text-white/50' : 'text-white'
+                arrivalPressed ? 'text-white/80' : 'text-white'
               }`}
             >
-              {arrivalPressed ? "I'm Here ✓" : "I'm Here"}
+              {arrivalPressed ? 'Show QR' : "I'm Here"}
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* QR modal — shown after "I'm Here" */}
+      {/* QR modal — shown after "I'm Here", re-openable via "Show QR" */}
       {qrData && (
         <QRModal
-          visible={true}
+          visible={qrVisible}
           qrToken={qrData.qrToken}
           expiresAt={qrData.expiresAt}
           incentive={qrData.incentive}
-          onClose={() => setQrData(null)}
+          onClose={() => setQrVisible(false)}
         />
       )}
     </>

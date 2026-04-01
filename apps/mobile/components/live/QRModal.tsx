@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 
 interface Props {
@@ -47,7 +48,7 @@ export function QRModal({ visible, qrToken, expiresAt, incentive, onClose }: Pro
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-zinc-950 px-6 pt-8 pb-10 items-center justify-between">
+      <SafeAreaView className="flex-1 bg-zinc-950 px-6 pt-8 pb-10 items-center justify-between">
         <View className="w-full items-center gap-4">
           <Text className="text-2xl font-bold text-zinc-100">Show this at the door</Text>
 
@@ -85,7 +86,7 @@ export function QRModal({ visible, qrToken, expiresAt, incentive, onClose }: Pro
         >
           <Text className="text-center text-[15px] font-semibold text-zinc-300">Close</Text>
         </Pressable>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

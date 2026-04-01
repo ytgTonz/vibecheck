@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchStream, fetchVenue, fetchViewerToken, LiveStream, useAuthStore, Venue } from '@vibecheck/shared';
 import { ErrorState, LoadingState } from '@/components/live/LiveStates';
@@ -176,7 +177,7 @@ export default function MobileLiveWatchScreen() {
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <SafeAreaView className="flex-1 bg-black">
       <Stack.Screen options={{ headerShown: false }} />
       <LiveKitRoom
         serverUrl={LIVEKIT_URL}
@@ -190,6 +191,6 @@ export default function MobileLiveWatchScreen() {
           onReconnect={() => setRetryCount((count) => count + 1)}
         />
       </LiveKitRoom>
-    </View>
+    </SafeAreaView>
   );
 }

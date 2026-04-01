@@ -16,6 +16,7 @@ import {
   LiveStream,
   Venue,
   AttendanceUpdateEvent,
+  ViewerEvent,
 } from "@vibecheck/shared";
 import {
   LiveKitRoom,
@@ -44,6 +45,7 @@ export default function BroadcastPage() {
   const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "monitoring" | "ended">("idle");
   const [error, setError] = useState<string | null>(null);
   const [attendanceCounts, setAttendanceCounts] = useState({ intentCount: 0, arrivalCount: 0 });
+  const [peakViewerCount, setPeakViewerCount] = useState(0);
 
   useEffect(() => {
     if (!stream?.id || (phase !== "live" && phase !== "monitoring")) return;
@@ -61,7 +63,21 @@ export default function BroadcastPage() {
     [stream?.id],
   );
 
-  useSocket({ "attendance:update": handleAttendanceUpdate });
+  const handleViewerUpdate = useCallback(
+    (data: ViewerEvent) => {
+      if (data.streamId === stream?.id) {
+        setPeakViewerCount((prevPeak) => Math.max(prevPeak, data.currentViewerCount));
+      }
+    },
+    [stream?.id],
+  );
+
+  useSocket({ "attendance:update": handleAttendanceUpdate, "stream:viewers": handleViewerUpdate });
+
+  useEffect(() => {
+    if (!stream?.id) return;
+    setPeakViewerCount(stream.viewerPeak ?? 0);
+  }, [stream?.id, stream?.viewerPeak]);
 
   useEffect(() => {
     hydrate();

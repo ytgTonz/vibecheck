@@ -31,6 +31,9 @@ export function LiveRoomContent({
 }) {
   const { width, height } = useWindowDimensions();
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
+  const [peakCount, setPeakCount] = useState(() =>
+    Math.max(stream.viewerPeak ?? 0, stream.currentViewerCount ?? 0),
+  );
   const nextReactionIdRef = useRef(0);
   const processedMessageCountRef = useRef(0);
   const pendingLocalReactionsRef = useRef<Array<{ emoji: string; at: number }>>([]);
@@ -52,7 +55,13 @@ export function LiveRoomContent({
     ) ||
     videoTracks.find((track: any) => isTrackReference?.(track));
 
-  const viewerCount = Math.max(stream.currentViewerCount, participants.length + 1);
+  const viewerCount = Math.max(stream.currentViewerCount, participants.length);
+
+  useEffect(() => {
+    setPeakCount((prevPeak) =>
+      Math.max(prevPeak, stream.viewerPeak ?? 0, viewerCount),
+    );
+  }, [stream.viewerPeak, viewerCount]);
 
   const removeFloatingReaction = useCallback((id: number) => {
     setFloatingReactions((current) => current.filter((reaction) => reaction.id !== id));
@@ -142,6 +151,7 @@ export function LiveRoomContent({
       <LiveHeader
         venue={venue}
         viewerCount={viewerCount}
+        peakCount={peakCount}
       />
 
       <View style={{ position: 'absolute', bottom: 185, right: 18, zIndex: 10 }}>

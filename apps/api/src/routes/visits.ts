@@ -111,10 +111,10 @@ router.post('/arrival', requireAuth, async (req: Request, res: Response) => {
     select: { id: true, title: true, description: true, expiresAt: true },
   });
 
-  const t24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const t4h = new Date(Date.now() + 4 * 60 * 60 * 1000);
   const expiresAt = incentive?.expiresAt
-    ? new Date(Math.min(incentive.expiresAt.getTime(), t24h.getTime()))
-    : t24h;
+    ? new Date(Math.min(incentive.expiresAt.getTime(), t4h.getTime()))
+    : t4h;
 
   const token = randomUUID();
 
