@@ -38,7 +38,7 @@ export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: B
       try {
         const stream = await mediaDevices.getUserMedia({
           video: { facingMode },
-          audio: false,
+          audio: true,
         });
         if (cancelled) {
           stream.getTracks().forEach((t: any) => t.stop());

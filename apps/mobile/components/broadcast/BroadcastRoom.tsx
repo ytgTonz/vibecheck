@@ -41,6 +41,13 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const [intentCount, setIntentCount] = useState(0);
   const [arrivalCount, setArrivalCount] = useState(0);
 
+  // Publish camera + mic tracks on mount (permissions already granted in setup)
+  useEffect(() => {
+    if (!localParticipant) return;
+    localParticipant.setCameraEnabled(true);
+    localParticipant.setMicrophoneEnabled(true);
+  }, [localParticipant]);
+
   useEffect(() => {
     const start = stream.startedAt ? new Date(stream.startedAt).getTime() : Date.now();
     const interval = setInterval(() => {
