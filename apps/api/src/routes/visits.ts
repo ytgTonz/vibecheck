@@ -59,14 +59,14 @@ router.post('/arrival', requireAuth, async (req: Request, res: Response) => {
     return;
   }
 
-  // Both email and phone must be verified
+  // Phone must be verified to check in
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { emailVerified: true, phoneVerified: true },
+    select: { phoneVerified: true },
   });
 
-  if (!user?.emailVerified || !user?.phoneVerified) {
-    res.status(403).json({ error: 'Both email and phone must be verified before checking in' });
+  if (!user?.phoneVerified) {
+    res.status(403).json({ error: 'Phone must be verified before checking in' });
     return;
   }
 
