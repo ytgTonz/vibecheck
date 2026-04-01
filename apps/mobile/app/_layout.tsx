@@ -36,8 +36,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Start at gate, let the routing effect decide based on auth state
-  initialRouteName: 'gate',
+  initialRouteName: '(tabs)',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -82,26 +81,27 @@ function RootLayoutNav() {
     // Hydrate auth from AsyncStorage immediately — don't wait for the timer.
     const hydratePromise = useAuthStore.getState().hydrate();
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+
+      // Hydrate and route BEFORE fading — so the correct screen is
+      // already underneath when the splash becomes transparent.
+      await hydratePromise;
+
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        router.replace('/gate');
+        // Wait for navigation to settle before revealing
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }
+
+      // Now fade the splash to reveal the correct screen.
       Animated.timing(splashOpacity, {
         toValue: 0,
         duration: 400,
         useNativeDriver: true,
-      }).start(async () => {
-        if (cancelled) return;
-
-        // Ensure hydration is complete before reading user state.
-        await hydratePromise;
-
-        const user = useAuthStore.getState().user;
-
-        if (user) {
-          router.replace('/');
-        }
-        // else: stay on gate (initialRouteName)
-
-        // Hide splash only after the routing decision.
-        setSplashVisible(false);
+      }).start(() => {
+        if (!cancelled) setSplashVisible(false);
       });
     }, 1500);
 

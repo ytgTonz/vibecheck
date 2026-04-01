@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@vibecheck/shared';
 import VibecheckIcon from '@/components/VibecheckIcon';
@@ -36,115 +36,47 @@ export default function GateScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView className="flex-1 bg-zinc-950 px-6 justify-between">
       <Pressable
-        style={({ pressed }) => [styles.skip, pressed && styles.btnPressed]}
+        className="self-end py-2 px-1 active:opacity-70"
         onPress={handleBrowse}
       >
-        <Text style={styles.skipText}>Skip</Text>
+        <Text className="text-sm text-zinc-600">Skip</Text>
       </Pressable>
 
-      <View style={styles.top}>
+      <View className="flex-1 items-center justify-center gap-3">
         <VibecheckIcon size={80} />
-        <Text style={styles.title}>
-          {'VIBE'}<Text style={{ color: '#FF2D55' }}>{'CHECK'}</Text>
+        <Text
+          className="text-zinc-100"
+          style={{ fontSize: 52, fontFamily: 'BebasNeue_400Regular', letterSpacing: 2 }}
+        >
+          VIBE<Text className="text-[#FF2D55]">CHECK</Text>
         </Text>
-        <Text style={styles.tagline}>Feel the night.</Text>
+        <Text className="text-[15px] text-zinc-500">Feel the night.</Text>
       </View>
 
-      <View style={styles.bottom}>
+      <View className="pb-3 gap-3">
         <Pressable
-          style={({ pressed }) => [styles.btn, styles.btnPrimary, pressed && styles.btnPressed]}
+          className="bg-zinc-100 rounded-2xl py-3.5 items-center active:opacity-70"
           onPress={handleBrowse}
         >
-          <Text style={styles.btnPrimaryText}>Browse venues</Text>
+          <Text className="text-[15px] font-semibold text-zinc-950">Browse venues</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.btn, styles.btnSecondary, pressed && styles.btnPressed]}
+          className="border border-zinc-700 rounded-2xl py-3.5 items-center active:opacity-70"
           onPress={handleSignIn}
         >
-          <Text style={styles.btnSecondaryText}>Sign in</Text>
+          <Text className="text-[15px] font-medium text-zinc-300">Sign in</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.btnTertiary, pressed && styles.btnPressed]}
+          className="items-center py-2.5 active:opacity-70"
           onPress={handleCreateAccount}
         >
-          <Text style={styles.btnTertiaryText}>Create account</Text>
+          <Text className="text-sm text-zinc-500">Create account</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#09090b',
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
-  },
-  top: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  title: {
-    fontSize: 52,
-    fontFamily: 'BebasNeue_400Regular',
-    color: '#f4f4f5',
-    letterSpacing: 2,
-  },
-  tagline: {
-    fontSize: 15,
-    color: '#71717a',
-  },
-  skip: {
-    alignSelf: 'flex-end',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  skipText: {
-    fontSize: 14,
-    color: '#52525b',
-  },
-  bottom: {
-    paddingBottom: 12,
-    gap: 12,
-  },
-  btn: {
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  btnPressed: {
-    opacity: 0.7,
-  },
-  btnPrimary: {
-    backgroundColor: '#f4f4f5',
-  },
-  btnPrimaryText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#09090b',
-  },
-  btnSecondary: {
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-  },
-  btnSecondaryText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#d4d4d8',
-  },
-  btnTertiary: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  btnTertiaryText: {
-    fontSize: 14,
-    color: '#71717a',
-  },
-});
