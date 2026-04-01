@@ -4,22 +4,23 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { RegisterPayload, useAuthStore, VenueType } from '@vibecheck/shared';
-import { AccountTypeSelector } from '@/components/auth/AccountTypeSelector';
+import { RegisterPayload, register as apiRegister, useAuthStore, VenueType } from '@vibecheck/shared';
+import { AccountTypeSelector, AccountType } from '@/components/auth/AccountTypeSelector';
 import { VenueRegistrationFields } from '@/components/auth/VenueRegistrationFields';
 import { PromoterInviteField } from '@/components/auth/PromoterInviteField';
 
 export default function MobileRegisterScreen() {
   const router = useRouter();
-  const { loading, error, register } = useAuthStore();
+  const { loading, error, register, setAuth } = useAuthStore();
 
-  const [accountType, setAccountType] = useState<'owner' | 'promoter' | null>(null);
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [phone, setPhone] = useState('');
   const [venueName, setVenueName] = useState('');
   const [venueType, setVenueType] = useState<VenueType | null>(null);
   const [venueLocation, setVenueLocation] = useState('');
@@ -27,6 +28,7 @@ export default function MobileRegisterScreen() {
   const [venueGenres, setVenueGenres] = useState<string[]>([]);
   const [inviteCode, setInviteCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
 
   const toggleGenre = (genre: string) => {
     setVenueGenres((current) =>
@@ -39,6 +41,33 @@ export default function MobileRegisterScreen() {
     if (!name.trim() || !email.trim() || !password) { setLocalError('Fill in your name, email, and password.'); return; }
     if (password.length < 8) { setLocalError('Password must be at least 8 characters.'); return; }
     if (password !== confirmPassword) { setLocalError('Passwords do not match.'); return; }
+
+    if (accountType === 'viewer') {
+      if (!phone.trim()) { setLocalError('Enter your phone number.'); return; }
+      setLocalError(null);
+      setViewerLoading(true);
+      try {
+        const response = await apiRegister({
+          accountType: 'viewer',
+          email: email.trim(),
+          password,
+          displayName: name.trim(),
+          phone: phone.trim(),
+        });
+        await setAuth(response.token, response.user);
+        await AsyncStorage.setItem('vc_onboarding_seen', 'true');
+        const stubOtp = response.otpDebug?.phoneOtp;
+        router.replace({
+          pathname: '/(tabs)/(auth)/verify-phone' as never,
+          params: stubOtp ? { stubOtp } : {},
+        } as never);
+      } catch (err) {
+        setLocalError(err instanceof Error ? err.message : 'Registration failed');
+      } finally {
+        setViewerLoading(false);
+      }
+      return;
+    }
 
     let payload: RegisterPayload;
 
@@ -81,6 +110,8 @@ export default function MobileRegisterScreen() {
     }
   };
 
+  const isLoading = accountType === 'viewer' ? viewerLoading : loading;
+
   return (
     <SafeAreaView className="flex-1 bg-zinc-950" edges={[]}>
       <KeyboardAvoidingView
@@ -102,7 +133,7 @@ export default function MobileRegisterScreen() {
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Full name"
+              placeholder={accountType === 'viewer' ? 'Your name' : 'Full name'}
               placeholderTextColor="#52525b"
               className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
             />
@@ -164,6 +195,17 @@ export default function MobileRegisterScreen() {
           <AccountTypeSelector accountType={accountType} onSelect={setAccountType} />
 
           <View className="gap-3">
+            {accountType === 'viewer' && (
+              <TextInput
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                placeholder="Phone number"
+                placeholderTextColor="#52525b"
+                className="rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3.5 text-[15px] text-zinc-100"
+              />
+            )}
+
             {accountType === 'owner' && (
               <VenueRegistrationFields
                 venueName={venueName}
@@ -189,12 +231,12 @@ export default function MobileRegisterScreen() {
 
             <Pressable
               onPress={handleRegister}
-              disabled={loading}
+              disabled={isLoading}
               className="rounded-2xl bg-zinc-100 py-3.5 px-4"
-              style={{ opacity: loading ? 0.6 : 1 }}
+              style={{ opacity: isLoading ? 0.6 : 1 }}
             >
               <Text className="text-center text-[15px] font-semibold text-zinc-950">
-                {loading ? 'Creating account…' : 'Create account'}
+                {isLoading ? 'Creating account…' : 'Create account'}
               </Text>
             </Pressable>
 

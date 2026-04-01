@@ -1,12 +1,20 @@
 import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+export type AccountType = 'viewer' | 'promoter' | 'owner';
+
 interface AccountTypeSelectorProps {
-  accountType: 'owner' | 'promoter' | null;
-  onSelect: (type: 'owner' | 'promoter') => void;
+  accountType: AccountType | null;
+  onSelect: (type: AccountType) => void;
 }
 
-const options: { type: 'owner' | 'promoter'; icon: string; label: string; subtitle: string }[] = [
+const options: { type: AccountType; icon: string; label: string; subtitle: string }[] = [
+  {
+    type: 'viewer',
+    icon: 'eye-outline',
+    label: 'Viewer',
+    subtitle: 'Browse & watch live',
+  },
   {
     type: 'promoter',
     icon: 'radio-outline',
@@ -30,19 +38,19 @@ export function AccountTypeSelector({ accountType, onSelect }: AccountTypeSelect
           <Pressable
             key={opt.type}
             onPress={() => onSelect(opt.type)}
-            className={`flex-1 rounded-[20px] border py-6 px-4 items-center gap-2 ${
+            className={`flex-1 rounded-[20px] border py-4 px-2 items-center gap-1.5 ${
               active ? 'border-zinc-100 bg-zinc-100/10' : 'border-zinc-800 bg-zinc-900'
             }`}
           >
             <Ionicons
               name={opt.icon as any}
-              size={32}
+              size={28}
               color={active ? '#f4f4f5' : '#71717a'}
             />
-            <Text className={`text-[15px] font-semibold mt-1 ${active ? 'text-zinc-100' : 'text-zinc-200'}`}>
+            <Text className={`text-[13px] font-semibold mt-0.5 ${active ? 'text-zinc-100' : 'text-zinc-200'}`}>
               {opt.label}
             </Text>
-            <Text className={`text-xs text-center ${active ? 'text-zinc-300' : 'text-zinc-500'}`}>
+            <Text className={`text-[10px] text-center leading-tight ${active ? 'text-zinc-300' : 'text-zinc-500'}`}>
               {opt.subtitle}
             </Text>
           </Pressable>

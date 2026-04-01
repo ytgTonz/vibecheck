@@ -96,7 +96,7 @@ export default function MobileLoginScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push('/(tabs)/(auth)/viewer-register' as never)}
+              onPress={() => router.push('/register')}
               className="rounded-2xl border border-zinc-700 py-3.5 px-4"
             >
               <Text className="text-center text-[15px] font-medium text-zinc-300">
