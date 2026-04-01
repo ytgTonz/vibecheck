@@ -31,8 +31,7 @@ export default function GateScreen() {
     router.push('/login');
   };
 
-  const handleCreateAccount = async () => {
-    await markOnboardingSeen();
+  const handleCreateAccount = () => {
     router.push('/register');
   };
 

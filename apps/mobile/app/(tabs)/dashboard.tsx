@@ -9,12 +9,11 @@ import {
   VenueWithStats,
 } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
-import { useNotifications } from '@/hooks/useNotifications';
+import { unregisterNotificationToken } from '@/hooks/useNotifications';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user, token, hydrate, logout } = useAuthStore();
-  const { unregisterToken } = useNotifications();
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +75,7 @@ export default function DashboardScreen() {
             </View>
             <Pressable
               onPress={async () => {
-                if (token) await unregisterToken(token);
+                if (token) await unregisterNotificationToken(token);
                 await logout();
               }}
               className="rounded-full border border-zinc-700 px-4 py-2"
@@ -157,7 +156,7 @@ export default function DashboardScreen() {
           </View>
           <Pressable
             onPress={async () => {
-              if (token) await unregisterToken(token);
+              if (token) await unregisterNotificationToken(token);
               await logout();
             }}
             className="rounded-full border border-zinc-700 px-4 py-2"

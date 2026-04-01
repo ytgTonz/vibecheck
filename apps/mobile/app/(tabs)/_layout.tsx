@@ -4,6 +4,7 @@ import { Tabs, useRouter, useSegments } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore, useBroadcastStore } from '@vibecheck/shared';
+import { useNotifications } from '@/hooks/useNotifications';
 
 function LiveBanner() {
   const router = useRouter();
@@ -70,6 +71,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const segments = useSegments();
   const { user } = useAuthStore();
+  useNotifications();
   const broadcastVenueId = useBroadcastStore((s) => s.venueId);
   const isFullscreenRoute =
     segments.includes('broadcast' as never) ||

@@ -36,8 +36,8 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  // Start at gate, let the routing effect decide based on auth state
+  initialRouteName: 'gate',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -93,15 +93,14 @@ function RootLayoutNav() {
         // Ensure hydration is complete before reading user state.
         await hydratePromise;
 
-        const seen = await AsyncStorage.getItem('vc_onboarding_seen');
         const user = useAuthStore.getState().user;
 
-        if (!seen && !user) {
-          router.replace('/gate');
+        if (user) {
+          router.replace('/');
         }
+        // else: stay on gate (initialRouteName)
 
-        // Hide splash only after the routing decision — prevents a flash of
-        // the browse screen while the async checks are in flight.
+        // Hide splash only after the routing decision.
         setSplashVisible(false);
       });
     }, 1500);
@@ -138,7 +137,7 @@ function RootLayoutNav() {
 
 const styles = StyleSheet.create({
   splash: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#09090b',
     alignItems: 'center',
     justifyContent: 'center',

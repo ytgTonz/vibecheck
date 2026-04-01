@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -73,6 +74,7 @@ export default function MobileRegisterScreen() {
     setLocalError(null);
     try {
       await register(payload);
+      await AsyncStorage.setItem('vc_onboarding_seen', 'true');
       router.replace(accountType === 'owner' ? '/dashboard' : '/upload');
     } catch {
       // store error rendered below
