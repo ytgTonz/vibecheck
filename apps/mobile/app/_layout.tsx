@@ -23,7 +23,6 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { useNotifications } from '../hooks/useNotifications';
 
 setAuthStorage({
   getItem: (key) => AsyncStorage.getItem(key),
@@ -76,7 +75,6 @@ function RootLayoutNav() {
   const router = useRouter();
   const [splashVisible, setSplashVisible] = useState(true);
   const splashOpacity = useRef(new Animated.Value(1)).current;
-  useNotifications();
 
   useEffect(() => {
     let cancelled = false;

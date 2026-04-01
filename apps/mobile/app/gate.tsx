@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@vibecheck/shared';
 import VibecheckIcon from '@/components/VibecheckIcon';
+import { useNotifications } from '../hooks/useNotifications';
 
 async function markOnboardingSeen() {
   await AsyncStorage.setItem('vc_onboarding_seen', 'true');
@@ -12,6 +13,7 @@ async function markOnboardingSeen() {
 
 export default function GateScreen() {
   const router = useRouter();
+  useNotifications();
 
   useEffect(() => {
     const user = useAuthStore.getState().user;
