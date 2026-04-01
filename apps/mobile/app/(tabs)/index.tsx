@@ -14,6 +14,7 @@ import {
 import VenueCard from '@/components/VenueCard';
 import FeaturedVenueCard from '@/components/FeaturedVenueCard';
 import FilterBar from '@/components/FilterBar';
+import { useNotifications } from '@/hooks/useNotifications';
 
 function BrowseTip() {
   const [visible, setVisible] = useState(false);
@@ -71,6 +72,7 @@ function BrowseTip() {
 }
 
 export default function BrowseScreen() {
+  useNotifications();
   const loading = useVenueStore((s) => s.loading);
   const error = useVenueStore((s) => s.error);
   const loadVenues = useVenueStore((s) => s.loadVenues);
