@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifyPhone, useAuthStore } from "@vibecheck/shared";
 
-export default function VerifyPhonePage() {
+function VerifyPhoneForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const stubOtp = searchParams.get("stubOtp");
-  const { token, setUser, user } = useAuthStore();
+  const { token, setUser, user, hydrated, hydrate } = useAuthStore();
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,14 +16,18 @@ export default function VerifyPhonePage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
-    if (!token) {
+    if (hydrated) inputRef.current?.focus();
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (hydrated && !token) {
       router.replace("/login");
     }
-  }, [token, router]);
+  }, [hydrated, token, router]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +55,7 @@ export default function VerifyPhonePage() {
     }
   };
 
-  if (!token) return null;
+  if (!hydrated || !token) return null;
 
   return (
     <div className="mx-auto max-w-sm px-4 py-8 sm:py-16">
@@ -105,5 +109,13 @@ export default function VerifyPhonePage() {
         </p>
       )}
     </div>
+  );
+}
+
+export default function VerifyPhonePage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyPhoneForm />
+    </Suspense>
   );
 }
