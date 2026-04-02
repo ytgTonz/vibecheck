@@ -1,11 +1,9 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { VALID_CATEGORIES, VALID_RATINGS } from '../lib/constants';
 
 const router = Router();
-
-const VALID_CATEGORIES = ['BUG', 'SUGGESTION', 'GENERAL'] as const;
-const VALID_RATINGS = ['BAD', 'NEUTRAL', 'GOOD'] as const;
 
 /** POST /feedback — Submit feedback (authenticated). */
 router.post('/', requireAuth, async (req: Request, res: Response) => {

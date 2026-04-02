@@ -2,7 +2,7 @@ import Expo, { ExpoPushMessage } from 'expo-server-sdk';
 import prisma from './prisma';
 import { getIO } from './socket';
 
-const expo = new Expo();
+export const expo = new Expo();
 
 /** In-memory queue of receipt IDs → token, awaiting Expo receipt check. */
 export const receiptQueue: Array<{ receiptId: string; token: string }> = [];

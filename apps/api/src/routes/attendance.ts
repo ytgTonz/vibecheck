@@ -1,21 +1,13 @@
 import { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { emitAttendanceUpdate } from '../lib/socket';
-import { AuthPayload } from '../middleware/auth';
+import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
-/** Optionally parse a Bearer token and attach user to req. */
-function tryAuth(req: Request): AuthPayload | null {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ') || !process.env.JWT_SECRET) return null;
-  try {
-    return jwt.verify(header.slice(7), process.env.JWT_SECRET) as AuthPayload;
-  } catch {
-    return null;
-  }
-}
+// Attach req.user if a valid token is present, but never reject unauthenticated requests.
+// This replaces the old per-handler tryAuth() — auth logic stays in one place (middleware/auth.ts).
+router.use(optionalAuth);
 
 async function getAttendanceCounts(streamId: string) {
   const [intentCount, arrivalCount] = await Promise.all([
@@ -44,7 +36,8 @@ router.post('/intent', async (req: Request, res: Response) => {
     return;
   }
 
-  const user = tryAuth(req);
+  // req.user is set by optionalAuth middleware — present only if the caller sent a valid JWT.
+  const userId = req.user?.userId ?? null;
 
   // Upsert — idempotent, no error on duplicate
   const existing = await prisma.streamAttendance.findUnique({
@@ -57,18 +50,18 @@ router.post('/intent', async (req: Request, res: Response) => {
         streamId,
         venueId: stream.venueId,
         deviceId,
-        userId: user?.userId ?? null,
+        userId,
         type: 'INTENT',
       },
     });
 
     // Schedule reminder push notification for authenticated users
-    if (user?.userId) {
+    if (userId) {
       const delayMinutes = 30 + Math.floor(Math.random() * 31); // 30–60 mins
       const scheduledFor = new Date(Date.now() + delayMinutes * 60 * 1000);
       await prisma.scheduledNotification.create({
         data: {
-          targetUserId: user.userId,
+          targetUserId: userId,
           title: `Don't forget — ${stream.venue.name} is live!`,
           body: 'Are you heading out?',
           data: { venueId: stream.venueId, streamId },
@@ -103,7 +96,7 @@ router.post('/arrival', async (req: Request, res: Response) => {
     return;
   }
 
-  const user = tryAuth(req);
+  const userId = req.user?.userId ?? null;
 
   const existing = await prisma.streamAttendance.findUnique({
     where: { deviceId_streamId_type: { deviceId, streamId, type: 'ARRIVAL' } },
@@ -115,7 +108,7 @@ router.post('/arrival', async (req: Request, res: Response) => {
         streamId,
         venueId: stream.venueId,
         deviceId,
-        userId: user?.userId ?? null,
+        userId,
         type: 'ARRIVAL',
       },
     });

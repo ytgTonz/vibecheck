@@ -6,13 +6,9 @@ import {
   deleteVenueWithCascade,
   AdminDeleteError,
 } from '../lib/adminHelpers';
+import { VALID_CATEGORIES, VALID_RATINGS, VALID_ROLES, VALID_VENUE_TYPES } from '../lib/constants';
 
 const router = Router();
-
-const validCategories = ['BUG', 'SUGGESTION', 'GENERAL'] as const;
-const validRatings = ['BAD', 'NEUTRAL', 'GOOD'] as const;
-const validRoles = ['ADMIN', 'VENUE_OWNER', 'VENUE_PROMOTER'] as const;
-const validVenueTypes = ['NIGHTCLUB', 'BAR', 'RESTAURANT_BAR', 'LOUNGE', 'SHISA_NYAMA', 'ROOFTOP', 'OTHER'] as const;
 
 // All admin routes require ADMIN role
 router.use(requireAuth, requireRole('ADMIN'));
@@ -87,13 +83,13 @@ router.get('/feedback', async (req: Request, res: Response) => {
   const rating = getQueryString(req.query.rating);
   const search = getQueryString(req.query.query);
 
-  if (category && !validCategories.includes(category as typeof validCategories[number])) {
-    res.status(400).json({ error: `Invalid category. Must be one of: ${validCategories.join(', ')}` });
+  if (category && !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
+    res.status(400).json({ error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` });
     return;
   }
 
-  if (rating && !validRatings.includes(rating as typeof validRatings[number])) {
-    res.status(400).json({ error: `Invalid rating. Must be one of: ${validRatings.join(', ')}` });
+  if (rating && !VALID_RATINGS.includes(rating as typeof VALID_RATINGS[number])) {
+    res.status(400).json({ error: `Invalid rating. Must be one of: ${VALID_RATINGS.join(', ')}` });
     return;
   }
 
@@ -138,8 +134,8 @@ router.get('/users', async (req: Request, res: Response) => {
   const search = getQueryString(req.query.query);
   const role = getQueryString(req.query.role);
 
-  if (role && !validRoles.includes(role as typeof validRoles[number])) {
-    res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+  if (role && !VALID_ROLES.includes(role as typeof VALID_ROLES[number])) {
+    res.status(400).json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` });
     return;
   }
 
@@ -201,8 +197,8 @@ router.get('/venues', async (req: Request, res: Response) => {
   const search = getQueryString(req.query.query);
   const type = getQueryString(req.query.type);
 
-  if (type && !validVenueTypes.includes(type as typeof validVenueTypes[number])) {
-    res.status(400).json({ error: `Invalid venue type. Must be one of: ${validVenueTypes.join(', ')}` });
+  if (type && !VALID_VENUE_TYPES.includes(type as typeof VALID_VENUE_TYPES[number])) {
+    res.status(400).json({ error: `Invalid venue type. Must be one of: ${VALID_VENUE_TYPES.join(', ')}` });
     return;
   }
 

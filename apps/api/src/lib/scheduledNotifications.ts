@@ -1,8 +1,5 @@
-import Expo from 'expo-server-sdk';
 import prisma from './prisma';
-import { sendNotification, receiptQueue } from './notifications';
-
-const expo = new Expo();
+import { sendNotification, receiptQueue, expo } from './notifications';
 
 /** Poll Expo push receipts and prune DeviceNotRegistered tokens. */
 export function startReceiptPoller() {
