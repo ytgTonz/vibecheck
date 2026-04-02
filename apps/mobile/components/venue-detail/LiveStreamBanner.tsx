@@ -1,12 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 import { LiveStream } from '@vibecheck/shared';
-
-function compactNumber(value: number) {
-  return new Intl.NumberFormat('en', {
-    notation: 'compact',
-    maximumFractionDigits: value >= 1000 ? 1 : 0,
-  }).format(Math.max(0, value));
-}
+import { compactNumber } from '@/lib/format';
 
 interface LiveStreamBannerProps {
   activeStream: LiveStream | null;

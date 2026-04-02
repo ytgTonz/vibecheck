@@ -1,28 +1,5 @@
 import { Pressable, Text, TextInput, View } from 'react-native';
-import { VenueType } from '@vibecheck/shared';
-
-const VENUE_TYPES: { value: VenueType; label: string }[] = [
-  { value: VenueType.NIGHTCLUB, label: 'Nightclub' },
-  { value: VenueType.BAR, label: 'Bar' },
-  { value: VenueType.RESTAURANT_BAR, label: 'Restaurant & Bar' },
-  { value: VenueType.LOUNGE, label: 'Lounge' },
-  { value: VenueType.SHISA_NYAMA, label: 'Shisa Nyama' },
-  { value: VenueType.ROOFTOP, label: 'Rooftop' },
-  { value: VenueType.OTHER, label: 'Other' },
-];
-
-const MUSIC_GENRES = [
-  'Afrobeats',
-  'Amapiano',
-  'R&B',
-  'Hip Hop',
-  'House',
-  'Jazz',
-  'Soul',
-  'Kwaito',
-  'Dancehall',
-  'Other',
-];
+import { VenueType, VENUE_TYPE_OPTIONS, MUSIC_GENRES } from '@vibecheck/shared';
 
 interface VenueRegistrationFieldsProps {
   venueName: string;
@@ -82,7 +59,7 @@ export function VenueRegistrationFields({
       <View>
         <Text className="mb-2 text-sm text-zinc-400">Venue type</Text>
         <View className="flex-row flex-wrap gap-2">
-          {VENUE_TYPES.map((type) => (
+          {VENUE_TYPE_OPTIONS.map((type) => (
             <Pressable
               key={type.value}
               onPress={() => onVenueTypeChange(type.value)}

@@ -3,22 +3,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Venue } from '@vibecheck/shared';
-
-function compactNumber(value: number) {
-  return new Intl.NumberFormat('en', {
-    notation: 'compact',
-    maximumFractionDigits: value >= 1000 ? 1 : 0,
-  }).format(Math.max(0, value));
-}
+import { compactNumber } from '@/lib/format';
 
 export function LiveHeader({
   venue,
   viewerCount,
-  peakCount: _peakCount,
 }: {
   venue: Venue;
   viewerCount: number;
-  peakCount?: number;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();

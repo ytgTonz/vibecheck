@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { VenueType, useVenueStore } from '@vibecheck/shared';
-
-const venueTypeOptions: { value: VenueType; label: string }[] = [
-  { value: VenueType.NIGHTCLUB, label: 'Nightclub' },
-  { value: VenueType.BAR, label: 'Bar' },
-  { value: VenueType.LOUNGE, label: 'Lounge' },
-  { value: VenueType.SHISA_NYAMA, label: 'Shisa nyama' },
-  { value: VenueType.ROOFTOP, label: 'Rooftop' },
-  { value: VenueType.RESTAURANT_BAR, label: 'Restaurant & Bar' },
-  { value: VenueType.OTHER, label: 'Other' },
-];
+import { useVenueStore, VENUE_TYPE_OPTIONS } from '@vibecheck/shared';
 
 function useGenreOptions(): string[] {
   const venues = useVenueStore((s) => s.venues);
@@ -69,7 +59,7 @@ export default function FilterBar() {
               active={venueTypeFilter === null}
               onPress={() => setVenueTypeFilter(null)}
             />
-            {venueTypeOptions.map((opt) => (
+            {VENUE_TYPE_OPTIONS.map((opt) => (
               <Pill
                 key={opt.value}
                 label={opt.label}
@@ -133,7 +123,7 @@ export default function FilterBar() {
           active={venueTypeFilter === null && musicGenreFilter === null}
           onPress={() => { setVenueTypeFilter(null); setMusicGenreFilter(null); }}
         />
-        {venueTypeOptions.map((opt) => (
+        {VENUE_TYPE_OPTIONS.map((opt) => (
           <Pill
             key={opt.value}
             label={opt.label}

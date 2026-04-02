@@ -1,15 +1,5 @@
 import { Text, View } from 'react-native';
-import { Venue } from '@vibecheck/shared';
-
-const venueTypeLabel: Record<string, string> = {
-  NIGHTCLUB: 'Nightclub',
-  BAR: 'Bar',
-  RESTAURANT_BAR: 'Restaurant & Bar',
-  LOUNGE: 'Lounge',
-  SHISA_NYAMA: 'Shisa Nyama',
-  ROOFTOP: 'Rooftop',
-  OTHER: 'Other',
-};
+import { Venue, venueTypeLabel } from '@vibecheck/shared';
 
 interface VenueInfoCardProps {
   venue: Venue;

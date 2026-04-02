@@ -151,7 +151,6 @@ export function LiveRoomContent({
       <LiveHeader
         venue={venue}
         viewerCount={viewerCount}
-        peakCount={peakCount}
       />
 
       <View style={{ position: 'absolute', bottom: 185, right: 18, zIndex: 10 }}>
