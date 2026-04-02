@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import { requireAuth } from '../../middleware/auth';
@@ -18,7 +18,7 @@ router.post('/:id/invite', requireAuth, async (req: Request, res: Response) => {
     return;
   }
 
-  const code = crypto.randomUUID().slice(0, 8).toUpperCase();
+  const code = randomUUID().slice(0, 8).toUpperCase();
   const expiresAt = new Date(Date.now() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
 
   const invite = await prisma.invite.create({

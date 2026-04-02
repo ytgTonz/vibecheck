@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import { createToken } from '../../lib/livekit';
@@ -93,7 +93,7 @@ router.get('/:id/viewer-token', async (req: Request, res: Response) => {
     return;
   }
 
-  const identity = `viewer-${stream.id}-${crypto.randomUUID()}`;
+  const identity = `viewer-${stream.id}-${randomUUID()}`;
   const token = await createToken(identity, stream.livekitRoom, {
     canPublish: false,
     name: 'Viewer',
