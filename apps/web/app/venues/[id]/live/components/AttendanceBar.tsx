@@ -1,14 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import {
-  AttendanceUpdateEvent,
-  useAuthStore,
-  useSocket,
-  recordAttendanceIntent,
-  recordAttendanceArrival,
-} from "@vibecheck/shared";
-import { getDeviceId } from "@/lib/deviceId";
+import { useAttendance } from "@/hooks/useAttendance";
 
 interface AttendanceBarProps {
   streamId: string;
@@ -16,65 +8,16 @@ interface AttendanceBarProps {
   initialArrivalCount?: number;
 }
 
-const intentKey = (id: string) => `attendance_intent_${id}`;
-const arrivalKey = (id: string) => `attendance_arrival_${id}`;
-
 export function AttendanceBar({
   streamId,
   initialIntentCount = 0,
   initialArrivalCount = 0,
 }: AttendanceBarProps) {
-  const token = useAuthStore((s) => s.token) ?? undefined;
-  const [intentPressed, setIntentPressed] = useState(false);
-  const [arrivalPressed, setArrivalPressed] = useState(false);
-  const [intentCount, setIntentCount] = useState(initialIntentCount);
-  const [arrivalCount, setArrivalCount] = useState(initialArrivalCount);
-  const [showThankYou, setShowThankYou] = useState(false);
-
-  useEffect(() => {
-    setIntentPressed(!!localStorage.getItem(intentKey(streamId)));
-    setArrivalPressed(!!localStorage.getItem(arrivalKey(streamId)));
-  }, [streamId]);
-
-  useSocket({
-    "attendance:update": useCallback(
-      (data: AttendanceUpdateEvent) => {
-        if (data.streamId === streamId) {
-          setIntentCount(data.intentCount);
-          setArrivalCount(data.arrivalCount);
-        }
-      },
-      [streamId],
-    ),
-  });
-
-  const handleIntent = async () => {
-    if (intentPressed) return;
-    setIntentPressed(true);
-    localStorage.setItem(intentKey(streamId), "1");
-    try {
-      const result = await recordAttendanceIntent(streamId, getDeviceId(), token);
-      setIntentCount(result.intentCount);
-      setArrivalCount(result.arrivalCount);
-    } catch {
-      // socket will correct counts
-    }
-  };
-
-  const handleArrival = async () => {
-    if (arrivalPressed) return;
-    setArrivalPressed(true);
-    localStorage.setItem(arrivalKey(streamId), "1");
-    setShowThankYou(true);
-    setTimeout(() => setShowThankYou(false), 3000);
-    try {
-      const result = await recordAttendanceArrival(streamId, getDeviceId(), token);
-      setIntentCount(result.intentCount);
-      setArrivalCount(result.arrivalCount);
-    } catch {
-      // socket will correct counts
-    }
-  };
+  const {
+    intentPressed, arrivalPressed,
+    intentCount, arrivalCount,
+    showThankYou, handleIntent, handleArrival,
+  } = useAttendance({ streamId, initialIntentCount, initialArrivalCount });
 
   return (
     <div className="hidden sm:flex sm:absolute sm:bottom-6 sm:left-1/2 sm:z-10 sm:-translate-x-1/2 flex-col items-center gap-2">

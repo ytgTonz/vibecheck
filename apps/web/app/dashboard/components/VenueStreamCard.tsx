@@ -116,7 +116,6 @@ export function VenueStreamCard({
 
       {isOwner && venue.ownerId === user?.id && (
         <PromoterPanel
-          venueId={venue.id}
           promoters={promoters}
           invite={invite}
           loading={loadingPromoters}

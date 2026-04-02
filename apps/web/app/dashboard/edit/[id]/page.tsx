@@ -9,30 +9,9 @@ import {
   useAuthStore,
   Venue,
   VenueType,
+  VENUE_TYPE_OPTIONS,
+  MUSIC_GENRES,
 } from "@vibecheck/shared";
-
-const VENUE_TYPES: { value: VenueType; label: string }[] = [
-  { value: VenueType.NIGHTCLUB, label: "Nightclub" },
-  { value: VenueType.BAR, label: "Bar" },
-  { value: VenueType.RESTAURANT_BAR, label: "Restaurant & Bar" },
-  { value: VenueType.LOUNGE, label: "Lounge" },
-  { value: VenueType.SHISA_NYAMA, label: "Shisa Nyama" },
-  { value: VenueType.ROOFTOP, label: "Rooftop" },
-  { value: VenueType.OTHER, label: "Other" },
-];
-
-const MUSIC_GENRES = [
-  "Afrobeats",
-  "Amapiano",
-  "R&B",
-  "Hip Hop",
-  "House",
-  "Jazz",
-  "Soul",
-  "Kwaito",
-  "Dancehall",
-  "Other",
-];
 
 export default function EditVenuePage() {
   const { id } = useParams<{ id: string }>();
@@ -211,7 +190,7 @@ export default function EditVenuePage() {
             disabled={saving}
             className={inputClass}
           >
-            {VENUE_TYPES.map((t) => (
+            {VENUE_TYPE_OPTIONS.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>

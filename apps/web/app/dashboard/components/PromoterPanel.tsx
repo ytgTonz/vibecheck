@@ -1,7 +1,6 @@
 import { VenuePromoter, Invite } from "@vibecheck/shared";
 
 interface PromoterPanelProps {
-  venueId: string;
   promoters: VenuePromoter[] | undefined;
   invite: Invite | undefined;
   loading: boolean;
@@ -11,7 +10,7 @@ interface PromoterPanelProps {
 }
 
 export function PromoterPanel({
-  venueId: _venueId, promoters, invite, loading,
+  promoters, invite, loading,
   onLoad, onGenerateInvite, onRemovePromoter,
 }: PromoterPanelProps) {
   return (

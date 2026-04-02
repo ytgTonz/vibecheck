@@ -3,19 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { fetchVenue, Venue, useAuthStore } from "@vibecheck/shared";
+import { fetchVenue, Venue, useAuthStore, venueTypeLabel } from "@vibecheck/shared";
 import { AttendanceCard } from "./components/AttendanceCard";
-
-/** Human-readable labels for venue types. */
-const venueTypeLabel: Record<string, string> = {
-  NIGHTCLUB: "Nightclub",
-  BAR: "Bar",
-  RESTAURANT_BAR: "Restaurant & Bar",
-  LOUNGE: "Lounge",
-  SHISA_NYAMA: "Shisa Nyama",
-  ROOFTOP: "Rooftop",
-  OTHER: "Other",
-};
 
 export default function VenueDetailPage() {
   const { id } = useParams<{ id: string }>();

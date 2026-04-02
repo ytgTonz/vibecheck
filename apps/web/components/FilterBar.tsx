@@ -1,16 +1,6 @@
 "use client";
 
-import { VenueType, useVenueStore } from "@vibecheck/shared";
-
-const venueTypeOptions: { value: VenueType; label: string }[] = [
-  { value: VenueType.NIGHTCLUB, label: "Nightclub" },
-  { value: VenueType.BAR, label: "Bar" },
-  { value: VenueType.RESTAURANT_BAR, label: "Restaurant & Bar" },
-  { value: VenueType.LOUNGE, label: "Lounge" },
-  { value: VenueType.SHISA_NYAMA, label: "Shisa Nyama" },
-  { value: VenueType.ROOFTOP, label: "Rooftop" },
-  { value: VenueType.OTHER, label: "Other" },
-];
+import { useVenueStore, VENUE_TYPE_OPTIONS } from "@vibecheck/shared";
 
 function useGenreOptions(): string[] {
   const venues = useVenueStore((s) => s.venues);
@@ -47,7 +37,7 @@ export default function FilterBar() {
         >
           All
         </button>
-        {venueTypeOptions.map((opt) => (
+        {VENUE_TYPE_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             onClick={() =>

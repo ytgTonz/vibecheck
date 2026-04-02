@@ -11,6 +11,23 @@ export const venueTypeLabel: Record<string, string> = {
   OTHER: 'Other',
 };
 
+/** Venue type options for dropdowns and filter pills. */
+export const VENUE_TYPE_OPTIONS: { value: VenueType; label: string }[] = [
+  { value: VenueType.NIGHTCLUB, label: 'Nightclub' },
+  { value: VenueType.BAR, label: 'Bar' },
+  { value: VenueType.RESTAURANT_BAR, label: 'Restaurant & Bar' },
+  { value: VenueType.LOUNGE, label: 'Lounge' },
+  { value: VenueType.SHISA_NYAMA, label: 'Shisa Nyama' },
+  { value: VenueType.ROOFTOP, label: 'Rooftop' },
+  { value: VenueType.OTHER, label: 'Other' },
+];
+
+/** Music genre options for venue forms. */
+export const MUSIC_GENRES = [
+  'Afrobeats', 'Amapiano', 'R&B', 'Hip Hop', 'House',
+  'Jazz', 'Soul', 'Kwaito', 'Dancehall', 'Other',
+] as const;
+
 export interface BrowseVenueGroups {
   live: Venue[];
   offline: Venue[];
