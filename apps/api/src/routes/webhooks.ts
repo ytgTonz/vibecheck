@@ -89,20 +89,20 @@ router.post('/livekit', async (req: Request, res: Response) => {
         const participant = event.participant;
         if (participant?.permission?.canPublish) break;
 
-        const stream = await prisma.liveStream.findUnique({
-          where: { livekitRoom: roomName },
-        });
+        // Atomic increment + peak update in one query — avoids race conditions
+        // when multiple viewers join simultaneously.
+        const updated = await prisma.$queryRaw<{ id: string; venueId: string; currentViewerCount: number }[]>`
+          UPDATE "LiveStream"
+          SET "currentViewerCount" = "currentViewerCount" + 1,
+              "viewerPeak" = GREATEST("viewerPeak", "currentViewerCount" + 1)
+          WHERE "livekitRoom" = ${roomName}
+            AND status != 'ENDED'
+          RETURNING id, "venueId", "currentViewerCount"
+        `;
 
-        if (stream && stream.status !== 'ENDED') {
-          const newCount = stream.currentViewerCount + 1;
-          await prisma.liveStream.update({
-            where: { id: stream.id },
-            data: {
-              currentViewerCount: newCount,
-              viewerPeak: Math.max(stream.viewerPeak, newCount),
-            },
-          });
-          emitViewerUpdate({ venueId: stream.venueId, streamId: stream.id, currentViewerCount: newCount });
+        if (updated.length > 0) {
+          const { id, venueId, currentViewerCount } = updated[0];
+          emitViewerUpdate({ venueId, streamId: id, currentViewerCount });
         }
         break;
       }
@@ -111,17 +111,18 @@ router.post('/livekit', async (req: Request, res: Response) => {
         const participant = event.participant;
         if (participant?.permission?.canPublish) break;
 
-        const stream = await prisma.liveStream.findUnique({
-          where: { livekitRoom: roomName },
-        });
+        // Atomic decrement — floor at 0, viewerPeak unchanged.
+        const updated = await prisma.$queryRaw<{ id: string; venueId: string; currentViewerCount: number }[]>`
+          UPDATE "LiveStream"
+          SET "currentViewerCount" = GREATEST("currentViewerCount" - 1, 0)
+          WHERE "livekitRoom" = ${roomName}
+            AND status != 'ENDED'
+          RETURNING id, "venueId", "currentViewerCount"
+        `;
 
-        if (stream && stream.status !== 'ENDED') {
-          const newCount = Math.max(0, stream.currentViewerCount - 1);
-          await prisma.liveStream.update({
-            where: { id: stream.id },
-            data: { currentViewerCount: newCount },
-          });
-          emitViewerUpdate({ venueId: stream.venueId, streamId: stream.id, currentViewerCount: newCount });
+        if (updated.length > 0) {
+          const { id, venueId, currentViewerCount } = updated[0];
+          emitViewerUpdate({ venueId, streamId: id, currentViewerCount });
         }
         break;
       }
