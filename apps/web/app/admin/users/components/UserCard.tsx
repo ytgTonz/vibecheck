@@ -4,6 +4,7 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   ADMIN: "bg-purple-900/50 text-purple-400",
   VENUE_OWNER: "bg-blue-900/50 text-blue-400",
   VENUE_PROMOTER: "bg-green-900/50 text-green-400",
+  VIEWER: "bg-zinc-800/50 text-zinc-400",
 };
 
 interface UserCardProps {

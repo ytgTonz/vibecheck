@@ -23,6 +23,9 @@ export default function NavBar() {
   }, [pathname]);
 
   const isOnBroadcastPage = venueId && pathname === `/dashboard/live/${venueId}`;
+  const isViewer = user?.role === "VIEWER";
+  const isAdmin = user?.role === "ADMIN";
+  const canBroadcast = user && !isViewer && !isAdmin;
 
   return (
     <nav className="border-b border-zinc-800 bg-zinc-950">
@@ -52,14 +55,15 @@ export default function NavBar() {
               </Link>
               {user ? (
                 <>
-                  {user.role === "ADMIN" ? (
+                  {isAdmin && (
                     <Link
                       href="/admin"
                       className="text-zinc-400 transition-colors hover:text-zinc-200"
                     >
                       Admin
                     </Link>
-                  ) : (
+                  )}
+                  {canBroadcast && (
                     <>
                       <Link
                         href="/dashboard"
@@ -127,7 +131,7 @@ export default function NavBar() {
             </Link>
             {user ? (
               <>
-                {user.role === "ADMIN" ? (
+                {isAdmin && (
                   <Link
                     href="/admin"
                     onClick={() => setMenuOpen(false)}
@@ -135,7 +139,8 @@ export default function NavBar() {
                   >
                     Admin
                   </Link>
-                ) : (
+                )}
+                {canBroadcast && (
                   <>
                     <Link
                       href="/dashboard"

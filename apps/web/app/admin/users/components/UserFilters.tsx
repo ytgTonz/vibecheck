@@ -1,4 +1,4 @@
-const ROLE_OPTIONS = ["ALL", "ADMIN", "VENUE_OWNER", "VENUE_PROMOTER"] as const;
+const ROLE_OPTIONS = ["ALL", "ADMIN", "VENUE_OWNER", "VENUE_PROMOTER", "VIEWER"] as const;
 
 interface UserFiltersProps {
   query: string;
