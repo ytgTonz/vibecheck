@@ -366,16 +366,20 @@ export function fetchViewerToken(
 export async function endStream(
   streamId: string,
   token: string,
-): Promise<void> {
+  viewerPeak?: number,
+): Promise<LiveStream> {
   const res = await baseFetch(`${baseUrl}/streams/${streamId}/end`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ viewerPeak }),
   });
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error || `Failed to end stream: ${res.status}`);
   }
+
+  return res.json() as Promise<LiveStream>;
 }
 
 /** Signal that the broadcaster's media track is published — transitions IDLE → LIVE. */

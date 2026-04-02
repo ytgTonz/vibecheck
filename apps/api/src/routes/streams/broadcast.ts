@@ -208,9 +208,15 @@ router.post('/:id/end', requireAuth, async (req: Request, res: Response) => {
     // Room may not exist yet or already deleted
   }
 
+  const { viewerPeak } = req.body as { viewerPeak?: number };
+
   const updated = await prisma.liveStream.update({
     where: { id: stream.id },
-    data: { status: 'ENDED', endedAt: new Date() },
+    data: {
+      status: 'ENDED',
+      endedAt: new Date(),
+      ...(typeof viewerPeak === 'number' && viewerPeak > 0 && { viewerPeak }),
+    },
     include: {
       venue: { select: { id: true, name: true, type: true, location: true } },
     },

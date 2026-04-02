@@ -16,7 +16,6 @@ import {
   LiveStream,
   Venue,
   AttendanceUpdateEvent,
-  ViewerEvent,
 } from "@vibecheck/shared";
 import {
   LiveKitRoom,
@@ -63,16 +62,11 @@ export default function BroadcastPage() {
     [stream?.id],
   );
 
-  const handleViewerUpdate = useCallback(
-    (data: ViewerEvent) => {
-      if (data.streamId === stream?.id) {
-        setPeakViewerCount((prevPeak) => Math.max(prevPeak, data.currentViewerCount));
-      }
-    },
-    [stream?.id],
-  );
+  const handleViewerCountChange = useCallback((count: number) => {
+    setPeakViewerCount((prev) => Math.max(prev, count));
+  }, []);
 
-  useSocket({ "attendance:update": handleAttendanceUpdate, "stream:viewers": handleViewerUpdate });
+  useSocket({ "attendance:update": handleAttendanceUpdate });
 
   useEffect(() => {
     if (!stream?.id) return;
@@ -140,8 +134,9 @@ export default function BroadcastPage() {
   const handleEndStream = async () => {
     if (!stream || !authToken) return;
     try {
-      await endStream(stream.id, authToken);
+      const ended = await endStream(stream.id, authToken, peakViewerCount);
       broadcastStore.clearBroadcast();
+      setStream(ended);
       setPhase("ended");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to end stream");
@@ -221,7 +216,7 @@ export default function BroadcastPage() {
           <RoomAudioRenderer />
           <div className="relative flex-1">
             <div className="aspect-video overflow-hidden rounded-xl bg-black"><RemoteVideo /></div>
-            <div className="absolute left-4 top-4"><ViewerCount /></div>
+            <div className="absolute left-4 top-4"><ViewerCount onCountChange={handleViewerCountChange} /></div>
             <div className="mt-4">
               <button onClick={handleEndStream} className="rounded-full bg-brand-red px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90">
                 End Stream
@@ -261,7 +256,7 @@ export default function BroadcastPage() {
         <GoLiveOnPublish streamId={stream!.id} authToken={authToken!} />
         <div className="relative flex-1">
           <div className="aspect-video overflow-hidden rounded-xl bg-black"><BroadcasterPreview /></div>
-          <div className="absolute left-4 top-4"><ViewerCount /></div>
+          <div className="absolute left-4 top-4"><ViewerCount onCountChange={handleViewerCountChange} /></div>
           <div className="mt-4"><LiveControls stream={stream!} onEnd={handleEndStream} /></div>
         </div>
         <div className="flex h-[500px] w-full flex-col rounded-xl border border-zinc-800 bg-zinc-900 lg:h-auto lg:w-80">

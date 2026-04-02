@@ -40,6 +40,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const [elapsed, setElapsed] = useState(0);
   const [intentCount, setIntentCount] = useState(0);
   const [arrivalCount, setArrivalCount] = useState(0);
+  const [peakViewerCount, setPeakViewerCount] = useState(0);
 
   // Publish camera + mic tracks on mount (permissions already granted in setup)
   useEffect(() => {
@@ -47,6 +48,10 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
     localParticipant.setCameraEnabled(true);
     localParticipant.setMicrophoneEnabled(true);
   }, [localParticipant]);
+
+  useEffect(() => {
+    setPeakViewerCount((prev) => Math.max(prev, participants.length));
+  }, [participants.length]);
 
   useEffect(() => {
     const start = stream.startedAt ? new Date(stream.startedAt).getTime() : Date.now();
@@ -100,7 +105,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
   const handleEnd = async () => {
     setEnding(true);
     try {
-      await endStream(stream.id, authToken);
+      await endStream(stream.id, authToken, peakViewerCount);
       onEnded();
     } catch (err) {
       if (__DEV__) console.error('[MobileBroadcast] end stream failed:', err);
@@ -192,7 +197,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
               Peak viewers
             </Text>
             <Text className="text-2xl font-semibold text-zinc-100 mt-1.5">
-              {stream.viewerPeak}
+              {peakViewerCount}
             </Text>
           </View>
           <View className="flex-1 rounded-2xl bg-zinc-900 border border-zinc-800 px-4 py-4">
