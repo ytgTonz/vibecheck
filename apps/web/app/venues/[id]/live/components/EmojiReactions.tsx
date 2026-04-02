@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useDataChannel } from "@livekit/components-react";
 
-const EMOJIS = ["🔥", "❤️", "🎉", "😍", "👏"];
+const EMOJIS = ["🔥"];
 
 export function EmojiReactions() {
   const { send } = useDataChannel("reactions");
@@ -38,17 +38,12 @@ export function EmojiReactions() {
           </span>
         ))}
       </div>
-      <div className="flex flex-row flex-wrap gap-1.5 sm:flex-col sm:gap-2">
-        {EMOJIS.map((emoji) => (
-          <button
-            key={emoji}
-            onClick={() => sendReaction(emoji)}
-            className="h-8 w-8 rounded-full bg-black/30 text-base transition-transform hover:scale-110 hover:bg-black/50 sm:h-10 sm:w-10 sm:text-lg"
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
+      <button
+        onClick={() => sendReaction("🔥")}
+        className="h-10 w-10 rounded-full bg-black/30 text-lg transition-transform hover:scale-110 hover:bg-black/50 sm:h-12 sm:w-12 sm:text-xl"
+      >
+        🔥
+      </button>
     </div>
   );
 }
