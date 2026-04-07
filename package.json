@@ -11,5 +11,8 @@
     "build:landing": "npm --workspace @vibecheck/landing run build",
     "lint:landing": "npm --workspace @vibecheck/landing run lint",
     "preview:landing": "npm --workspace @vibecheck/landing run preview"
+  },
+  "dependencies": {
+    "qrcode.react": "^4.2.0"
   }
 }
