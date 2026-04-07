@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { fetchStream, fetchVenue, fetchViewerToken, LiveStream, useAuthStore, Venue } from '@vibecheck/shared';
 import { ErrorState, LoadingState } from '@/components/live/LiveStates';
+import { useNetwork } from '@/contexts/NetworkContext';
 import { LiveAuthGate } from '@/components/live/LiveAuthGate';
 import { LiveRoomContent } from '@/components/live/LiveRoomContent';
 import {
@@ -24,6 +25,15 @@ export default function MobileLiveWatchScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const { isConnected, didReconnect, clearReconnect } = useNetwork();
+
+  // Auto-retry when connectivity returns after an error
+  useEffect(() => {
+    if (didReconnect && error) {
+      setRetryCount((c) => c + 1);
+      clearReconnect();
+    }
+  }, [didReconnect, clearReconnect, error]);
 
   useEffect(() => {
     if (!AudioSession) return;
@@ -159,9 +169,13 @@ export default function MobileLiveWatchScreen() {
     return (
       <ErrorState
         id={id}
-        title={error || 'Stream not available'}
-        detail="The live room could not be opened right now. Jump back to the venue page and try again from there."
-        onRetry={() => setRetryCount((count) => count + 1)}
+        title={!isConnected ? "You're offline" : (error || 'Stream not available')}
+        detail={
+          !isConnected
+            ? "The live stream needs an internet connection. We'll reconnect automatically when you're back online."
+            : 'The live room could not be opened right now. Jump back to the venue page and try again from there.'
+        }
+        onRetry={isConnected ? () => setRetryCount((count) => count + 1) : undefined}
       />
     );
   }

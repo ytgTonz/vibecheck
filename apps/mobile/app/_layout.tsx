@@ -19,6 +19,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import VibecheckIcon from '@/components/VibecheckIcon';
+import OfflineBanner from '@/components/OfflineBanner';
+import { NetworkProvider } from '@/contexts/NetworkContext';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -112,6 +114,7 @@ function RootLayoutNav() {
   }, [router, splashOpacity]);
 
   return (
+    <NetworkProvider>
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
@@ -119,6 +122,7 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>
+        <OfflineBanner />
         {splashVisible && (
           <Animated.View style={[styles.splash, { opacity: splashOpacity }]}>
             <View style={styles.splashInner}>
@@ -132,6 +136,7 @@ function RootLayoutNav() {
         )}
       </ThemeProvider>
     </SafeAreaProvider>
+    </NetworkProvider>
   );
 }
 

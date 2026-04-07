@@ -10,6 +10,7 @@ import {
 } from '@vibecheck/shared';
 import AuthPanel from '@/components/AuthPanel';
 import { unregisterNotificationToken } from '@/hooks/useNotifications';
+import { useNetwork } from '@/contexts/NetworkContext';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function DashboardScreen() {
     [user?.role],
   );
   const isViewer = user?.role === 'VIEWER';
+  const { isConnected, didReconnect, clearReconnect } = useNetwork();
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -45,6 +47,14 @@ export default function DashboardScreen() {
     if (!token) return;
     void loadDashboard(token);
   }, [token]);
+
+  // Auto-refresh when connectivity returns
+  useEffect(() => {
+    if (didReconnect && token) {
+      void loadDashboard(token);
+      clearReconnect();
+    }
+  }, [didReconnect, clearReconnect, token]);
 
   const onRefresh = useCallback(async () => {
     if (!token) return;
@@ -182,8 +192,16 @@ export default function DashboardScreen() {
         )}
 
         {error && (
-          <View className="mb-5 rounded-2xl border border-red-900/50 bg-red-950/30 px-4 py-3">
-            <Text className="text-sm text-red-300">{error}</Text>
+          <View className={`mb-5 rounded-2xl border px-4 py-3 ${
+            !isConnected
+              ? 'border-zinc-700 bg-zinc-900'
+              : 'border-red-900/50 bg-red-950/30'
+          }`}>
+            <Text className={`text-sm ${!isConnected ? 'text-zinc-400' : 'text-red-300'}`}>
+              {!isConnected
+                ? 'You\'re offline — your venues will reload when you reconnect.'
+                : error}
+            </Text>
           </View>
         )}
 

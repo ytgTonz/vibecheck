@@ -14,6 +14,7 @@ import {
 import VenueCard from '@/components/VenueCard';
 import FeaturedVenueCard from '@/components/FeaturedVenueCard';
 import FilterBar from '@/components/FilterBar';
+import { useNetwork } from '@/contexts/NetworkContext';
 function BrowseTip() {
   const [visible, setVisible] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
@@ -81,10 +82,19 @@ export default function BrowseScreen() {
   const setVenueOffline = useVenueStore((s) => s.setVenueOffline);
   const setViewerCount = useVenueStore((s) => s.setViewerCount);
   const [refreshing, setRefreshing] = useState(false);
+  const { isConnected, didReconnect, clearReconnect } = useNetwork();
 
   useEffect(() => {
     void loadVenues();
   }, [loadVenues]);
+
+  // Auto-refresh when connectivity returns
+  useEffect(() => {
+    if (didReconnect) {
+      void loadVenues();
+      clearReconnect();
+    }
+  }, [didReconnect, clearReconnect, loadVenues]);
 
   useSocket({
     'stream:live': ({ venueId, streamId }) => {
@@ -149,8 +159,28 @@ export default function BrowseScreen() {
       )}
 
       {error && (
-        <View className="flex-1 items-center justify-center px-4">
-          <Text className="text-red-400">Error: {error}</Text>
+        <View className="flex-1 items-center justify-center px-4 gap-3">
+          {!isConnected ? (
+            <>
+              <View className="h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
+                <Text className="text-2xl">📡</Text>
+              </View>
+              <Text className="text-base font-semibold text-zinc-200">You're offline</Text>
+              <Text className="text-sm text-zinc-500 text-center max-w-[240px]">
+                Check your connection — venues will load automatically when you're back online.
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text className="text-red-400">Error: {error}</Text>
+              <Pressable
+                onPress={() => loadVenues()}
+                className="rounded-full bg-zinc-800 px-4 py-2 active:opacity-70"
+              >
+                <Text className="text-sm font-medium text-zinc-200">Retry</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       )}
 

@@ -13,6 +13,7 @@ import { fetchVenue, fetchStream, Venue, LiveStream, useAuthStore } from '@vibec
 import { LiveStreamBanner } from '@/components/venue-detail/LiveStreamBanner';
 import { VenueInfoCard } from '@/components/venue-detail/VenueInfoCard';
 import { VenueAttendanceCard } from '@/components/venue-detail/VenueAttendanceCard';
+import { useNetwork } from '@/contexts/NetworkContext';
 
 export default function VenueDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,6 +24,7 @@ export default function VenueDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { isConnected, didReconnect, clearReconnect } = useNetwork();
 
   const loadData = useCallback(async (background = false) => {
     if (!id) return;
@@ -54,6 +56,14 @@ export default function VenueDetailScreen() {
     return () => clearInterval(interval);
   }, [loadData]);
 
+  // Auto-refresh when connectivity returns
+  useEffect(() => {
+    if (didReconnect) {
+      void loadData();
+      clearReconnect();
+    }
+  }, [didReconnect, clearReconnect, loadData]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
@@ -76,11 +86,23 @@ export default function VenueDetailScreen() {
     return (
       <SafeAreaView className="flex-1 bg-zinc-950" edges={['top']}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View className="flex-1 items-center justify-center px-5">
-          <Text className="text-center text-base font-medium text-red-400">
-            {error || 'Venue not found'}
-          </Text>
-          <Pressable onPress={() => router.back()} className="mt-4">
+        <View className="flex-1 items-center justify-center px-5 gap-3">
+          {!isConnected ? (
+            <>
+              <View className="h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900">
+                <Text className="text-2xl">📡</Text>
+              </View>
+              <Text className="text-base font-semibold text-zinc-200">You're offline</Text>
+              <Text className="text-sm text-zinc-500 text-center max-w-[240px]">
+                This venue will load automatically when your connection returns.
+              </Text>
+            </>
+          ) : (
+            <Text className="text-center text-base font-medium text-red-400">
+              {error || 'Venue not found'}
+            </Text>
+          )}
+          <Pressable onPress={() => router.back()} className="mt-2">
             <Text className="text-sm text-zinc-400">Back to browse</Text>
           </Pressable>
         </View>
