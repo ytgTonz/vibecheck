@@ -6,6 +6,7 @@ import { fetchAdminVenues, deleteAdminVenue, useAuthStore, AdminVenue } from "@v
 import { Notice } from "../components/Notice";
 import { Pagination } from "../components/Pagination";
 import { LoadingSkeleton } from "../components/LoadingSkeleton";
+import { AdminPageToolbar } from "../components/AdminPageToolbar";
 import { VenueFilters } from "./components/VenueFilters";
 import { VenueAdminCard } from "./components/VenueAdminCard";
 import { VenueTable } from "./components/VenueTable";
@@ -74,7 +75,40 @@ export default function AdminVenuesPage() {
   if (venues.length === 0) {
     return (
       <div className="space-y-4">
-        <VenueFilters query={query} type={type} hasFilters={hasFilters} onQueryChange={(v) => { setQuery(v); setPage(1); }} onTypeChange={(v) => { setType(v); setPage(1); }} onClear={handleClearFilters} />
+        <AdminPageToolbar
+          title="Venue Management"
+          description="Search venues and moderate ownership records."
+          searchSlot={
+            <input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Search venue, location, owner name, or email"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+            />
+          }
+          secondaryAction={
+            hasFilters ? (
+              <button
+                onClick={handleClearFilters}
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+              >
+                Clear filters
+              </button>
+            ) : null
+          }
+          primaryAction={
+            <button
+              onClick={() => loadVenues(page)}
+              className="rounded-lg bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
+            >
+              Refresh
+            </button>
+          }
+        />
+        <VenueFilters query={query} type={type} hasFilters={hasFilters} onQueryChange={(v) => { setQuery(v); setPage(1); }} onTypeChange={(v) => { setType(v); setPage(1); }} onClear={handleClearFilters} showSearch={false} showClear={false} />
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
           <p className="text-base font-medium text-zinc-100">No venues found</p>
           <p className="mt-2 text-sm text-zinc-500">{hasFilters ? "Try changing the search or venue type filter." : "There are no venues to moderate yet."}</p>
@@ -86,8 +120,41 @@ export default function AdminVenuesPage() {
   return (
     <div className="space-y-4">
       {notice && <Notice type={notice.type} message={notice.message} />}
-      <VenueFilters query={query} type={type} hasFilters={hasFilters} onQueryChange={(v) => { setQuery(v); setPage(1); }} onTypeChange={(v) => { setType(v); setPage(1); }} onClear={handleClearFilters} />
-      <p className="text-sm text-zinc-500">{total} venue{total !== 1 ? "s" : ""}{hasFilters ? " matching current filters" : ""}</p>
+      <AdminPageToolbar
+        title="Venue Management"
+        description="Search venues and moderate ownership records."
+        searchSlot={
+          <input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search venue, location, owner name, or email"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
+        }
+        secondaryAction={
+          hasFilters ? (
+            <button
+              onClick={handleClearFilters}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Clear filters
+            </button>
+          ) : null
+        }
+        primaryAction={
+          <button
+            onClick={() => loadVenues(page)}
+            className="rounded-lg bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
+          >
+            Refresh
+          </button>
+        }
+        meta={`${total} venue${total !== 1 ? "s" : ""}${hasFilters ? " matching current filters" : ""}`}
+      />
+      <VenueFilters query={query} type={type} hasFilters={hasFilters} onQueryChange={(v) => { setQuery(v); setPage(1); }} onTypeChange={(v) => { setType(v); setPage(1); }} onClear={handleClearFilters} showSearch={false} showClear={false} />
       <div className="grid gap-3 md:hidden">
         {venues.map((v) => <VenueAdminCard key={v.id} venue={v} deletingVenueId={deletingVenueId} onDelete={handleDelete} />)}
       </div>

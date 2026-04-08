@@ -9,6 +9,7 @@ import {
   AppNotification,
   NotificationType,
 } from "@vibecheck/shared";
+import { AdminPageToolbar } from "../components/AdminPageToolbar";
 
 const PAGE_SIZE = 20;
 
@@ -31,6 +32,7 @@ export default function AdminNotificationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
   const [page, setPage] = useState(1);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(() => {
     if (!token) return;
@@ -82,42 +84,65 @@ export default function AdminNotificationsPage() {
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleNotifications = normalizedQuery
+    ? notifications.filter((n) => {
+        const searchable = `${n.title} ${n.body} ${typeConfig[n.type].label}`.toLowerCase();
+        return searchable.includes(normalizedQuery);
+      })
+    : notifications;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
-            {filters.map((f) => (
-              <button
-                key={f}
-                onClick={() => {
-                  setFilter(f);
-                  setPage(1);
-                }}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  filter === f
-                    ? "bg-white text-zinc-900"
-                    : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {f === "ALL" ? "All" : "Unread"}
-              </button>
-            ))}
-          </div>
-          <span className="text-sm text-zinc-500">
-            {total} notification{total !== 1 ? "s" : ""}
-          </span>
-        </div>
-
-        {unreadCount > 0 && (
+      <AdminPageToolbar
+        title="Notification Center"
+        description="Review system events and keep the admin inbox clean."
+        searchSlot={
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Quick search in current page"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+          />
+        }
+        secondaryAction={
           <button
-            onClick={markAllRead}
-            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            onClick={load}
+            className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
           >
-            Mark all read
+            Refresh
           </button>
-        )}
+        }
+        primaryAction={
+          unreadCount > 0 ? (
+            <button
+              onClick={markAllRead}
+              className="rounded-lg bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
+            >
+              Mark all read
+            </button>
+          ) : null
+        }
+        meta={`${total} notification${total !== 1 ? "s" : ""}`}
+      />
+
+      <div className="flex gap-1">
+        {filters.map((f) => (
+          <button
+            key={f}
+            onClick={() => {
+              setFilter(f);
+              setPage(1);
+            }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              filter === f
+                ? "bg-white text-zinc-900"
+                : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            {f === "ALL" ? "All" : "Unread"}
+          </button>
+        ))}
       </div>
 
       {loading ? (
@@ -133,16 +158,14 @@ export default function AdminNotificationsPage() {
         <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
           <p className="text-sm text-red-400">{error}</p>
         </div>
-      ) : notifications.length === 0 ? (
+      ) : visibleNotifications.length === 0 ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
-          <p className="text-zinc-400">
-            {filter === "UNREAD" ? "No unread notifications" : "No notifications yet"}
-          </p>
+          <p className="text-zinc-400">{normalizedQuery ? "No matching notifications on this page" : (filter === "UNREAD" ? "No unread notifications" : "No notifications yet")}</p>
         </div>
       ) : (
         <>
           <div className="space-y-2">
-            {notifications.map((n) => {
+            {visibleNotifications.map((n) => {
               const config = typeConfig[n.type];
               return (
                 <div

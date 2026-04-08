@@ -7,17 +7,30 @@ interface UserFiltersProps {
   onQueryChange: (v: string) => void;
   onRoleChange: (v: string) => void;
   onClear: () => void;
+  showSearch?: boolean;
+  showClear?: boolean;
 }
 
-export function UserFilters({ query, role, hasFilters, onQueryChange, onRoleChange, onClear }: UserFiltersProps) {
+export function UserFilters({
+  query,
+  role,
+  hasFilters,
+  onQueryChange,
+  onRoleChange,
+  onClear,
+  showSearch = true,
+  showClear = true,
+}: UserFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <input
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Search name or email"
-        className="min-w-[220px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
-      />
+      {showSearch && (
+        <input
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search name or email"
+          className="min-w-[220px] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
+        />
+      )}
       <select
         value={role}
         onChange={(e) => onRoleChange(e.target.value)}
@@ -29,7 +42,7 @@ export function UserFilters({ query, role, hasFilters, onQueryChange, onRoleChan
           </option>
         ))}
       </select>
-      {hasFilters && (
+      {showClear && hasFilters && (
         <button
           onClick={onClear}
           className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"

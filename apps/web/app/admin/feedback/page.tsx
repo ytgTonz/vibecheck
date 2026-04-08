@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   fetchAdminFeedback,
   useAuthStore,
   AdminFeedback,
 } from "@vibecheck/shared";
+import { AdminPageToolbar } from "../components/AdminPageToolbar";
 
 const categories = ["ALL", "BUG", "SUGGESTION", "GENERAL"] as const;
 const ratings = ["ALL", "BAD", "NEUTRAL", "GOOD"] as const;
@@ -34,7 +35,7 @@ export default function AdminFeedbackPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
+  const loadFeedback = useCallback(() => {
     if (!token) return;
     setLoading(true);
     setError(null);
@@ -52,16 +53,19 @@ export default function AdminFeedbackPage() {
       .finally(() => setLoading(false));
   }, [token, category, rating, query, page]);
 
+  useEffect(() => {
+    loadFeedback();
+  }, [loadFeedback]);
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasFilters = category !== "ALL" || rating !== "ALL" || query.trim().length > 0;
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-        <div>
-          <label htmlFor="feedback-search" className="mb-1 block text-xs text-zinc-500">
-            Search feedback
-          </label>
+      <AdminPageToolbar
+        title="Feedback Review"
+        description="Triage bug reports, suggestions, and sentiment trends."
+        searchSlot={
           <input
             id="feedback-search"
             value={query}
@@ -72,8 +76,34 @@ export default function AdminFeedbackPage() {
             placeholder="Search message, user name, or email"
             className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none"
           />
-        </div>
+        }
+        secondaryAction={
+          hasFilters ? (
+            <button
+              onClick={() => {
+                setCategory("ALL");
+                setRating("ALL");
+                setQuery("");
+                setPage(1);
+              }}
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+            >
+              Clear filters
+            </button>
+          ) : null
+        }
+        primaryAction={
+          <button
+            onClick={loadFeedback}
+            className="rounded-lg bg-zinc-100 px-3 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
+          >
+            Refresh
+          </button>
+        }
+        meta={`${total} result${total !== 1 ? "s" : ""}${hasFilters ? " matching current filters" : ""}`}
+      />
 
+      <div className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="flex flex-wrap gap-4">
           <div>
             <p className="mb-1 text-xs text-zinc-500">Category</p>
@@ -117,21 +147,6 @@ export default function AdminFeedbackPage() {
               ))}
             </div>
           </div>
-          {hasFilters && (
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setCategory("ALL");
-                  setRating("ALL");
-                  setQuery("");
-                  setPage(1);
-                }}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -154,10 +169,6 @@ export default function AdminFeedbackPage() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-zinc-500">
-            {total} result{total !== 1 ? "s" : ""}
-            {hasFilters ? " matching current filters" : ""}
-          </p>
           <div className="space-y-3">
             {feedback.map((fb) => (
               <div key={fb.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">

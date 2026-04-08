@@ -37,6 +37,7 @@ export default function NavBar() {
   const isOnBroadcastPage = venueId && pathname === `/dashboard/live/${venueId}`;
   const isViewer = user?.role === "VIEWER";
   const isAdmin = user?.role === "ADMIN";
+  const isAdminRoute = pathname.startsWith("/admin");
   const canBroadcast = user && !isViewer && !isAdmin;
   const keepCompact = hydrated && Boolean(user);
   const leftLogoVisibility = keepCompact ? 1 : scrollProgress;
@@ -87,15 +88,17 @@ export default function NavBar() {
           <div className="flex items-center justify-end">
             {/* Desktop nav */}
             <div className="hidden items-center gap-4 whitespace-nowrap text-sm sm:flex">
-              <Link
-                href="/browse"
-                className="text-zinc-400 transition-colors hover:text-zinc-200"
-              >
-                Browse
-              </Link>
+              {!isAdminRoute && (
+                <Link
+                  href="/browse"
+                  className="text-zinc-400 transition-colors hover:text-zinc-200"
+                >
+                  Browse
+                </Link>
+              )}
               {user ? (
                 <>
-                  {isAdmin && (
+                  {isAdmin && !isAdminRoute && (
                     <Link
                       href="/admin"
                       className="text-zinc-400 transition-colors hover:text-zinc-200"
@@ -119,7 +122,7 @@ export default function NavBar() {
                       </Link>
                     </>
                   )}
-                  <FeedbackButton />
+                  {!isAdminRoute && <FeedbackButton />}
                   <span className="whitespace-nowrap text-zinc-400">{user.name}</span>
                   <button
                     onClick={logout}
@@ -162,16 +165,18 @@ export default function NavBar() {
       {menuOpen && hydrated && (
         <div className="border-t border-zinc-800 px-4 py-3 sm:hidden">
           <div className="flex flex-col gap-1">
-            <Link
-              href="/browse"
-              onClick={() => setMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
-            >
-              Browse
-            </Link>
+            {!isAdminRoute && (
+              <Link
+                href="/browse"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+              >
+                Browse
+              </Link>
+            )}
             {user ? (
               <>
-                {isAdmin && (
+                {isAdmin && !isAdminRoute && (
                   <Link
                     href="/admin"
                     onClick={() => setMenuOpen(false)}
@@ -207,9 +212,11 @@ export default function NavBar() {
                     Log out
                   </button>
                 </div>
-                <div className="border-t border-zinc-800 pt-2">
-                  <FeedbackButton />
-                </div>
+                {!isAdminRoute && (
+                  <div className="border-t border-zinc-800 pt-2">
+                    <FeedbackButton />
+                  </div>
+                )}
               </>
             ) : (
               <Link
