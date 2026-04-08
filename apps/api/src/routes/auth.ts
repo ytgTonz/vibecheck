@@ -317,4 +317,27 @@ router.post('/login', async (req: Request, res: Response) => {
   res.json(buildAuthResponse(user));
 });
 
+// PATCH /auth/me
+router.patch('/me', requireAuth, async (req: Request, res: Response) => {
+  const { name } = req.body as { name?: unknown };
+
+  if (typeof name !== 'string') {
+    res.status(400).json({ error: 'name is required' });
+    return;
+  }
+
+  const trimmedName = name.trim();
+  if (trimmedName.length < 2 || trimmedName.length > 60) {
+    res.status(400).json({ error: 'name must be between 2 and 60 characters' });
+    return;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: req.user!.userId },
+    data: { name: trimmedName },
+  });
+
+  res.json({ user: buildAuthResponse(updated).user });
+});
+
 export default router;

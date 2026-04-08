@@ -151,6 +151,29 @@ export async function login(
   return body as AuthResponse;
 }
 
+/** Update current user's profile fields. */
+export async function updateMyProfile(
+  token: string,
+  data: { name: string }
+): Promise<AuthResponse['user']> {
+  const res = await baseFetch(`${baseUrl}/auth/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  const body = await res.json();
+
+  if (!res.ok) {
+    throw new Error(body.error || `Failed to update profile: ${res.status}`);
+  }
+
+  return body.user as AuthResponse['user'];
+}
+
 // ─── Protected venue endpoints ───────────────────────────────────────────────
 
 /** Venue with live status, returned by fetchMyVenues(). */
