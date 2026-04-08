@@ -1,0 +1,31 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0B10"/>
+      <stop offset="0.48" stop-color="#102033"/>
+      <stop offset="1" stop-color="#271016"/>
+    </linearGradient>
+    <radialGradient id="lightLeft" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(230 250) rotate(80) scale(300 270)">
+      <stop stop-color="#38BDF8" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="lightRight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(940 260) rotate(90) scale(280 250)">
+      <stop stop-color="#F43F5E" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#F43F5E" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg2)"/>
+  <circle cx="230" cy="250" r="220" fill="url(#lightLeft)"/>
+  <circle cx="940" cy="260" r="210" fill="url(#lightRight)"/>
+  <rect x="90" y="120" width="1020" height="520" rx="28" fill="#0E0F16" fill-opacity="0.58" stroke="#2B3142" stroke-width="2"/>
+  <path d="M155 560C180 510 250 500 292 540C334 580 376 574 409 534C451 483 520 488 560 532C602 579 651 571 690 533C728 497 798 495 842 543C880 583 925 582 962 541C1004 495 1067 496 1090 534V640H155V560Z" fill="#F4F4F5" fill-opacity="0.09"/>
+  <circle cx="280" cy="465" r="30" fill="#FFFFFF" fill-opacity="0.18"/>
+  <circle cx="398" cy="472" r="26" fill="#FFFFFF" fill-opacity="0.14"/>
+  <circle cx="514" cy="466" r="28" fill="#FFFFFF" fill-opacity="0.16"/>
+  <circle cx="633" cy="470" r="27" fill="#FFFFFF" fill-opacity="0.12"/>
+  <circle cx="752" cy="465" r="29" fill="#FFFFFF" fill-opacity="0.17"/>
+  <circle cx="870" cy="471" r="26" fill="#FFFFFF" fill-opacity="0.13"/>
+  <rect x="155" y="687" width="345" height="22" rx="11" fill="#FFFFFF" fill-opacity="0.15"/>
+  <rect x="155" y="723" width="460" height="16" rx="8" fill="#FFFFFF" fill-opacity="0.1"/>
+  <text x="96" y="850" fill="#F4F4F5" fill-opacity="0.74" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">PLACEHOLDER IMAGE: CROWD ENERGY</text>
+</svg>
