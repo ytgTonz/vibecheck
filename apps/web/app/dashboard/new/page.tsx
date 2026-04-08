@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   createVenue,
-  useAuthStore,
+  useRequireAuth,
   VenueType,
   VENUE_TYPE_OPTIONS,
   MUSIC_GENRES,
@@ -13,8 +13,7 @@ import {
 
 export default function NewVenuePage() {
   const router = useRouter();
-  const { user, token, hydrate } = useAuthStore();
-  const [hydrated, setHydrated] = useState(false);
+  const { user, token, ready } = useRequireAuth((path) => router.replace(path));
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,20 +28,10 @@ export default function NewVenuePage() {
   const [drinkPrices, setDrinkPrices] = useState("");
 
   useEffect(() => {
-    hydrate();
-    setHydrated(true);
-  }, [hydrate]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (!user || !token) {
-      router.replace("/login");
-      return;
-    }
-    if (user.role !== "VENUE_OWNER") {
+    if (ready && user?.role !== "VENUE_OWNER") {
       router.replace("/dashboard");
     }
-  }, [hydrated, user, token, router]);
+  }, [ready, user, router]);
 
   const toggleGenre = (genre: string) => {
     setMusicGenre((prev) =>
@@ -81,7 +70,7 @@ export default function NewVenuePage() {
   const inputClass =
     "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50";
 
-  if (!hydrated) {
+  if (!ready) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 h-4 w-32 rounded bg-zinc-800" />

@@ -1,19 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   fetchMyVenues, fetchVenueRecentStreams, generateInvite,
-  fetchVenuePromoters, removePromoter, useAuthStore, useSocket,
-  VenueWithStats, VenuePromoter, Invite, LiveStream, StreamEvent, ViewerEvent,
+  fetchVenuePromoters, removePromoter, useRequireAuth, useVenueLiveUpdates,
+  VenueWithStats, VenuePromoter, Invite, LiveStream,
 } from "@vibecheck/shared";
 import { VenueStreamCard } from "./components/VenueStreamCard";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, token, hydrate } = useAuthStore();
-  const [hydrated, setHydrated] = useState(false);
+  const { user, token, ready, hydrated } = useRequireAuth((path) => router.replace(path));
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,25 +25,7 @@ export default function DashboardPage() {
 
   const isOwner = user?.role === "VENUE_OWNER" || user?.role === "ADMIN";
 
-  const handleStreamLive = useCallback((data: StreamEvent) => {
-    setVenues((prev) => prev.map((v) =>
-      v.id === data.venueId ? { ...v, isLive: true, activeStreamId: data.streamId, currentViewerCount: 0 } : v
-    ));
-  }, []);
-
-  const handleStreamEnded = useCallback((data: StreamEvent) => {
-    setVenues((prev) => prev.map((v) =>
-      v.id === data.venueId ? { ...v, isLive: false, activeStreamId: undefined, currentViewerCount: 0 } : v
-    ));
-  }, []);
-
-  const handleViewerUpdate = useCallback((data: ViewerEvent) => {
-    setVenues((prev) => prev.map((v) =>
-      v.id === data.venueId ? { ...v, currentViewerCount: data.currentViewerCount } : v
-    ));
-  }, []);
-
-  useSocket({ 'stream:live': handleStreamLive, 'stream:ended': handleStreamEnded, 'stream:viewers': handleViewerUpdate });
+  useVenueLiveUpdates(setVenues);
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -70,13 +51,9 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => { hydrate(); setHydrated(true); }, [hydrate]);
-
   useEffect(() => {
-    if (!hydrated) return;
-    if (!user || !token) { router.replace("/login"); return; }
-    loadDashboard(token);
-  }, [hydrated, user, token, router]);
+    if (ready && token) loadDashboard(token);
+  }, [ready, token]);
 
   const loadPromoters = async (venueId: string) => {
     if (!token) return;
@@ -105,7 +82,7 @@ export default function DashboardPage() {
     } catch { /* silently fail */ }
   };
 
-  if (!hydrated || loading) {
+  if (!ready || loading) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6 h-7 w-48 rounded bg-zinc-800" />

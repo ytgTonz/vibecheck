@@ -10,7 +10,7 @@ import {
   fetchViewerToken,
   fetchAttendanceCounts,
   endStream,
-  useAuthStore,
+  useRequireAuth,
   useBroadcastStore,
   useSocket,
   LiveStream,
@@ -34,9 +34,8 @@ const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
 export default function BroadcastPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
-  const { user, token: authToken, hydrate } = useAuthStore();
+  const { user, token: authToken, ready, hydrated } = useRequireAuth((path) => router.replace(path));
   const broadcastStore = useBroadcastStore();
-  const [hydrated, setHydrated] = useState(false);
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
@@ -74,11 +73,6 @@ export default function BroadcastPage() {
   }, [stream?.id, stream?.viewerPeak]);
 
   useEffect(() => {
-    hydrate();
-    setHydrated(true);
-  }, [hydrate]);
-
-  useEffect(() => {
     if (!hydrated || !venueId) return;
     const bs = useBroadcastStore.getState();
     if (bs.venueId === venueId && bs.livekitToken && bs.streamId) {
@@ -89,14 +83,12 @@ export default function BroadcastPage() {
   }, [hydrated, venueId]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    if (!user || !authToken) { router.replace("/login"); return; }
-    if (!venueId) return;
+    if (!ready || !venueId) return;
 
     fetchVenue(venueId)
       .then(async (v) => {
         setVenue(v);
-        if (v.isLive && v.activeStreamId && v.ownerId === user.id) {
+        if (v.isLive && v.activeStreamId && user && v.ownerId === user.id) {
           const bs = useBroadcastStore.getState();
           if (bs.venueId === venueId && bs.streamId === v.activeStreamId) return;
           try {
@@ -110,7 +102,7 @@ export default function BroadcastPage() {
         }
       })
       .catch(() => setError("Failed to load venue"));
-  }, [hydrated, user, authToken, venueId, router]);
+  }, [ready, user, authToken, venueId]);
 
   const startStream = async () => {
     if (!authToken || !venueId) return;
@@ -143,7 +135,7 @@ export default function BroadcastPage() {
     }
   };
 
-  if (!hydrated || !venue) {
+  if (!ready || !venue) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-white" />

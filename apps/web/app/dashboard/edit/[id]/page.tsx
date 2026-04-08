@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   fetchVenue,
   updateVenue,
-  useAuthStore,
+  useRequireAuth,
   Venue,
   VenueType,
   VENUE_TYPE_OPTIONS,
@@ -16,8 +16,7 @@ import {
 export default function EditVenuePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, token, hydrate } = useAuthStore();
-  const [hydrated, setHydrated] = useState(false);
+  const { user, token, ready } = useRequireAuth((path) => router.replace(path));
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,19 +32,6 @@ export default function EditVenuePage() {
   const [musicGenre, setMusicGenre] = useState<string[]>([]);
   const [coverCharge, setCoverCharge] = useState("");
   const [drinkPrices, setDrinkPrices] = useState("");
-
-  useEffect(() => {
-    hydrate();
-    setHydrated(true);
-  }, [hydrate]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (!user || !token) {
-      router.replace("/login");
-      return;
-    }
-  }, [hydrated, user, token, router]);
 
   // Load venue data
   useEffect(() => {
@@ -107,7 +93,7 @@ export default function EditVenuePage() {
   const inputClass =
     "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none disabled:opacity-50";
 
-  if (!hydrated || loading) {
+  if (!ready || loading) {
     return (
       <div className="mx-auto max-w-lg px-4 py-8">
         <div className="mb-6 h-4 w-32 rounded bg-zinc-800" />

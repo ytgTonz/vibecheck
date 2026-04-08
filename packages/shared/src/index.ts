@@ -6,5 +6,7 @@ export type { VenueSection } from './stores/venueStore';
 export { useAuthStore, setAuthStorage } from './stores/authStore';
 export { useBroadcastStore } from './stores/broadcastStore';
 export { useSocket } from './hooks/useSocket';
+export { useVenueLiveUpdates } from './hooks/useVenueLiveUpdates';
+export { useRequireAuth } from './hooks/useRequireAuth';
 export { getSocket, disconnectSocket } from './socket';
 export type { StreamEvent, ViewerEvent, NotificationEvent, AttendanceUpdateEvent } from './socket';

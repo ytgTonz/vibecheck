@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuthStore, fetchMyVenues, fetchQRToken, redeemQRToken, QRTokenPreview } from "@vibecheck/shared";
+import { useRequireAuth, fetchMyVenues, fetchQRToken, redeemQRToken, QRTokenPreview } from "@vibecheck/shared";
 import Link from "next/link";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -13,7 +13,7 @@ const SCANNER_DIV_ID = "qr-reader";
 export default function QRScannerPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
-  const { user, token, hydrated } = useAuthStore();
+  const { user, token, hydrated, ready } = useRequireAuth((path) => router.replace(path));
 
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scannedToken, setScannedToken] = useState("");
@@ -27,16 +27,9 @@ export default function QRScannerPage() {
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
 
-  // Redirect if not logged in
-  useEffect(() => {
-    if (hydrated && !user) {
-      router.replace("/login");
-    }
-  }, [hydrated, user, router]);
-
   // Check venue membership
   useEffect(() => {
-    if (!hydrated || !user || !token) return;
+    if (!ready || !token) return;
     let cancelled = false;
     fetchMyVenues(token)
       .then((venues) => {
@@ -45,7 +38,7 @@ export default function QRScannerPage() {
       })
       .catch(() => { if (!cancelled) setAuthorized(false); });
     return () => { cancelled = true; };
-  }, [hydrated, token, user, venueId]);
+  }, [ready, token, venueId]);
 
   const stopCamera = async () => {
     if (scannerRef.current?.isScanning) {
@@ -76,7 +69,7 @@ export default function QRScannerPage() {
 
   // Start camera when idle; stop it when we move to any other state
   useEffect(() => {
-    if (!hydrated || !user || authorized !== true) return;
+    if (!ready || authorized !== true) return;
 
     if (scanState === "idle") {
       startCamera();
@@ -86,7 +79,7 @@ export default function QRScannerPage() {
 
     return () => { stopCamera(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanState, hydrated, user, authorized]);
+  }, [scanState, ready, authorized]);
 
   const handleTokenInput = async (value: string) => {
     const trimmed = value.trim();
@@ -133,7 +126,7 @@ export default function QRScannerPage() {
     setScanState("idle");
   };
 
-  if (!hydrated || !user) return null;
+  if (!ready) return null;
 
   if (authorized === false) {
     return (

@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { verifyPhone, useAuthStore } from "@vibecheck/shared";
+import { verifyPhone, useRequireAuth, useAuthStore } from "@vibecheck/shared";
 
 function VerifyPhoneForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const stubOtp = searchParams.get("stubOtp");
-  const { token, setUser, user, hydrated, hydrate } = useAuthStore();
+  const { token, user, ready } = useRequireAuth((path) => router.replace(path));
+  const { setUser } = useAuthStore();
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,18 +17,8 @@ function VerifyPhoneForm() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
-
-  useEffect(() => {
-    if (hydrated) inputRef.current?.focus();
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (hydrated && !token) {
-      router.replace("/login");
-    }
-  }, [hydrated, token, router]);
+    if (ready) inputRef.current?.focus();
+  }, [ready]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +46,7 @@ function VerifyPhoneForm() {
     }
   };
 
-  if (!hydrated || !token) return null;
+  if (!ready) return null;
 
   return (
     <div className="mx-auto max-w-sm px-4 py-8 sm:py-16">
