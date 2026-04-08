@@ -3,6 +3,7 @@ import { Bebas_Neue, Source_Serif_4, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar";
 import NotificationToast from "@/components/NotificationToast";
+import { ToastProvider, ToastPortal } from "@/components/toast";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -42,9 +43,12 @@ export default function RootLayout({
       <body
         className={`${bebasNeue.variable} ${sourceSerif4.variable} ${ibmPlexMono.variable} antialiased bg-zinc-950 text-zinc-100`}
       >
-        <NavBar />
-        <NotificationToast />
-        {children}
+        <ToastProvider>
+          <NavBar />
+          <NotificationToast />
+          <ToastPortal />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
