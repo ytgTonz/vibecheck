@@ -1,7 +1,7 @@
 {
   "project": "VibeCheck",
   "generated": "2026-03-27",
-  "description": "Nightlife app for East London, SA — live venue streaming, promoter tools, foot traffic attribution",
+  "description": "Nightlife discovery app — live venue streaming, promoter tools, foot traffic attribution",
   "monorepo": true,
   "workspaces": ["apps/*", "packages/*"],
   "apps": {
