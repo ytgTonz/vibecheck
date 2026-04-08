@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore, register as apiRegister } from "@vibecheck/shared";
 import { AccountTypeSelector } from "./components/AccountTypeSelector";
@@ -11,6 +11,7 @@ import { ViewerFields } from "./components/ViewerFields";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, register, loading, error, setAuth } = useAuthStore();
 
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -31,6 +32,26 @@ export default function LoginPage() {
 
   const [viewerLoading, setViewerLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    const accountTypeParam = searchParams.get("accountType");
+
+    if (modeParam === "register") {
+      setMode("register");
+    } else if (modeParam === "login") {
+      setMode("login");
+    }
+
+    if (
+      accountTypeParam === "owner" ||
+      accountTypeParam === "promoter" ||
+      accountTypeParam === "viewer"
+    ) {
+      setMode("register");
+      setAccountType(accountTypeParam);
+    }
+  }, [searchParams]);
 
   const toggleGenre = (genre: string) => {
     setVenueGenres((prev) =>

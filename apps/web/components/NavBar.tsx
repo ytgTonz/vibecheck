@@ -2,18 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAuthStore, useBroadcastStore } from "@vibecheck/shared";
+import { usePathname, useRouter } from "next/navigation";
+import { fetchMyVenues, useAuthStore, useBroadcastStore, VenueWithStats } from "@vibecheck/shared";
 import FeedbackButton from "@/components/FeedbackButton";
 import VibecheckIcon from "@/components/VibecheckIcon";
 
 export default function NavBar() {
-  const { user, logout, hydrate } = useAuthStore();
+  const router = useRouter();
+  const { user, token, logout, hydrate } = useAuthStore();
   const { venueId, venueName } = useBroadcastStore();
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [goLivePickerOpen, setGoLivePickerOpen] = useState(false);
+  const [goLiveVenues, setGoLiveVenues] = useState<VenueWithStats[]>([]);
+  const [goLiveLoading, setGoLiveLoading] = useState(false);
+  const [goLiveError, setGoLiveError] = useState<string | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -22,6 +27,7 @@ export default function NavBar() {
 
   useEffect(() => {
     setMenuOpen(false);
+    setGoLivePickerOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -42,6 +48,39 @@ export default function NavBar() {
   const keepCompact = hydrated && Boolean(user);
   const leftLogoVisibility = keepCompact ? 1 : scrollProgress;
   const centeredLogoVisibility = keepCompact ? 0 : 1 - scrollProgress;
+
+  const loadGoLiveVenues = async () => {
+    if (!token) {
+      setGoLiveError("You need to be signed in to go live.");
+      setGoLiveVenues([]);
+      return;
+    }
+    setGoLiveLoading(true);
+    setGoLiveError(null);
+    try {
+      const venues = await fetchMyVenues(token);
+      const sorted = [...venues].sort((a, b) => {
+        if (a.isLive !== b.isLive) return Number(b.isLive) - Number(a.isLive);
+        return a.name.localeCompare(b.name);
+      });
+      setGoLiveVenues(sorted);
+    } catch (err) {
+      setGoLiveError(err instanceof Error ? err.message : "Failed to load your venues.");
+      setGoLiveVenues([]);
+    } finally {
+      setGoLiveLoading(false);
+    }
+  };
+
+  const openGoLivePicker = () => {
+    setGoLivePickerOpen(true);
+    void loadGoLiveVenues();
+  };
+
+  const handleSelectVenue = (selectedVenueId: string) => {
+    setGoLivePickerOpen(false);
+    router.push(`/dashboard/live/${selectedVenueId}`);
+  };
 
   return (
     <nav className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950">
@@ -114,16 +153,22 @@ export default function NavBar() {
                       >
                         Dashboard
                       </Link>
-                      <Link
-                        href="/dashboard"
+                      <button
+                        type="button"
+                        onClick={openGoLivePicker}
                         className="rounded-lg bg-brand-red px-3 py-1.5 font-medium text-white transition-colors hover:bg-brand-red/90"
                       >
                         Go Live
-                      </Link>
+                      </button>
                     </>
                   )}
                   {!isAdminRoute && <FeedbackButton />}
-                  <span className="whitespace-nowrap text-zinc-400">{user.name}</span>
+                  <Link
+                    href="/account"
+                    className="whitespace-nowrap rounded-md border border-zinc-700 px-2 py-0.5 text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+                  >
+                    {user.name}
+                  </Link>
                   <button
                     onClick={logout}
                     className="whitespace-nowrap text-zinc-500 transition-colors hover:text-zinc-300"
@@ -194,17 +239,26 @@ export default function NavBar() {
                     >
                       Dashboard
                     </Link>
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setMenuOpen(false)}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        openGoLivePicker();
+                      }}
                       className="rounded-lg bg-brand-red px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-red/90"
                     >
                       Go Live
-                    </Link>
+                    </button>
                   </>
                 )}
                 <div className="mt-1 flex items-center justify-between border-t border-zinc-800 pt-2">
-                  <span className="px-3 text-xs text-zinc-500">{user.name}</span>
+                  <Link
+                    href="/account"
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+                  >
+                    {user.name}
+                  </Link>
                   <button
                     onClick={() => { logout(); setMenuOpen(false); }}
                     className="rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-300"
@@ -226,6 +280,83 @@ export default function NavBar() {
               >
                 Log in
               </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {goLivePickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Select venue to go live"
+          onClick={() => setGoLivePickerOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  Broadcast
+                </p>
+                <h2 className="text-lg font-semibold text-zinc-100">Select a venue</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGoLivePickerOpen(false)}
+                className="rounded-lg px-2 py-1 text-zinc-500 transition-colors hover:bg-zinc-900 hover:text-zinc-300"
+                aria-label="Close venue selector"
+              >
+                ✕
+              </button>
+            </div>
+
+            {goLiveLoading && (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-4 text-sm text-zinc-400">
+                Loading your venues...
+              </div>
+            )}
+
+            {!goLiveLoading && goLiveError && (
+              <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-3 py-3 text-sm text-red-300">
+                {goLiveError}
+              </div>
+            )}
+
+            {!goLiveLoading && !goLiveError && goLiveVenues.length === 0 && (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-4 text-sm text-zinc-400">
+                No linked venues available for broadcast yet.
+              </div>
+            )}
+
+            {!goLiveLoading && !goLiveError && goLiveVenues.length > 0 && (
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {goLiveVenues.map((venue) => (
+                  <button
+                    key={venue.id}
+                    type="button"
+                    onClick={() => handleSelectVenue(venue.id)}
+                    className="flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-850"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-zinc-100">{venue.name}</p>
+                      <p className="mt-0.5 text-xs text-zinc-500">{venue.location}</p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+                        venue.isLive
+                          ? "bg-brand-red/20 text-brand-red"
+                          : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {venue.isLive ? "Live" : "Offline"}
+                    </span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         </div>

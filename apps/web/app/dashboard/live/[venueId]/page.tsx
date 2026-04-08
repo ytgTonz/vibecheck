@@ -31,6 +31,23 @@ import { RemoteVideo } from "./components/RemoteVideo";
 
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
 
+function LocalPreview({ stream }: { stream: MediaStream }) {
+  const videoRef = useCallback((node: HTMLVideoElement | null) => {
+    if (!node) return;
+    node.srcObject = stream;
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted
+      className="h-full w-full rounded-xl object-cover"
+    />
+  );
+}
+
 export default function BroadcastPage() {
   const { venueId } = useParams<{ venueId: string }>();
   const router = useRouter();
@@ -40,10 +57,13 @@ export default function BroadcastPage() {
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
-  const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "monitoring" | "ended">("idle");
+  const [phase, setPhase] = useState<"idle" | "previewing" | "connecting" | "live" | "monitoring" | "ended">("idle");
   const [error, setError] = useState<string | null>(null);
   const [attendanceCounts, setAttendanceCounts] = useState({ intentCount: 0, arrivalCount: 0 });
   const [peakViewerCount, setPeakViewerCount] = useState(0);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
+  const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [micEnabled, setMicEnabled] = useState(true);
 
   useEffect(() => {
     if (!stream?.id || (phase !== "live" && phase !== "monitoring")) return;
@@ -104,7 +124,43 @@ export default function BroadcastPage() {
       .catch(() => setError("Failed to load venue"));
   }, [ready, user, authToken, venueId]);
 
-  const startStream = async () => {
+  const stopPreview = useCallback(() => {
+    setPreviewStream((current) => {
+      current?.getTracks().forEach((t) => t.stop());
+      return null;
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => stopPreview();
+  }, [stopPreview]);
+
+  const startPreview = async () => {
+    setError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setPreviewStream(stream);
+      setCameraEnabled(true);
+      setMicEnabled(true);
+      setPhase("previewing");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not access camera/microphone");
+      setPhase("idle");
+    }
+  };
+
+  const togglePreviewTrack = (kind: "video" | "audio") => {
+    if (!previewStream) return;
+    const tracks = kind === "video" ? previewStream.getVideoTracks() : previewStream.getAudioTracks();
+    const nextEnabled = kind === "video" ? !cameraEnabled : !micEnabled;
+    tracks.forEach((track) => {
+      track.enabled = nextEnabled;
+    });
+    if (kind === "video") setCameraEnabled(nextEnabled);
+    else setMicEnabled(nextEnabled);
+  };
+
+  const goLiveFromPreview = async () => {
     if (!authToken || !venueId) return;
     setPhase("connecting");
     setError(null);
@@ -115,11 +171,12 @@ export default function BroadcastPage() {
       const { token: broadcasterToken } = await fetchStreamToken(newStream.id, authToken);
       console.log('[Broadcast] broadcaster token received, joining room');
       setLivekitToken(broadcasterToken);
+      stopPreview();
       setPhase("live");
       if (venue) broadcastStore.setBroadcast(venueId!, newStream.id, venue.name, broadcasterToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start stream");
-      setPhase("idle");
+      setPhase("previewing");
     }
   };
 
@@ -156,7 +213,7 @@ export default function BroadcastPage() {
     );
   }
 
-  if (phase === "idle" || phase === "connecting") {
+  if (phase === "idle" || phase === "previewing" || phase === "connecting") {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <Link href="/dashboard" className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200">
@@ -165,17 +222,77 @@ export default function BroadcastPage() {
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-center">
           <h1 className="text-2xl font-bold">{venue.name}</h1>
           <p className="mt-1 text-zinc-400">{venue.location}</p>
-          <p className="mt-4 text-sm text-zinc-500">
-            Start a live stream to broadcast from this venue. Your camera and microphone will be shared with viewers.
-          </p>
+          {phase === "idle" ? (
+            <p className="mt-4 text-sm text-zinc-500">
+              Start a live stream to broadcast from this venue. You will get a camera/audio preview before going live.
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-zinc-500">
+              Confirm your camera and microphone setup before going live.
+            </p>
+          )}
           {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
-          <button
-            onClick={startStream}
-            disabled={phase === "connecting"}
-            className="mt-6 rounded-full bg-brand-red px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90 disabled:opacity-50"
-          >
-            {phase === "connecting" ? "Connecting..." : "Start Stream"}
-          </button>
+
+          {(phase === "previewing" || phase === "connecting") && previewStream && (
+            <div className="mt-6 overflow-hidden rounded-xl border border-zinc-800 bg-black">
+              <div className="aspect-video">
+                <LocalPreview stream={previewStream} />
+              </div>
+            </div>
+          )}
+
+          {phase === "idle" && (
+            <button
+              onClick={startPreview}
+              className="mt-6 rounded-full bg-brand-red px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90"
+            >
+              Start Stream
+            </button>
+          )}
+
+          {(phase === "previewing" || phase === "connecting") && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={() => togglePreviewTrack("video")}
+                disabled={phase === "connecting"}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  cameraEnabled
+                    ? "bg-zinc-800 text-white hover:bg-zinc-700"
+                    : "bg-brand-red/20 text-red-400 hover:bg-red-500/30"
+                } disabled:opacity-50`}
+              >
+                {cameraEnabled ? "Camera On" : "Camera Off"}
+              </button>
+              <button
+                onClick={() => togglePreviewTrack("audio")}
+                disabled={phase === "connecting"}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  micEnabled
+                    ? "bg-zinc-800 text-white hover:bg-zinc-700"
+                    : "bg-brand-red/20 text-red-400 hover:bg-red-500/30"
+                } disabled:opacity-50`}
+              >
+                {micEnabled ? "Mic On" : "Mic Off"}
+              </button>
+              <button
+                onClick={() => {
+                  stopPreview();
+                  setPhase("idle");
+                }}
+                disabled={phase === "connecting"}
+                className="rounded-full border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={goLiveFromPreview}
+                disabled={phase === "connecting"}
+                className="rounded-full bg-brand-red px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90 disabled:opacity-50"
+              >
+                {phase === "connecting" ? "Connecting..." : "Go Live"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
