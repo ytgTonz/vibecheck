@@ -16,7 +16,7 @@ export function PromoterPanel({
   return (
     <div className="border-t border-zinc-800 pt-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-300">Promoters</h3>
+        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Promoters</h3>
         <div className="flex gap-2">
           <button onClick={onLoad} className="text-xs text-zinc-400 hover:text-white">
             {loading ? "Loading..." : "Refresh"}

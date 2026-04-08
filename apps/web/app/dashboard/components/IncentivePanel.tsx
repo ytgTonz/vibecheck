@@ -67,7 +67,7 @@ export function IncentivePanel({ venueId, token }: IncentivePanelProps) {
   return (
     <div className="border-t border-zinc-800 pt-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-zinc-300">Venue Incentive</h3>
+        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Venue Incentive</h3>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}

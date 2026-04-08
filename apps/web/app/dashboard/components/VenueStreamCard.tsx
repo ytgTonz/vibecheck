@@ -37,15 +37,13 @@ export function VenueStreamCard({
   }, [venue.id, token]);
 
   return (
-    <div className="mb-8 rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+    <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <h2 className="text-xl font-bold">{venue.name}</h2>
-            <p className="text-sm text-zinc-400">{venue.location}</p>
-          </div>
+        <div>
+          <h2 className="text-xl font-semibold">{venue.name}</h2>
+          <p className="text-sm text-zinc-400">{venue.location}</p>
           {venue.isLive && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-1 text-xs font-semibold text-red-400">
+            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-1 text-xs font-semibold text-red-400">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
               LIVE · {venue.currentViewerCount} viewers
             </span>
@@ -53,15 +51,15 @@ export function VenueStreamCard({
         </div>
         <div className="flex flex-wrap gap-2 sm:shrink-0 sm:gap-3">
           {venue.isLive ? (
-            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-brand-red/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30">
+            <Link href={`/dashboard/live/${venue.id}`} className="rounded-xl bg-brand-red/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30">
               View Stream
             </Link>
           ) : (
-            <Link href={`/dashboard/live/${venue.id}`} className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-red/90">
+            <Link href={`/dashboard/live/${venue.id}`} className="rounded-xl bg-brand-red px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-red/90">
               Go Live
             </Link>
           )}
-          <Link href={`/dashboard/scan/${venue.id}`} className="rounded-lg bg-zinc-800 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700">
+          <Link href={`/dashboard/scan/${venue.id}`} className="rounded-xl bg-zinc-800 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-700">
             Scan QR
           </Link>
           {venue.ownerId === user?.id && (
@@ -77,20 +75,20 @@ export function VenueStreamCard({
 
       {/* Visit stats */}
       {stats && (
-        <div className="mb-4 flex gap-4 rounded-lg bg-zinc-800/40 px-4 py-3">
-          <div className="text-center">
-            <p className="text-lg font-bold text-zinc-100">{stats.comingCount}</p>
-            <p className="text-xs text-zinc-500">Coming</p>
+        <div className="mb-4 flex rounded-xl bg-zinc-800/40 px-4 py-3">
+          <div className="flex flex-1 flex-col items-center">
+            <p className="text-lg font-semibold text-zinc-100">{stats.comingCount}</p>
+            <p className="text-[11px] uppercase tracking-widest text-zinc-500">Coming</p>
           </div>
           <div className="w-px bg-zinc-700" />
-          <div className="text-center">
-            <p className="text-lg font-bold text-zinc-100">{stats.arrivedCount}</p>
-            <p className="text-xs text-zinc-500">Arrived</p>
+          <div className="flex flex-1 flex-col items-center">
+            <p className="text-lg font-semibold text-zinc-100">{stats.arrivedCount}</p>
+            <p className="text-[11px] uppercase tracking-widest text-zinc-500">Arrived</p>
           </div>
           <div className="w-px bg-zinc-700" />
-          <div className="text-center">
-            <p className="text-lg font-bold text-zinc-100">{stats.claimedCount}</p>
-            <p className="text-xs text-zinc-500">Claimed</p>
+          <div className="flex flex-1 flex-col items-center">
+            <p className="text-lg font-semibold text-zinc-100">{stats.claimedCount}</p>
+            <p className="text-[11px] uppercase tracking-widest text-zinc-500">Claimed</p>
           </div>
         </div>
       )}
