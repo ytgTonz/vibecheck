@@ -28,7 +28,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "VibeCheck — Feel the night",
   description:
-    "Watch live streams from East London venues and feel the vibe before you arrive.",
+    "Watch live venue streams and feel the vibe before you arrive.",
   icons: { icon: "/favicon.png" },
 };
 

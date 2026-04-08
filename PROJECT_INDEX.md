@@ -4,7 +4,7 @@ Generated: 2026-03-27
 
 ## Overview
 
-Nightlife app for East London, SA. Venues stream live to mobile viewers; promoters manage venues and broadcast from web or mobile. Business model: per-venue invoicing based on foot traffic attribution.
+Nightlife discovery app. Venues stream live to mobile viewers; promoters manage venues and broadcast from web or mobile. Business model: per-venue invoicing based on foot traffic attribution.
 
 ## Project Structure
 

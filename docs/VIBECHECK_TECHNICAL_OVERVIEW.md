@@ -9,7 +9,7 @@
 
 ## 1. What VibeCheck Is
 
-VibeCheck is a venue discovery platform built for East London nightlife. It answers one question: **where should I go tonight?**
+VibeCheck is a venue discovery platform built for nightlife. It answers one question: **where should I go tonight?**
 
 Instead of stale reviews or curated promo content, VibeCheck lets venue teams (owners and promoters) publish short video clips that show what the venue actually looks and feels like right now. Users browse a live-ranked feed, open venue stories, and make a decision based on current signal — not guesswork.
 
@@ -141,7 +141,7 @@ Venue (1) ---has---> (N) Invite
 | Model | Key Fields | Notes |
 |-------|-----------|-------|
 | **User** | id, email, password (hashed), name, role | Roles: VENUE_OWNER, VENUE_PROMOTER, ADMIN |
-| **Venue** | id, name, type, location, city, hours, musicGenre[], coverCharge, drinkPrices, ownerId | 7 venue types. City defaults to "East London, Eastern Cape" |
+| **Venue** | id, name, type, location, city, hours, musicGenre[], coverCharge, drinkPrices, ownerId | 7 venue types. City is user-provided |
 | **Clip** | id, videoUrl, thumbnail, duration, venueId, uploadedBy, caption, views | Views tracked via public endpoint |
 | **VenuePromoter** | userId, venueId | Unique constraint on [userId, venueId] |
 | **Invite** | code (unique), venueId, createdBy, used, expiresAt | 8-char random code, 7-day expiry |
@@ -212,7 +212,7 @@ Each venue in the listing includes derived fields from its latest clip:
   "id": "...",
   "name": "Rumors Lounge",
   "type": "LOUNGE",
-  "location": "Oxford Street, East London",
+  "location": "123 Main Street",
   "clipCount": 12,
   "lastClipAt": "2026-03-19T20:15:00.000Z",
   "latestClipThumbnail": "https://res.cloudinary.com/...",
@@ -386,7 +386,7 @@ Beyond roles, certain actions check venue membership:
 | Feature | Effort | Impact | Notes |
 |---------|--------|--------|-------|
 | Live streaming | Very High | High | Requires media server infrastructure (Mux/AWS IVS). See detailed analysis below |
-| Multi-city expansion | Medium | High | Remove East London default, add city selection |
+| Multi-city expansion | Medium | High | City is now user-provided; add city-based filtering/discovery |
 | Monetization (promoted venues) | High | High | Paid placement in featured slot or boosted ranking |
 | Event integration | Medium | Medium | Link clips to specific events (DJ sets, specials, launches) |
 
@@ -411,7 +411,7 @@ Live streaming was evaluated and **deferred** from the MVP. Key reasons:
 | JWT token in localStorage | Low (for MVP) | Acceptable for MVP. Consider httpOnly cookies or refresh token rotation for production hardening |
 | No rate limiting on public endpoints | Medium | Add express-rate-limit before launch to prevent abuse of view counting and venue listing |
 | No email verification | Low | Users can register with any email. Add verification flow before scaling |
-| Single-region database | Low | Adequate for East London user base. Consider read replicas if expanding to multiple cities |
+| Single-region database | Low | Adequate for initial user base. Consider read replicas if expanding to multiple regions |
 
 ---
 

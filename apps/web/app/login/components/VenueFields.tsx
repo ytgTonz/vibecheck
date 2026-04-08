@@ -51,7 +51,7 @@ export function VenueFields({
         <input
           id="venueLocation" type="text" required value={venueLocation}
           onChange={(e) => onVenueLocationChange(e.target.value)}
-          className={inputClass} placeholder="e.g. Quigney, East London"
+          className={inputClass} placeholder="e.g. 123 Main St, City Centre"
         />
       </div>
 

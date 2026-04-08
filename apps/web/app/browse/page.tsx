@@ -87,7 +87,7 @@ export default function BrowsePage() {
       <section className="mb-8 overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950 px-5 py-6 text-white shadow-[0_18px_48px_rgba(0,0,0,0.18)] sm:px-7 sm:py-8">
         <div className="max-w-3xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-red/75">
-            Tonight In East London
+            Live Tonight
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
             See what is live before you decide where to pull up.

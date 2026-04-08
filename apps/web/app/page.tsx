@@ -7,7 +7,7 @@ const pillars = [
   {
     eyebrow: "Live Discovery",
     title: "See the room before you spend the Uber.",
-    body: "Watch live streams from venues around East London and decide where to go with actual real-time context instead of stale posts.",
+    body: "Watch live streams from venues around you and decide where to go with actual real-time context instead of stale posts.",
   },
   {
     eyebrow: "Venue Teams",
@@ -35,7 +35,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,440px)] lg:items-end">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand-red/80">
-              East London Nightlife, In Real Time
+              Live Nightlife, In Real Time
             </p>
             <h1 className="mt-4 max-w-4xl font-bebas text-6xl tracking-widest sm:text-7xl lg:text-8xl">
               <span className="text-zinc-100">FEEL </span><span className="text-brand-red">THE NIGHT.</span>

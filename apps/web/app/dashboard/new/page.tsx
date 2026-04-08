@@ -158,7 +158,7 @@ export default function NewVenuePage() {
             onChange={(e) => setLocation(e.target.value)}
             disabled={saving}
             className={inputClass}
-            placeholder="e.g. 12 Oxford St, East London"
+            placeholder="e.g. 12 Main St, City Centre"
           />
         </div>
 

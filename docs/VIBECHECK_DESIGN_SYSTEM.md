@@ -132,7 +132,7 @@ Badge text:       10-11px, weight 600
   <View className="border-t border-zinc-800 pt-3">
     <View className="flex-row justify-between py-2.5 border-b border-zinc-800">
       <Text className="text-[13px] text-zinc-500">Location</Text>
-      <Text className="text-[13px] text-zinc-200">Quigney, East London</Text>
+      <Text className="text-[13px] text-zinc-200">123 Main St, City Centre</Text>
     </View>
     {/* More rows... */}
   </View>

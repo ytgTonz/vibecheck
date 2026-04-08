@@ -212,7 +212,7 @@ export default function BrowseScreen() {
           <View className="pb-4 pt-2">
             <Text className="text-3xl font-bold text-zinc-100">VibeCheck</Text>
             <Text className="mt-1 text-sm text-zinc-400">
-              See the vibe before you arrive.
+              See the vibe before you arrive
             </Text>
           </View>
 

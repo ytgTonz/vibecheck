@@ -14,7 +14,7 @@ model Venue {
   name       String
   type       VenueType
   location   String
-  city       String    @default("East London, Eastern Cape")
+  city       String    @default("")
   hours       String?
   musicGenre  String[]
   coverCharge String?
