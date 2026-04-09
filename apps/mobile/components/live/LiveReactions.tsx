@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-export const QUICK_REACTIONS = ['🔥'] as const;
+export const QUICK_REACTIONS = ['🔥', '❤️', '👏'] as const;
 
 export type FloatingReaction = {
   id: number;

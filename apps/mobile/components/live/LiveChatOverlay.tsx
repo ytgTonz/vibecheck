@@ -19,21 +19,45 @@ import { isReactionMessage } from './LiveReactions';
 type ChatMessage = {
   from?: { name?: string; identity?: string };
   message: string;
+  timestamp?: number;
 };
+
+const AVATAR_COLORS = ['#a855f7', '#3b82f6', '#10b981', '#f97316', '#ec4899', '#06b6d4'];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function getRelativeTime(timestamp?: number): string {
+  if (!timestamp) return 'now';
+  const diffMins = Math.floor((Date.now() - timestamp) / 60_000);
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
+  return `${Math.floor(diffMins / 60)}h`;
+}
 
 export function LiveChatOverlay({
   messages,
   onSend,
+  chatOpen,
   bottomOffset = 6,
 }: {
   messages: ChatMessage[];
   onSend: (msg: string) => void;
+  chatOpen: boolean;
   bottomOffset?: number;
 }) {
   const [text, setText] = useState('');
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const messageCount = messages.length;
+  const inputRef = useRef<TextInput>(null);
   const keyboardOffset = useSharedValue(0);
 
   useEffect(() => {
@@ -41,7 +65,6 @@ export function LiveChatOverlay({
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onShow = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardVisible(true);
       const extra = Platform.OS === 'android' ? 24 : 10;
       keyboardOffset.value = withTiming(e.endCoordinates.height + extra, {
         duration: Platform.OS === 'ios' ? 250 : 150,
@@ -49,7 +72,6 @@ export function LiveChatOverlay({
       });
     });
     const onHide = Keyboard.addListener(hideEvent, () => {
-      setKeyboardVisible(false);
       keyboardOffset.value = withTiming(0, {
         duration: Platform.OS === 'ios' ? 200 : 100,
         easing: Easing.in(Easing.quad),
@@ -62,6 +84,15 @@ export function LiveChatOverlay({
     };
   }, [keyboardOffset]);
 
+  // Focus input when chat opens
+  useEffect(() => {
+    if (chatOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      Keyboard.dismiss();
+    }
+  }, [chatOpen]);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: -keyboardOffset.value }],
   }));
@@ -72,6 +103,8 @@ export function LiveChatOverlay({
     onSend(trimmed);
     setText('');
   };
+
+  const nonReactionMessages = messages.filter((m) => !isReactionMessage(m.message));
 
   return (
     <Animated.View
@@ -88,81 +121,89 @@ export function LiveChatOverlay({
         animatedStyle,
       ]}
     >
-      {!keyboardVisible && <View style={{ maxWidth: '76%' }} className="mb-2">
+      {/* Message list — always visible */}
+      <View style={{ maxWidth: '80%' }} className="mb-2">
         <ScrollView
           ref={scrollRef}
-          onContentSizeChange={() =>
-            scrollRef.current?.scrollToEnd({ animated: true })
-          }
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
           showsVerticalScrollIndicator={false}
-          className="max-h-[180px]"
+          className="max-h-[160px]"
         >
-          {messageCount === 0 ? (
+          {nonReactionMessages.length === 0 ? (
             <View className="px-1 py-2">
-              <Text className="text-sm text-white/75">
-                Join the chat.
-              </Text>
+              <Text className="text-sm text-white/60">Join the chat.</Text>
             </View>
           ) : (
-            messages.slice(-6).map((msg, index) =>
-              isReactionMessage(msg.message) ? (
+            nonReactionMessages.slice(-6).map((msg, index) => {
+              const name = msg.from?.name || msg.from?.identity || 'Viewer';
+              const color = getAvatarColor(name);
+              const initials = getInitials(name);
+              const time = getRelativeTime(msg.timestamp);
+              return (
                 <View
                   key={`${msg.from?.identity || 'viewer'}-${index}`}
-                  className="mb-2 flex-row items-center gap-2 px-1"
+                  className="mb-2 flex-row items-start gap-2 px-1"
                 >
-                  <Text className="text-base">{msg.message.trim()}</Text>
-                  <Text
-                    numberOfLines={1}
-                    className="flex-shrink text-[11px] font-semibold text-white"
+                  {/* Avatar */}
+                  <View
+                    style={{ backgroundColor: color, width: 28, height: 28, borderRadius: 14 }}
+                    className="flex-shrink-0 items-center justify-center"
                   >
-                    {msg.from?.name || msg.from?.identity || 'Viewer'}
-                  </Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: 'white' }}>
+                      {initials}
+                    </Text>
+                  </View>
+
+                  {/* Text content */}
+                  <View className="min-w-0 flex-1">
+                    <View className="flex-row items-baseline gap-1.5">
+                      <Text
+                        className="text-xs font-semibold text-white"
+                        numberOfLines={1}
+                      >
+                        {name}
+                      </Text>
+                      <Text className="text-[10px] text-white/40">{time}</Text>
+                    </View>
+                    <Text
+                      numberOfLines={2}
+                      className="mt-0.5 text-sm leading-[18px] text-white/85"
+                    >
+                      {msg.message}
+                    </Text>
+                  </View>
                 </View>
-              ) : (
-                <View
-                  key={`${msg.from?.identity || 'viewer'}-${index}`}
-                  className="mb-2 px-1"
-                >
-                  <Text
-                    numberOfLines={1}
-                    className="text-[11px] font-semibold text-white"
-                  >
-                    {msg.from?.name || msg.from?.identity || 'Viewer'}
-                  </Text>
-                  <Text
-                    numberOfLines={2}
-                    className="mt-0.5 text-sm leading-5 text-white/90"
-                  >
-                    {msg.message}
-                  </Text>
-                </View>
-              ),
-            )
+              );
+            })
           )}
         </ScrollView>
-      </View>}
-
-      <View className="flex-row items-center gap-2 rounded-full border border-white/10 bg-black/55 px-3 py-2">
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={handleSend}
-          placeholder="Comment"
-          placeholderTextColor="#a1a1aa"
-          className="flex-1 px-2 py-1 text-sm text-white"
-        />
-        <Pressable
-          onPress={handleSend}
-          disabled={!text.trim()}
-          className={`h-9 w-9 items-center justify-center rounded-full ${
-            text.trim() ? 'bg-white/20' : 'bg-white/8'
-          }`}
-        >
-          <Text className={`text-base font-semibold ${text.trim() ? 'text-white' : 'text-zinc-500'}`}>
-            ↑
-          </Text>
-        </Pressable>
       </View>
+
+      {/* Chat input — only shown when chatOpen */}
+      {chatOpen && (
+        <View className="flex-row items-center gap-2 rounded-full border border-white/10 bg-black/60 px-3 py-2">
+          <TextInput
+            ref={inputRef}
+            value={text}
+            onChangeText={setText}
+            onSubmitEditing={handleSend}
+            placeholder="Say something..."
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            className="flex-1 px-2 py-1 text-sm text-white"
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={!text.trim()}
+            className={`h-9 w-9 items-center justify-center rounded-full ${
+              text.trim() ? 'bg-brand-red' : 'bg-white/10'
+            }`}
+          >
+            <Text className={`text-base font-bold ${text.trim() ? 'text-white' : 'text-zinc-500'}`}>
+              ↑
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </Animated.View>
   );
 }

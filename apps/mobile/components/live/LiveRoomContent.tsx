@@ -3,6 +3,7 @@ import { View, useWindowDimensions } from 'react-native';
 import { LiveStream, Venue } from '@vibecheck/shared';
 import { LiveChatOverlay } from './LiveChatOverlay';
 import { LiveHeader } from './LiveHeader';
+import { LiveBottomBar } from './LiveBottomBar';
 import {
   FloatingReaction,
   FloatingReactionLayer,
@@ -20,6 +21,11 @@ import {
 } from './livekit';
 import { LiveAttendanceBar } from './LiveAttendanceBar';
 
+// Height of the bottom bar (approximate — attendance bar sits above it)
+const BOTTOM_BAR_HEIGHT = 64;
+// Height of the attendance row
+const ATTENDANCE_HEIGHT = 60;
+
 export function LiveRoomContent({
   venue,
   stream,
@@ -34,6 +40,7 @@ export function LiveRoomContent({
   const [peakCount, setPeakCount] = useState(() =>
     Math.max(stream.viewerPeak ?? 0, stream.currentViewerCount ?? 0),
   );
+  const [chatOpen, setChatOpen] = useState(false);
   const nextReactionIdRef = useRef(0);
   const processedMessageCountRef = useRef(0);
   const pendingLocalReactionsRef = useRef<Array<{ emoji: string; at: number }>>([]);
@@ -84,7 +91,7 @@ export function LiveRoomContent({
             id: nextReactionIdRef.current++,
             emoji,
             left,
-            bottom: 148,
+            bottom: BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 40,
             size,
             drift: Math.random() * 56 - 28,
             duration: 1500 + Math.round(Math.random() * 500),
@@ -106,9 +113,7 @@ export function LiveRoomContent({
 
     nextMessages.forEach((message: { message: string }) => {
       const emoji = message.message.trim();
-      if (!isReactionMessage(emoji)) {
-        return;
-      }
+      if (!isReactionMessage(emoji)) return;
 
       const localReactionIndex = pendingLocalReactionsRef.current.findIndex(
         (reaction) => reaction.emoji === emoji,
@@ -135,35 +140,53 @@ export function LiveRoomContent({
     <View className="flex-1 bg-black">
       <LiveVideoStage videoTrack={videoTrack} width={width} height={height} />
 
-      {/* Subtle dim for text readability over video */}
+      {/* Subtle dim for text readability */}
       <View pointerEvents="none" className="absolute inset-0 bg-black/10" />
 
       <FloatingReactionLayer
         reactions={floatingReactions}
         onDone={removeFloatingReaction}
       />
+
       <StreamEndedOverlay
         venueId={venue.id}
         venueName={venue.name}
         streamId={stream.id}
         onReconnect={onReconnect}
       />
-      <LiveHeader
-        venue={venue}
-        viewerCount={viewerCount}
-      />
 
-      <View style={{ position: 'absolute', bottom: 185, right: 18, zIndex: 10 }}>
+      {/* Top bar */}
+      <LiveHeader venue={venue} viewerCount={viewerCount} />
+
+      {/* Emoji reactions — right side, above attendance */}
+      <View
+        style={{
+          position: 'absolute',
+          right: 14,
+          bottom: BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 8,
+          zIndex: 10,
+        }}
+      >
         <QuickReactionRow onReact={handleReact} vertical />
       </View>
 
+      {/* Chat messages — above attendance bar */}
       <LiveChatOverlay
         messages={chat.chatMessages}
         onSend={(message: string) => chat.send(message)}
-        bottomOffset={130}
+        chatOpen={chatOpen}
+        bottomOffset={BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 4}
       />
 
+      {/* Attendance row — sits above bottom bar */}
       <LiveAttendanceBar stream={stream} venue={venue} />
+
+      {/* Bottom bar */}
+      <LiveBottomBar
+        venueName={venue.name}
+        chatOpen={chatOpen}
+        onChatToggle={() => setChatOpen((v) => !v)}
+      />
     </View>
   );
 }

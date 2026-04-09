@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
-import { SymbolView } from 'expo-symbols';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiveStream, Venue, useAuthStore, useSocket, recordVisitIntent, recordVisitArrival, VisitArrivalResponse } from '@vibecheck/shared';
 import { QRModal } from './QRModal';
 
@@ -11,19 +10,15 @@ interface Props {
   venue: Venue;
 }
 
-// Scoped to venue + stream to avoid collisions across nights/sessions
 function intentKey(venueId: string, streamId: string) {
   return `visit_intent_${venueId}_${streamId}`;
 }
 
 export function LiveAttendanceBar({ stream, venue }: Props) {
-  const insets = useSafeAreaInsets();
   const token = useAuthStore((s) => s.token);
 
   const [intentPressed, setIntentPressed] = useState(false);
   const [arrivalPressed, setArrivalPressed] = useState(false);
-  const [intentCount, setIntentCount] = useState(venue.intentCount ?? 0);
-  const [arrivalCount, setArrivalCount] = useState(venue.arrivalCount ?? 0);
   const [showThankYou, setShowThankYou] = useState(false);
   const [qrData, setQrData] = useState<VisitArrivalResponse | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
@@ -31,20 +26,15 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
   const [arrivalSubmitting, setArrivalSubmitting] = useState(false);
   const thankYouAnim = useRef(new Animated.Value(0)).current;
 
-  // Restore pressed state from AsyncStorage on mount
   useEffect(() => {
     AsyncStorage.getItem(intentKey(venue.id, stream.id)).then((val) => {
       if (val) setIntentPressed(true);
     });
   }, [venue.id, stream.id]);
 
-  // Real-time count updates via Socket.IO
   useSocket({
     'attendance:update': (data) => {
-      if (data.streamId === stream.id) {
-        setIntentCount(data.intentCount);
-        setArrivalCount(data.arrivalCount);
-      }
+      if (data.streamId !== stream.id) return;
     },
   });
 
@@ -55,9 +45,8 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
       await recordVisitIntent({ venueId: venue.id, streamId: stream.id }, token);
       setIntentPressed(true);
       await AsyncStorage.setItem(intentKey(venue.id, stream.id), '1');
-      setIntentCount((c) => c + 1);
     } catch {
-      // Count may still update via socket if another device already recorded intent
+      // socket will update counts
     } finally {
       setIntentSubmitting(false);
     }
@@ -69,7 +58,6 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
     try {
       const result = await recordVisitArrival({ venueId: venue.id, streamId: stream.id }, token);
       setArrivalPressed(true);
-      setArrivalCount((c) => c + 1);
       setQrData(result);
       setQrVisible(true);
       setShowThankYou(true);
@@ -79,7 +67,7 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
         Animated.timing(thankYouAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start(() => setShowThankYou(false));
     } catch {
-      // Leave the button enabled so the user can retry after verification or recovery
+      // leave button enabled for retry
     } finally {
       setArrivalSubmitting(false);
     }
@@ -88,69 +76,52 @@ export function LiveAttendanceBar({ stream, venue }: Props) {
   return (
     <>
       <View
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
-        className="px-4 pt-2"
+        style={{ position: 'absolute', bottom: 64, left: 0, right: 0 }}
+        className="flex-row items-center gap-3 bg-black/60 px-4 py-3"
       >
-        {/* Live counters */}
-        <View className="mb-2 items-center">
-          <View className="flex-row items-center gap-2 rounded-full bg-black/50 px-4 py-1">
-            <SymbolView name="calendar" size={11} tintColor="white" />
-            <Text className="text-xs font-semibold text-white">{intentCount}</Text>
-            <Text className="text-xs text-white/50">·</Text>
-            <SymbolView name="mappin" size={11} tintColor="white" />
-            <Text className="text-xs font-semibold text-white">{arrivalCount}</Text>
+        {/* Label */}
+        <View className="min-w-0 flex-1 flex-row items-center gap-2">
+          <Ionicons name="people-outline" size={16} color="rgba(255,255,255,0.5)" />
+          <View className="min-w-0 flex-1">
+            <Text className="text-xs font-semibold text-white" numberOfLines={1}>
+              Planning to go out?
+            </Text>
+            <Text className="text-xs text-white/50" numberOfLines={1}>
+              {showThankYou ? 'Thank you from VibeCheck!' : 'Let others know your vibe'}
+            </Text>
           </View>
         </View>
 
-        {/* Thank you message */}
-        {showThankYou && (
-          <Animated.View
-            className="mb-2 items-center"
-            style={{ opacity: thankYouAnim, transform: [{ translateY: thankYouAnim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }] }}
-          >
-            <Text className="text-xs font-medium text-white/80">
-              Thank you from VibeCheck!
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* Action buttons */}
-        <View className="flex-row gap-3" style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
+        {/* Buttons */}
+        <View className="flex-row gap-2">
           <Pressable
             onPress={handleIntent}
             disabled={intentPressed || intentSubmitting || !token}
-            className={`flex-1 items-center rounded-xl py-3 ${
-              intentPressed ? 'bg-white/20' : 'border border-orange-100/70 bg-white/90'
+            className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+              intentPressed ? 'bg-white/10' : 'bg-zinc-800'
             }`}
           >
-            <Text
-              className={`text-sm font-semibold ${
-                intentPressed ? 'text-white/40' : 'text-black'
-              }`}
-            >
-              {intentPressed ? "I'm Coming ✓" : "I'm Coming"}
+            <Text className="text-sm">🤔</Text>
+            <Text className={`text-xs font-semibold ${intentPressed ? 'text-white/40' : 'text-white'}`}>
+              {intentPressed ? 'Thinking ✓' : 'Thinking of going'}
             </Text>
           </Pressable>
 
           <Pressable
             onPress={arrivalPressed ? () => setQrVisible(true) : handleArrival}
             disabled={arrivalSubmitting || (!arrivalPressed && !token)}
-            className={`flex-1 items-center rounded-xl py-3 ${
-              arrivalPressed ? 'bg-purple-500/40' : 'bg-purple-500'
+            className={`flex-row items-center gap-1.5 rounded-full px-3 py-2 ${
+              arrivalPressed ? 'bg-brand-red/40' : 'bg-brand-red'
             }`}
           >
-            <Text
-              className={`text-sm font-semibold ${
-                arrivalPressed ? 'text-white/80' : 'text-white'
-              }`}
-            >
-              {arrivalPressed ? 'Show QR' : "I'm Here"}
+            <Text className="text-sm">🚶</Text>
+            <Text className={`text-xs font-semibold ${arrivalPressed ? 'text-white/60' : 'text-white'}`}>
+              {arrivalPressed ? 'Show QR' : "I'm here"}
             </Text>
           </Pressable>
         </View>
       </View>
 
-      {/* QR modal — shown after "I'm Here", re-openable via "Show QR" */}
       {qrData && (
         <QRModal
           visible={qrVisible}
