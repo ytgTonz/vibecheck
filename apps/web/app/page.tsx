@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import HeroCarousel from "@/components/HeroCarousel";
 
 const APK_DOWNLOAD_URL =
   "https://github.com/ytgTonz/vibecheck/releases/download/apk-latest/app-release.apk";
@@ -28,23 +29,6 @@ const onboardingSteps = [
   "Start exploring live venues",
 ];
 
-const liveMoments = [
-  {
-    venue: "Neon Basement",
-    crowd: "Packed",
-    streamers: "2 streams live",
-  },
-  {
-    venue: "Palm Room",
-    crowd: "Warming up",
-    streamers: "Owner is live",
-  },
-  {
-    venue: "The Dock",
-    crowd: "High energy",
-    streamers: "Promoter + DJ cam",
-  },
-];
 
 const marketingGallery = [
   {
@@ -143,86 +127,11 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[2rem] border border-zinc-700/80 bg-[linear-gradient(155deg,#111113_5%,#27160f_52%,#0a0a0d_100%)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+          <div className="relative flex items-center justify-center overflow-hidden rounded-[2rem] border border-zinc-700/80 bg-[linear-gradient(155deg,#111113_5%,#27160f_52%,#0a0a0d_100%)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
             <div className="pointer-events-none absolute right-[-24px] top-[-24px] h-32 w-32 rounded-full bg-brand-red/30 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-[-30%] left-[-10%] h-56 w-56 rounded-full bg-brand-red/25 blur-[95px]" />
-
-            <div className="mb-5 flex items-center justify-between">
-              <div className="flex gap-1.5">
-                <span className="h-1 flex-1 rounded-full bg-white/90" />
-                <span className="h-1 flex-1 rounded-full bg-white/25" />
-                <span className="h-1 flex-1 rounded-full bg-white/15" />
-              </div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-300" />
-                </span>
-                Live feed
-              </span>
-            </div>
-
-            <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-brand-red/80">
-                Tonight In Your Area
-              </p>
-              <h2 className="mt-4 text-2xl font-semibold">
-                Real venues. Real crowd energy.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-zinc-300">
-                Watch active venues at a glance, compare vibes side-by-side, then commit to the
-                spot that actually looks right for your night.
-              </p>
-
-              <div className="mt-6 space-y-3">
-                {liveMoments.map((moment) => (
-                  <div
-                    key={moment.venue}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-zinc-200"
-                  >
-                    <div>
-                      <p className="font-medium text-zinc-100">{moment.venue}</p>
-                      <p className="text-xs text-zinc-400">{moment.streamers}</p>
-                    </div>
-                    <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs">
-                      {moment.crowd}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <a
-                href={APK_DOWNLOAD_URL}
-                className="mt-6 inline-flex rounded-full border border-zinc-600 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-200 transition-colors hover:border-zinc-400 hover:bg-zinc-900"
-              >
-                Download Android APK
-              </a>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <article className="relative overflow-hidden rounded-2xl border border-white/10">
-                <Image
-                  src="/marketing/placeholders/crowd-energy.png"
-                  alt="Crowd energy under lights"
-                  width={900}
-                  height={700}
-                  className="h-28 w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-                <p className="absolute bottom-2 left-3 text-xs font-medium text-zinc-100">Live crowd energy</p>
-              </article>
-              <article className="relative overflow-hidden rounded-2xl border border-white/10">
-                <Image
-                  src="/marketing/placeholders/venue-exterior.png"
-                  alt="Venue exterior at night"
-                  width={900}
-                  height={700}
-                  className="h-28 w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-                <p className="absolute bottom-2 left-3 text-xs font-medium text-zinc-100">Trusted venue context</p>
-              </article>
-            </div>
+            <div className="pointer-events-none absolute left-[-14%] top-[38%] h-64 w-64 rounded-full bg-purple-500/25 blur-[120px]" />
+            <div className="pointer-events-none absolute bottom-[-28%] right-[-8%] h-56 w-56 rounded-full bg-brand-red/20 blur-[95px]" />
+            <HeroCarousel />
           </div>
         </div>
       </section>
