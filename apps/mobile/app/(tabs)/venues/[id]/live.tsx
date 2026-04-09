@@ -80,7 +80,6 @@ export default function MobileLiveWatchScreen() {
 
         let streamData: LiveStream | null = null;
         const MAX_RETRIES = 5;
-        const RETRY_DELAY = 2000;
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
           if (cancelled) return;
@@ -89,15 +88,12 @@ export default function MobileLiveWatchScreen() {
             if (__DEV__) console.log(`[Mobile] stream fetched (attempt ${attempt + 1}):`, streamData.id, 'status:', streamData.status);
             if (streamData.status === 'LIVE') break;
             streamData = null;
-            if (attempt < MAX_RETRIES - 1) {
-              await new Promise((r) => setTimeout(r, RETRY_DELAY));
-            }
           } catch (fetchErr) {
             if (__DEV__) console.log(`[Mobile] stream fetch attempt ${attempt + 1} failed:`, fetchErr);
             streamData = null;
-            if (attempt < MAX_RETRIES - 1) {
-              await new Promise((r) => setTimeout(r, RETRY_DELAY));
-            }
+          }
+          if (attempt < MAX_RETRIES - 1) {
+            await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
           }
         }
 
@@ -120,7 +116,7 @@ export default function MobileLiveWatchScreen() {
           } catch (tokenErr) {
             if (__DEV__) console.log(`[Mobile] viewer token attempt ${attempt + 1} failed:`, tokenErr);
             if (attempt < 2) {
-              await new Promise((r) => setTimeout(r, RETRY_DELAY));
+              await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
             }
           }
         }

@@ -76,13 +76,17 @@ export function LiveRoomContent({
     setFloatingReactions((current) => current.filter((reaction) => reaction.id !== id));
   }, []);
 
+  const layoutRef = useRef({ width, attendanceBottomOffset });
+  layoutRef.current = { width, attendanceBottomOffset };
+
   const launchFloatingReaction = useCallback(
     (emoji: string, source: 'local' | 'remote') => {
+      const { width: w, attendanceBottomOffset: abo } = layoutRef.current;
       const size = 46 + Math.round(Math.random() * 10);
-      const safeWidth = Math.max(140, width - size - 24);
+      const safeWidth = Math.max(140, w - size - 24);
       const left =
         source === 'local'
-          ? Math.max(20, Math.min(width - size - 20, width - size - 28))
+          ? Math.max(20, Math.min(w - size - 20, w - size - 28))
           : Math.max(20, Math.min(safeWidth, 20 + Math.random() * (safeWidth - 20)));
 
       setFloatingReactions((current) => {
@@ -93,7 +97,7 @@ export function LiveRoomContent({
             id: nextReactionIdRef.current++,
             emoji,
             left,
-            bottom: attendanceBottomOffset + ATTENDANCE_HEIGHT + 40,
+            bottom: abo + ATTENDANCE_HEIGHT + 40,
             size,
             drift: Math.random() * 56 - 28,
             duration: 1500 + Math.round(Math.random() * 500),
@@ -101,14 +105,18 @@ export function LiveRoomContent({
         ];
       });
     },
-    [attendanceBottomOffset, width],
+    [],
   );
 
   useEffect(() => {
     const messages = chat.chatMessages || [];
     const nextMessages = messages.slice(processedMessageCountRef.current);
-    const now = Date.now();
+    if (nextMessages.length === 0) {
+      processedMessageCountRef.current = messages.length;
+      return;
+    }
 
+    const now = Date.now();
     pendingLocalReactionsRef.current = pendingLocalReactionsRef.current.filter(
       (reaction) => now - reaction.at < 2500,
     );
