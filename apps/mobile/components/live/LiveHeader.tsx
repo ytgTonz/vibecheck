@@ -80,14 +80,9 @@ export function LiveHeader({
               <Text className="text-xs font-bold text-white">LIVE</Text>
             </View>
 
-            <View className="min-w-0 flex-row items-center gap-1.5">
-              <Text className="max-w-[170px] text-sm font-bold text-white" numberOfLines={1}>
-                {venue.name}
-              </Text>
-              <View className="h-4 w-4 items-center justify-center rounded-full bg-brand-red">
-                <Ionicons name="checkmark" size={10} color="white" />
-              </View>
-            </View>
+            <Text className="max-w-[200px] text-sm font-bold text-white" numberOfLines={1}>
+              {venue.name}
+            </Text>
           </View>
 
           <View className="mt-0.5 flex-row items-center gap-1">

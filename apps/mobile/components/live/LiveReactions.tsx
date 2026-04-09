@@ -13,6 +13,12 @@ import Animated, {
 
 export const QUICK_REACTIONS = ['🔥', '❤️', '👏'] as const;
 
+const REACTION_LABELS: Record<string, string> = {
+  '🔥': 'Fire reaction',
+  '❤️': 'Heart reaction',
+  '👏': 'Clap reaction',
+};
+
 export type FloatingReaction = {
   id: number;
   emoji: string;
@@ -103,6 +109,8 @@ function QuickReactionButton({
       onPressOut={stopFiring}
       delayLongPress={200}
       hitSlop={12}
+      accessibilityLabel={REACTION_LABELS[reaction] ?? reaction}
+      accessibilityRole="button"
       className={
         vertical
           ? 'h-14 w-14 items-center justify-center rounded-full bg-black/30'

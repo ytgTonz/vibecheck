@@ -23,8 +23,12 @@ try {
 
   const lkClient = require('livekit-client');
   TrackSource = lkClient.Track?.Source;
-} catch {
-  // LiveKit native modules may not be available in Expo Go.
+} catch (err: any) {
+  // Only swallow module-not-found errors (Expo Go). Re-throw real bugs.
+  if (err?.code !== 'MODULE_NOT_FOUND' && !err?.message?.includes('Cannot find module')) {
+    throw err;
+  }
+  if (__DEV__) console.log('[LiveKit] Native modules not available — running in limited mode.');
 }
 
 export {
