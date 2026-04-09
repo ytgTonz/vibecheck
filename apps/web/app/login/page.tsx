@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore, register as apiRegister } from "@vibecheck/shared";
@@ -9,7 +9,7 @@ import { VenueFields } from "./components/VenueFields";
 import { PromoterFields } from "./components/PromoterFields";
 import { ViewerFields } from "./components/ViewerFields";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, register, loading, error, setAuth } = useAuthStore();
@@ -248,5 +248,13 @@ export default function LoginPage() {
         )}
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
