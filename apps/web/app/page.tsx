@@ -108,6 +108,12 @@ export default function LandingPage() {
               >
                 Browse live venues
               </Link>
+              <a
+                href={APK_DOWNLOAD_URL}
+                className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+              >
+                Download Android APK
+              </a>
             </div>
 
             <div className="mt-5 text-sm text-zinc-400">
