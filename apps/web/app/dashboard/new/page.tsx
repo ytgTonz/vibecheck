@@ -72,31 +72,19 @@ export default function NewVenuePage() {
 
   if (!ready) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-8">
-        <div className="mb-6 h-4 w-32 rounded bg-zinc-800" />
-        <div className="mb-6 h-7 w-28 rounded bg-zinc-800" />
-        <div className="animate-pulse space-y-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i}>
-              <div className="mb-1 h-3 w-20 rounded bg-zinc-800" />
-              <div className="h-10 w-full rounded-lg bg-zinc-800" />
-            </div>
-          ))}
-        </div>
+      <div className="mx-auto max-w-lg animate-pulse space-y-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i}>
+            <div className="mb-1 h-3 w-20 rounded bg-zinc-800" />
+            <div className="h-10 w-full rounded-lg bg-zinc-800" />
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <Link
-        href="/dashboard"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-200"
-      >
-        &larr; Back to dashboard
-      </Link>
-
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Add Venue</h1>
+    <div className="mx-auto max-w-lg">
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>

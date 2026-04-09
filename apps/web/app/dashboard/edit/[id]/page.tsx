@@ -95,24 +95,20 @@ export default function EditVenuePage() {
 
   if (!ready || loading) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-8">
-        <div className="mb-6 h-4 w-32 rounded bg-zinc-800" />
-        <div className="mb-6 h-7 w-28 rounded bg-zinc-800" />
-        <div className="animate-pulse space-y-5">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i}>
-              <div className="mb-1 h-3 w-20 rounded bg-zinc-800" />
-              <div className="h-10 w-full rounded-lg bg-zinc-800" />
-            </div>
-          ))}
-        </div>
+      <div className="mx-auto max-w-lg animate-pulse space-y-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i}>
+            <div className="mb-1 h-3 w-20 rounded bg-zinc-800" />
+            <div className="h-10 w-full rounded-lg bg-zinc-800" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error && !venue) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-8">
+      <div className="mx-auto max-w-lg">
         <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
           <p className="text-sm font-medium text-red-400">{error}</p>
           <Link href="/dashboard" className="mt-3 inline-block text-xs text-red-400 hover:text-red-300">
@@ -123,10 +119,9 @@ export default function EditVenuePage() {
     );
   }
 
-  // Only owner can edit
   if (venue && user && venue.ownerId !== user.id) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-8">
+      <div className="mx-auto max-w-lg">
         <div className="rounded-xl border border-red-900/50 bg-red-950/30 p-6 text-center">
           <p className="text-sm font-medium text-red-400">You don&apos;t have permission to edit this venue.</p>
           <Link href="/dashboard" className="mt-3 inline-block text-xs text-red-400 hover:text-red-300">
@@ -138,15 +133,7 @@ export default function EditVenuePage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8">
-      <Link
-        href="/dashboard"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-zinc-500 transition-colors hover:text-zinc-200"
-      >
-        &larr; Back to dashboard
-      </Link>
-
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Edit Venue</h1>
+    <div className="mx-auto max-w-lg">
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
