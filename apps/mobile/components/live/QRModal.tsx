@@ -12,17 +12,19 @@ interface Props {
 }
 
 function useCountdown(expiresAt: string) {
-  const getSecondsLeft = () => {
+  const calcSecondsLeft = () => {
     const diff = Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000);
     return Math.max(diff, 0);
   };
 
-  const [secondsLeft, setSecondsLeft] = useState(getSecondsLeft);
+  const [secondsLeft, setSecondsLeft] = useState(calcSecondsLeft);
 
   useEffect(() => {
-    if (secondsLeft <= 0) return;
+    setSecondsLeft(calcSecondsLeft());
     const interval = setInterval(() => {
-      setSecondsLeft(getSecondsLeft());
+      const remaining = calcSecondsLeft();
+      setSecondsLeft(remaining);
+      if (remaining <= 0) clearInterval(interval);
     }, 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);

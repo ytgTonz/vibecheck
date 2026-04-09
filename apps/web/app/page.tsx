@@ -90,6 +90,12 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
+            <a
+                href={APK_DOWNLOAD_URL}
+                className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
+              >
+                Download Android APK
+              </a>
               <Link
                 href="/login?mode=register&accountType=viewer"
                 className="rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red/90"
@@ -108,12 +114,7 @@ export default function LandingPage() {
               >
                 Browse live venues
               </Link>
-              <a
-                href={APK_DOWNLOAD_URL}
-                className="rounded-full border border-zinc-700 px-6 py-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
-              >
-                Download Android APK
-              </a>
+              
             </div>
 
             <div className="mt-5 text-sm text-zinc-400">
@@ -148,12 +149,10 @@ export default function LandingPage() {
             Visual Storytelling
           </p>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Replace these placeholders with real nightlife photography.
+            Built for real venues, real nights, real energy.
           </h2>
           <p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
-            The layout is ready for production images. Drop your downloaded assets into
-            `apps/web/public/marketing/placeholders/` with the same filenames to update the
-            landing instantly.
+            Give your venue a live-first storefront. When owners stream the room in real time, viewers decide faster—and your busiest nights get busier.
           </p>
         </div>
 

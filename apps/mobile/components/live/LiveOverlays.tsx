@@ -21,14 +21,16 @@ export function StreamEndedOverlay({
   useSocket({
     'stream:ended': useCallback(
       (data: StreamEvent) => {
-        if (data.venueId === venueId) setEnded(true);
+        // Only end the overlay when the stream we're watching actually ended.
+        if (data.venueId === venueId && data.streamId === streamId) setEnded(true);
       },
-      [venueId],
+      [venueId, streamId],
     ),
     'stream:live': useCallback(
       (data: StreamEvent) => {
         if (data.venueId === venueId && data.streamId !== streamId) {
-          setEnded(true);
+          // A new stream can start before we receive the ended event for the current one.
+          // Track it, but don't block the viewer with an \"ended\" overlay prematurely.
           setNewStreamAvailable(true);
         }
       },

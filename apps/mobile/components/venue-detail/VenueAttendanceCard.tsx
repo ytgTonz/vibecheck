@@ -16,6 +16,10 @@ function intentKey(venueId: string, streamId: string) {
   return `visit_intent_${venueId}_${streamId}`;
 }
 
+function arrivalQrKey(venueId: string, streamId: string) {
+  return `visit_arrival_qr_${venueId}_${streamId}`;
+}
+
 export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps) {
   const router = useRouter();
   const { token, user } = useAuthStore();
@@ -26,6 +30,7 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
   const [arrivalCount, setArrivalCount] = useState(venue.arrivalCount ?? 0);
   const [showThankYou, setShowThankYou] = useState(false);
   const [qrData, setQrData] = useState<VisitArrivalResponse | null>(null);
+  const [qrVisible, setQrVisible] = useState(false);
   const [intentSubmitting, setIntentSubmitting] = useState(false);
   const [arrivalSubmitting, setArrivalSubmitting] = useState(false);
   const thankYouAnim = useRef(new Animated.Value(0)).current;
@@ -34,6 +39,24 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
     AsyncStorage.getItem(intentKey(venue.id, stream.id)).then((val) => {
       if (val) setIntentPressed(true);
     });
+  }, [venue.id, stream.id]);
+
+  useEffect(() => {
+    // Restore QR so users can find it after app relaunch.
+    AsyncStorage.getItem(arrivalQrKey(venue.id, stream.id))
+      .then((raw) => {
+        if (!raw) return;
+        const parsed = JSON.parse(raw) as VisitArrivalResponse;
+        if (!parsed?.qrToken || !parsed?.expiresAt) return;
+        // Drop expired QR from storage to avoid stale UX.
+        if (new Date(parsed.expiresAt).getTime() <= Date.now()) {
+          AsyncStorage.removeItem(arrivalQrKey(venue.id, stream.id)).catch(() => {});
+          return;
+        }
+        setArrivalPressed(true);
+        setQrData(parsed);
+      })
+      .catch(() => {});
   }, [venue.id, stream.id]);
 
   useSocket({
@@ -76,6 +99,8 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
       setArrivalPressed(true);
       setArrivalCount((c) => c + 1);
       setQrData(result);
+      setQrVisible(true);
+      await AsyncStorage.setItem(arrivalQrKey(venue.id, stream.id), JSON.stringify(result));
       setShowThankYou(true);
       Animated.sequence([
         Animated.timing(thankYouAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
@@ -144,7 +169,7 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
           </Pressable>
 
           <Pressable
-            onPress={handleArrival}
+            onPress={arrivalPressed ? () => setQrVisible(true) : handleArrival}
             disabled={arrivalPressed || arrivalSubmitting}
             className={`flex-1 rounded-[16px] p-3.5 items-center ${
               arrivalPressed ? 'bg-zinc-700' : 'bg-zinc-800 border border-zinc-700'
@@ -157,7 +182,7 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
               style={{ marginBottom: 6 }}
             />
             <Text className={`text-[11px] text-center ${arrivalPressed ? 'text-zinc-300 font-medium' : 'text-zinc-400'}`}>
-              I've arrived!
+              {arrivalPressed ? 'Show QR' : "I've arrived!"}
             </Text>
             <Text className={`text-[11px] mt-1 ${arrivalPressed ? 'text-zinc-300' : 'text-zinc-500'}`}>
               {arrivalCount}
@@ -169,11 +194,11 @@ export function VenueAttendanceCard({ stream, venue }: VenueAttendanceCardProps)
       {/* QR modal — shown after "I'm Here" */}
       {qrData && (
         <QRModal
-          visible={true}
+          visible={qrVisible}
           qrToken={qrData.qrToken}
           expiresAt={qrData.expiresAt}
           incentive={qrData.incentive}
-          onClose={() => setQrData(null)}
+          onClose={() => setQrVisible(false)}
         />
       )}
     </>

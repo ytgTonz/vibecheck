@@ -3,19 +3,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface LiveBottomBarProps {
+  venueId: string;
   venueName: string;
   chatOpen: boolean;
   onChatToggle: () => void;
 }
 
-export function LiveBottomBar({ venueName, chatOpen, onChatToggle }: LiveBottomBarProps) {
+export function LiveBottomBar({ venueId, venueName, chatOpen, onChatToggle }: LiveBottomBarProps) {
   const insets = useSafeAreaInsets();
 
   const handleShare = async () => {
+    const liveLink = `vibecheck://venues/${venueId}/live`;
     try {
       await Share.share({
         title: venueName,
-        message: `Watch ${venueName} live on VibeCheck`,
+        message: `Watch ${venueName} live on VibeCheck: ${liveLink}`,
+        url: liveLink,
       });
     } catch {
       // user cancelled
@@ -50,11 +53,6 @@ export function LiveBottomBar({ venueName, chatOpen, onChatToggle }: LiveBottomB
         <Ionicons name="share-outline" size={16} color="white" />
         <Text className="text-sm font-semibold text-white">Share stream</Text>
       </Pressable>
-
-      {/* Bookmark placeholder */}
-      <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10 opacity-60">
-        <Ionicons name="bookmark-outline" size={20} color="white" />
-      </View>
     </View>
   );
 }

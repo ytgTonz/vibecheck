@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { QRTokenPreview } from '@vibecheck/shared';
 
@@ -27,10 +28,15 @@ export default function ScanResultSheet({
   onScanNext,
   onDismiss,
 }: ScanResultSheetProps) {
+  const insets = useSafeAreaInsets();
+
   if (state.phase === 'scanning') return null;
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 rounded-t-[24px] border-t border-zinc-800 bg-zinc-900 px-5 pb-10 pt-6">
+    <View
+      className="absolute bottom-0 left-0 right-0 rounded-t-[24px] border-t border-zinc-800 bg-zinc-900 px-5 pt-6"
+      style={{ paddingBottom: Math.max(insets.bottom, 20) + 10 }}
+    >
       {state.phase === 'loading' && <LoadingContent />}
       {state.phase === 'previewing' && (
         <PreviewContent

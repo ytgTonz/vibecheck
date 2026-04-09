@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiveStream, Venue } from '@vibecheck/shared';
 import { LiveChatOverlay } from './LiveChatOverlay';
 import { LiveHeader } from './LiveHeader';
@@ -21,9 +22,6 @@ import {
 } from './livekit';
 import { LiveAttendanceBar } from './LiveAttendanceBar';
 
-// Height of the bottom bar (approximate — attendance bar sits above it)
-const BOTTOM_BAR_HEIGHT = 64;
-// Height of the attendance row
 const ATTENDANCE_HEIGHT = 60;
 
 export function LiveRoomContent({
@@ -36,6 +34,7 @@ export function LiveRoomContent({
   onReconnect: () => void;
 }) {
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
   const [peakCount, setPeakCount] = useState(() =>
     Math.max(stream.viewerPeak ?? 0, stream.currentViewerCount ?? 0),
@@ -44,6 +43,9 @@ export function LiveRoomContent({
   const nextReactionIdRef = useRef(0);
   const processedMessageCountRef = useRef(0);
   const pendingLocalReactionsRef = useRef<Array<{ emoji: string; at: number }>>([]);
+  const bottomInset = Math.max(insets.bottom, 12);
+  const bottomBarHeight = 56 + bottomInset;
+  const attendanceBottomOffset = bottomBarHeight + 6;
 
   const participants = useRemoteParticipants?.() || [];
   const videoTracks =
@@ -91,7 +93,7 @@ export function LiveRoomContent({
             id: nextReactionIdRef.current++,
             emoji,
             left,
-            bottom: BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 40,
+            bottom: attendanceBottomOffset + ATTENDANCE_HEIGHT + 40,
             size,
             drift: Math.random() * 56 - 28,
             duration: 1500 + Math.round(Math.random() * 500),
@@ -99,7 +101,7 @@ export function LiveRoomContent({
         ];
       });
     },
-    [width],
+    [attendanceBottomOffset, width],
   );
 
   useEffect(() => {
@@ -156,14 +158,14 @@ export function LiveRoomContent({
       />
 
       {/* Top bar */}
-      <LiveHeader venue={venue} viewerCount={viewerCount} />
+      <LiveHeader venue={venue} viewerCount={viewerCount} streamId={stream.id} />
 
       {/* Emoji reactions — right side, above attendance */}
       <View
         style={{
           position: 'absolute',
           right: 14,
-          bottom: BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 8,
+          bottom: attendanceBottomOffset + ATTENDANCE_HEIGHT + 8,
           zIndex: 10,
         }}
       >
@@ -175,14 +177,15 @@ export function LiveRoomContent({
         messages={chat.chatMessages}
         onSend={(message: string) => chat.send(message)}
         chatOpen={chatOpen}
-        bottomOffset={BOTTOM_BAR_HEIGHT + ATTENDANCE_HEIGHT + 4}
+        bottomOffset={attendanceBottomOffset + ATTENDANCE_HEIGHT + 4}
       />
 
       {/* Attendance row — sits above bottom bar */}
-      <LiveAttendanceBar stream={stream} venue={venue} />
+      <LiveAttendanceBar stream={stream} venue={venue} bottomOffset={attendanceBottomOffset} />
 
       {/* Bottom bar */}
       <LiveBottomBar
+        venueId={venue.id}
         venueName={venue.name}
         chatOpen={chatOpen}
         onChatToggle={() => setChatOpen((v) => !v)}

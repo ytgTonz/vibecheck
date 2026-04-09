@@ -134,7 +134,7 @@ export function LiveChatOverlay({
               <Text className="text-sm text-white/60">Join the chat.</Text>
             </View>
           ) : (
-            nonReactionMessages.slice(-6).map((msg, index) => {
+            nonReactionMessages.slice(-50).map((msg, index) => {
               const name = msg.from?.name || msg.from?.identity || 'Viewer';
               const color = getAvatarColor(name);
               const initials = getInitials(name);

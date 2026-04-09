@@ -168,6 +168,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
             <LiveChatOverlay
               messages={chat.chatMessages || []}
               onSend={(msg) => chat.send?.(msg)}
+              chatOpen={true}
             />
           </View>
         </View>
