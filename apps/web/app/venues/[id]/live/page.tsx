@@ -1,28 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchStream, fetchViewerToken, fetchVenue, LiveStream, Venue } from "@vibecheck/shared";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { ViewerCount } from "./components/ViewerCount";
 import { EmojiReactions } from "./components/EmojiReactions";
 import { ChatOverlay } from "./components/ChatOverlay";
 import { BroadcasterVideo } from "./components/BroadcasterVideo";
 import { StreamEndedOverlay } from "./components/StreamEndedOverlay";
 import { AttendanceBar } from "./components/AttendanceBar";
+import { BottomBar } from "./components/BottomBar";
 
 const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "";
 
+function formatViewerCount(count: number): string {
+  if (count >= 1000) return (count / 1000).toFixed(1) + "k";
+  return String(count);
+}
+
 export default function LiveWatchPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
 
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [viewerCount, setViewerCount] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -92,29 +100,105 @@ export default function LiveWatchPage() {
   return (
     <div className="fixed inset-0 z-50 bg-black">
       <LiveKitRoom serverUrl={LIVEKIT_URL} token={token} connect={true} className="relative h-full w-full">
-        <div className="absolute inset-0"><BroadcasterVideo /></div>
+        {/* Video background */}
+        <div className="absolute inset-0">
+          <BroadcasterVideo />
+        </div>
         <RoomAudioRenderer />
         <StreamEndedOverlay venueName={venue.name} streamId={stream.id} />
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link href="/browse" className="rounded-full bg-black/50 px-3 py-1.5 text-sm text-white/80 backdrop-blur-sm hover:bg-black/70">
-              &larr; Back
-            </Link>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red/20 px-2.5 py-1 text-xs font-semibold text-red-400 backdrop-blur-sm">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-red" />
+
+        {/* Top bar */}
+        <div className="absolute inset-x-0 top-0 z-10 px-4 pt-3 pb-2">
+          {/* Row 1: back + actions */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => router.back()}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+              aria-label="Go back"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: venue.name, url: window.location.href }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(window.location.href).catch(() => {});
+                  }
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+                aria-label="Share stream"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: stream info */}
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-red px-2.5 py-1 text-xs font-bold text-white">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               LIVE
             </span>
-            <h1 className="min-w-0 truncate text-sm font-semibold text-white drop-shadow-lg">{venue.name}</h1>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h1 className="truncate text-sm font-bold text-white drop-shadow-lg">{venue.name}</h1>
+                {/* Verified badge */}
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-brand-red" aria-label="Verified">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+              </div>
+              <p className="text-xs text-white/70">{formatViewerCount(viewerCount)} watching</p>
+            </div>
           </div>
-          <ViewerCount />
         </div>
-        <AttendanceBar
-          streamId={stream.id}
-          initialIntentCount={venue.intentCount}
-          initialArrivalCount={venue.arrivalCount}
-        />
-        <div className="absolute bottom-16 right-2 z-10 sm:bottom-4 sm:right-4"><EmojiReactions /></div>
-        <ChatOverlay />
+
+        {/* Emoji reactions — right side, above attendance */}
+        <div className="absolute right-3 z-10" style={{ bottom: "14rem" }}>
+          <EmojiReactions />
+        </div>
+
+        {/* Chat messages — bottom-left, above attendance */}
+        <div className="absolute left-0 z-10 w-full sm:w-1/2 sm:max-w-md" style={{ bottom: "9.5rem" }}>
+          <ChatOverlay chatOpen={chatOpen} onViewerCount={setViewerCount} />
+        </div>
+
+        {/* Attendance bar — above bottom bar */}
+        <div className="absolute inset-x-0 z-10" style={{ bottom: "4rem" }}>
+          <AttendanceBar
+            streamId={stream.id}
+            initialIntentCount={venue.intentCount}
+            initialArrivalCount={venue.arrivalCount}
+          />
+        </div>
+
+        {/* Bottom bar */}
+        <div className="absolute inset-x-0 bottom-0 z-20">
+          <BottomBar
+            venueName={venue.name}
+            chatOpen={chatOpen}
+            onChatToggle={() => setChatOpen((v) => !v)}
+          />
+        </div>
       </LiveKitRoom>
     </div>
   );

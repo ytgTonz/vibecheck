@@ -2,6 +2,12 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+@keyframes vcFloatUp {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  70%  { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-120px) scale(0.6); }
+}
+
 @theme {
   /* Brand accent colors */
   --color-brand-red: #FF2D55;
