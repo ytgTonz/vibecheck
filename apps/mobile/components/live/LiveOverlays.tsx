@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSocket } from '@vibecheck/shared';
+import { useSocket, type StreamEvent } from '@vibecheck/shared';
 
 export function StreamEndedOverlay({
   venueId,
@@ -20,13 +20,13 @@ export function StreamEndedOverlay({
 
   useSocket({
     'stream:ended': useCallback(
-      (data) => {
+      (data: StreamEvent) => {
         if (data.venueId === venueId) setEnded(true);
       },
       [venueId],
     ),
     'stream:live': useCallback(
-      (data) => {
+      (data: StreamEvent) => {
         if (data.venueId === venueId && data.streamId !== streamId) {
           setEnded(true);
           setNewStreamAvailable(true);

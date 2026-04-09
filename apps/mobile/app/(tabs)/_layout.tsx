@@ -76,6 +76,7 @@ export default function TabLayout() {
   const isFullscreenRoute =
     segments.includes('broadcast' as never) ||
     segments.includes('live' as never) ||
+    segments.includes('scanner' as never) ||
     segments.includes('(auth)' as never);
 
   const canBroadcast = useMemo(
@@ -199,6 +200,7 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="scanner" options={{ href: null }} />
       <Tabs.Screen name="(auth)" options={{ href: null }} />
       <Tabs.Screen name="broadcast/[venueId]" options={{ href: null }} />
       <Tabs.Screen name="venues/[id]" options={{ href: null }} />

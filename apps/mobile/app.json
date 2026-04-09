@@ -41,6 +41,12 @@
       "expo-router",
       "@livekit/react-native-expo-plugin",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow VibeCheck to scan QR codes at the door."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",

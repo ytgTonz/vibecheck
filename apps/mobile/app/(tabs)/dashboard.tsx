@@ -164,15 +164,26 @@ export default function DashboardScreen() {
             <Text className="text-3xl font-bold text-zinc-100">Dashboard</Text>
             <Text className="mt-1 text-sm text-zinc-400">Your venues and live controls.</Text>
           </View>
-          <Pressable
-            onPress={async () => {
-              if (token) await unregisterNotificationToken(token);
-              await logout();
-            }}
-            className="rounded-full border border-zinc-700 px-4 py-2"
-          >
-            <Text className="text-xs font-medium text-zinc-300">Log out</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-2">
+            {canBroadcast && (
+              <Pressable
+                onPress={() => router.push('/scanner' as any)}
+                className="flex-row items-center gap-1.5 rounded-full bg-lime-500 px-4 py-2"
+              >
+                <Ionicons name="qr-code-outline" size={14} color="#09090b" />
+                <Text className="text-xs font-semibold text-zinc-950">Scan QR</Text>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={async () => {
+                if (token) await unregisterNotificationToken(token);
+                await logout();
+              }}
+              className="rounded-full border border-zinc-700 px-4 py-2"
+            >
+              <Text className="text-xs font-medium text-zinc-300">Log out</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Signed-in-as card */}

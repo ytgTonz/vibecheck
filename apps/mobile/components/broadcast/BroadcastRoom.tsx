@@ -148,7 +148,7 @@ export function BroadcastRoom({ venue, stream, authToken, onEnded }: BroadcastRo
                   className={`h-9 w-9 items-center justify-center rounded-full ${cameraEnabled ? 'bg-black/50' : 'bg-brand-red/80'}`}
                 >
                   <Ionicons
-                    name={cameraEnabled ? 'camera-outline' : 'camera-off-outline'}
+                    name={cameraEnabled ? 'videocam-outline' : 'videocam-off-outline'}
                     size={17}
                     color="white"
                   />
