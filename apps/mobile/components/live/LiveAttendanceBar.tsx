@@ -116,7 +116,7 @@ export function LiveAttendanceBar({ stream, venue, bottomOffset }: Props) {
   return (
     <>
       <View
-        style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0 }}
+        style={{ position: 'absolute', bottom: bottomOffset, left: 0, right: 0, zIndex: 25 }}
         className="flex-row items-center gap-3 bg-black/60 px-4 py-3"
       >
         {/* Label */}
