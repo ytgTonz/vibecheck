@@ -13,6 +13,7 @@ import { fetchVenue, fetchStream, Venue, LiveStream, useAuthStore } from '@vibec
 import { LiveStreamBanner } from '@/components/venue-detail/LiveStreamBanner';
 import { VenueInfoCard } from '@/components/venue-detail/VenueInfoCard';
 import { VenueAttendanceCard } from '@/components/venue-detail/VenueAttendanceCard';
+import { SavedQRCard } from '@/components/venue-detail/SavedQRCard';
 import { useNetwork } from '@/contexts/NetworkContext';
 
 export default function VenueDetailScreen() {
@@ -151,6 +152,8 @@ export default function VenueDetailScreen() {
           {venue.isLive && activeStream && (
             <VenueAttendanceCard stream={activeStream} venue={venue} />
           )}
+
+          {!venue.isLive && <SavedQRCard venueId={venue.id} />}
         </View>
       </ScrollView>
     </SafeAreaView>
