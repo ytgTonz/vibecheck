@@ -378,11 +378,22 @@ export async function fetchStreamToken(
   return body as { token: string };
 }
 
-/** Fetch anonymous viewer token for a stream. */
-export function fetchViewerToken(
+/** Fetch viewer token for a stream. If an auth token is provided, the user's name is embedded in the LiveKit token for chat attribution. */
+export async function fetchViewerToken(
   streamId: string,
+  authToken?: string,
 ): Promise<{ token: string }> {
-  return apiFetch<{ token: string }>(`/streams/${streamId}/viewer-token`);
+  const headers: Record<string, string> = {};
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+  const res = await baseFetch(`${baseUrl}/streams/${streamId}/viewer-token`, { headers });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || `API error: ${res.status}`);
+  }
+
+  return res.json() as Promise<{ token: string }>;
 }
 
 /** End a stream. */

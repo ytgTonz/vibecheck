@@ -18,7 +18,7 @@ const LIVEKIT_URL = process.env.EXPO_PUBLIC_LIVEKIT_URL || '';
 export default function MobileLiveWatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user, hydrated } = useAuthStore();
+  const { user, token: authToken, hydrated } = useAuthStore();
   const [venue, setVenue] = useState<Venue | null>(null);
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -110,7 +110,7 @@ export default function MobileLiveWatchScreen() {
         for (let attempt = 0; attempt < 3; attempt++) {
           if (cancelled) return;
           try {
-            const result = await fetchViewerToken(streamData.id);
+            const result = await fetchViewerToken(streamData.id, authToken ?? undefined);
             viewerToken = result.token;
             break;
           } catch (tokenErr) {
@@ -145,7 +145,7 @@ export default function MobileLiveWatchScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id, retryCount]);
+  }, [id, retryCount, authToken]);
 
   // Gate: guests cannot watch live streams
   if (hydrated && !user) {

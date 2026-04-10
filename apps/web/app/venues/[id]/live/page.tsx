@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchStream, fetchViewerToken, fetchVenue, LiveStream, Venue } from "@vibecheck/shared";
+import { fetchStream, fetchViewerToken, fetchVenue, LiveStream, useAuthStore, Venue } from "@vibecheck/shared";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
 import { EmojiReactions } from "./components/EmojiReactions";
@@ -31,6 +31,7 @@ export default function LiveWatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
+  const authToken = useAuthStore((s) => s.token);
 
   useEffect(() => {
     if (!id) return;
@@ -58,7 +59,7 @@ export default function LiveWatchPage() {
           return;
         }
 
-        const { token: viewerToken } = await fetchViewerToken(streamData.id);
+        const { token: viewerToken } = await fetchViewerToken(streamData.id, authToken ?? undefined);
         setToken(viewerToken);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load stream");

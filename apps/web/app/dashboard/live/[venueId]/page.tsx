@@ -112,7 +112,7 @@ export default function BroadcastPage() {
           const bs = useBroadcastStore.getState();
           if (bs.venueId === venueId && bs.streamId === v.activeStreamId) return;
           try {
-            const { token: viewerToken } = await fetchViewerToken(v.activeStreamId);
+            const { token: viewerToken } = await fetchViewerToken(v.activeStreamId, authToken ?? undefined);
             setStream({ id: v.activeStreamId } as LiveStream);
             setLivekitToken(viewerToken);
             setPhase("monitoring");

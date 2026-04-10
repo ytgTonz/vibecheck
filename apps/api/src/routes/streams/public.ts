@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { Router, Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import { createToken } from '../../lib/livekit';
+import { optionalAuth } from '../../middleware/auth';
 
 const router = Router();
 
@@ -77,8 +78,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   res.json(stream);
 });
 
-// GET /streams/:id/viewer-token — anonymous viewer token
-router.get('/:id/viewer-token', async (req: Request, res: Response) => {
+// GET /streams/:id/viewer-token — viewer token (uses real name if authenticated)
+router.get('/:id/viewer-token', optionalAuth, async (req: Request, res: Response) => {
   const stream = await prisma.liveStream.findUnique({
     where: { id: req.params.id },
   });
@@ -93,10 +94,20 @@ router.get('/:id/viewer-token', async (req: Request, res: Response) => {
     return;
   }
 
+  // If the viewer is authenticated, use their real name for chat attribution
+  let viewerName = 'Viewer';
+  if (req.user) {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { name: true },
+    });
+    if (dbUser?.name) viewerName = dbUser.name;
+  }
+
   const identity = `viewer-${stream.id}-${randomUUID()}`;
   const token = await createToken(identity, stream.livekitRoom, {
     canPublish: false,
-    name: 'Viewer',
+    name: viewerName,
   });
 
   res.json({ token });

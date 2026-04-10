@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   fetchMyVenues,
+  updateMyProfile,
   useAuthStore,
   VenueWithStats,
 } from '@vibecheck/shared';
@@ -14,17 +15,59 @@ import { useNetwork } from '@/contexts/NetworkContext';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { user, token, hydrate, logout } = useAuthStore();
+  const { user, token, hydrate, logout, setUser } = useAuthStore();
   const [venues, setVenues] = useState<VenueWithStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = useRef<TextInput>(null);
   const canBroadcast = useMemo(
     () => user?.role === 'VENUE_OWNER' || user?.role === 'VENUE_PROMOTER',
     [user?.role],
   );
   const isViewer = user?.role === 'VIEWER';
   const { isConnected, didReconnect, clearReconnect } = useNetwork();
+
+  const startEditingName = () => {
+    setNameDraft(user?.name ?? '');
+    setNameError(null);
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.focus(), 100);
+  };
+
+  const cancelEditingName = () => {
+    setEditingName(false);
+    setNameError(null);
+  };
+
+  const saveName = async () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed.length < 2 || trimmed.length > 60) {
+      setNameError('Name must be between 2 and 60 characters');
+      return;
+    }
+    if (trimmed === user?.name) {
+      setEditingName(false);
+      return;
+    }
+    if (!token) return;
+
+    setNameSaving(true);
+    setNameError(null);
+    try {
+      const updatedUser = await updateMyProfile(token, { name: trimmed });
+      setUser(updatedUser);
+      setEditingName(false);
+    } catch (err) {
+      setNameError(err instanceof Error ? err.message : 'Failed to update name');
+    } finally {
+      setNameSaving(false);
+    }
+  };
 
   const loadDashboard = async (authToken: string) => {
     setLoading(true);
@@ -98,7 +141,36 @@ export default function DashboardScreen() {
             <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500">
               Signed in as
             </Text>
-            <Text className="mt-2 text-base font-semibold text-zinc-100">{user.name}</Text>
+            {editingName ? (
+              <View className="mt-2">
+                <TextInput
+                  ref={nameInputRef}
+                  value={nameDraft}
+                  onChangeText={setNameDraft}
+                  onSubmitEditing={saveName}
+                  onBlur={cancelEditingName}
+                  maxLength={60}
+                  autoCapitalize="words"
+                  returnKeyType="done"
+                  className="rounded-xl border border-zinc-600 bg-zinc-800 px-3 py-2 text-base text-zinc-100"
+                  placeholderTextColor="#71717a"
+                  placeholder="Your display name"
+                  editable={!nameSaving}
+                />
+                {nameError ? (
+                  <Text className="mt-1.5 text-xs text-red-400">{nameError}</Text>
+                ) : (
+                  <Text className="mt-1.5 text-xs text-zinc-500">
+                    This name appears in live chat
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <Pressable onPress={startEditingName} className="mt-2 flex-row items-center gap-2">
+                <Text className="text-base font-semibold text-zinc-100">{user.name}</Text>
+                <Ionicons name="pencil" size={14} color="#71717a" />
+              </Pressable>
+            )}
             <Text className="mt-0.5 text-sm text-zinc-400">{user.email}</Text>
             {user.phone ? (
               <Text className="mt-0.5 text-sm text-zinc-500">{user.phone}</Text>
@@ -191,7 +263,36 @@ export default function DashboardScreen() {
           <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-zinc-500">
             Signed in as
           </Text>
-          <Text className="mt-2 text-base font-semibold text-zinc-100">{user.name}</Text>
+          {editingName ? (
+            <View className="mt-2">
+              <TextInput
+                ref={nameInputRef}
+                value={nameDraft}
+                onChangeText={setNameDraft}
+                onSubmitEditing={saveName}
+                onBlur={cancelEditingName}
+                maxLength={60}
+                autoCapitalize="words"
+                returnKeyType="done"
+                className="rounded-xl border border-zinc-600 bg-zinc-800 px-3 py-2 text-base text-zinc-100"
+                placeholderTextColor="#71717a"
+                placeholder="Your display name"
+                editable={!nameSaving}
+              />
+              {nameError ? (
+                <Text className="mt-1.5 text-xs text-red-400">{nameError}</Text>
+              ) : (
+                <Text className="mt-1.5 text-xs text-zinc-500">
+                  This name appears in live chat
+                </Text>
+              )}
+            </View>
+          ) : (
+            <Pressable onPress={startEditingName} className="mt-2 flex-row items-center gap-2">
+              <Text className="text-base font-semibold text-zinc-100">{user.name}</Text>
+              <Ionicons name="pencil" size={14} color="#71717a" />
+            </Pressable>
+          )}
           <Text className="mt-0.5 text-sm text-zinc-400">{user.email}</Text>
         </View>
 
