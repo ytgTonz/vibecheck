@@ -91,7 +91,7 @@ export function BroadcastSetupScreen({ venue, stream, phase, error, onStart }: B
             streamURL={cameraStream.toURL()}
             style={StyleSheet.absoluteFillObject}
             objectFit="cover"
-            mirror={facingMode === 'user'}
+            mirror={false}
           />
         ) : (
           <View className="flex-1 items-center justify-center">

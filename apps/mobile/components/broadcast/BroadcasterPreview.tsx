@@ -30,6 +30,7 @@ export function BroadcasterPreview() {
       trackRef={localTrack}
       style={{ width: '100%', height: '100%' }}
       objectFit="cover"
+      mirror={false}
     />
   );
 }
