@@ -51,7 +51,6 @@ function resolveWsUrl(): string {
 export function getSocket(authToken?: string): Socket {
   if (!socket) {
     const wsUrl = resolveWsUrl();
-    console.log('[Socket] creating client', { url: wsUrl });
 
     socket = io(wsUrl, {
       path: '/ws',
@@ -64,20 +63,9 @@ export function getSocket(authToken?: string): Socket {
       ...(authToken ? { auth: { token: authToken } } : {}),
     });
 
-    socket.on('connect', () => {
-      console.log('[Socket] connected', { id: socket?.id, url: wsUrl });
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('[Socket] disconnected', { reason });
-    });
-
-    socket.on('connect_error', (error) => {
-      console.log('[Socket] connect_error', {
-        message: error.message,
-        url: wsUrl,
-      });
-    });
+    socket.on('connect', () => {});
+    socket.on('disconnect', () => {});
+    socket.on('connect_error', () => {});
   }
   return socket;
 }
