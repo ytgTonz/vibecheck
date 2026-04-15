@@ -34,20 +34,20 @@ const marketingGallery = [
   {
     src: "/marketing/placeholders/hero-venue-stream.png",
     alt: "Phone filming a live DJ set",
-    title: "Live Venue Stream",
-    caption: "Vertical action shot, real crowd movement, low-light nightlife.",
+    title: "Stream the moment",
+    caption: "Go live in seconds and let your crowd pull people off the fence.",
   },
   {
     src: "/marketing/placeholders/crowd-energy.png",
     alt: "Energetic crowd and lights",
-    title: "Crowd Energy",
-    caption: "Wide dancefloor scene with color lighting and visible vibe.",
+    title: "Feel the room",
+    caption: "Real-time energy — no photos, no filters, just the honest vibe.",
   },
   {
     src: "/marketing/placeholders/venue-exterior.png",
-    alt: "Placeholder: venue exterior at night",
-    title: "Venue Context",
-    caption: "Night exterior shot so users trust this is a real location.",
+    alt: "Venue exterior at night",
+    title: "Own your night",
+    caption: "Your venue, your story. Show the world what they're missing.",
   },
 ];
 
