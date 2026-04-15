@@ -166,10 +166,8 @@ export default function BroadcastPage() {
     setError(null);
     try {
       const newStream = await createStream(venueId, authToken);
-      console.log('[Broadcast] stream created:', newStream.id, 'status:', newStream.status);
       setStream(newStream);
       const { token: broadcasterToken } = await fetchStreamToken(newStream.id, authToken);
-      console.log('[Broadcast] broadcaster token received, joining room');
       setLivekitToken(broadcasterToken);
       stopPreview();
       setPhase("live");

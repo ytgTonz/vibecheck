@@ -104,7 +104,6 @@ export default function BrowseScreen() {
       setVenueOffline(venueId);
     },
     'stream:viewers': ({ venueId, currentViewerCount }) => {
-      console.log('[Browse] stream:viewers', { venueId, currentViewerCount });
       setViewerCount(venueId, currentViewerCount);
     },
   });

@@ -45,15 +45,6 @@ function baseFetch(url: string, options: RequestInit = {}): Promise<Response> {
   });
 }
 
-/** Optional override for tests or environments that need to swap the API server at runtime. */
-export function setBaseUrl(url: string) {
-  baseUrl = normalizeBaseUrl(url);
-}
-
-export function getBaseUrl(): string {
-  return baseUrl;
-}
-
 /** Thin wrapper around fetch that throws on non-OK responses. */
 async function apiFetch<T>(path: string): Promise<T> {
   const res = await baseFetch(`${baseUrl}${path}`);
